@@ -1,42 +1,97 @@
-from collections import deque
+from itertools import combinations
+import collections
+import math
+import sys
 
 def handle_input():
     try:
-        fl = input("Брой козички и максимален брой курсове - N K: ")
+        error_message = "Invalid format"
+        print("Input")
+        fl = input()
         n, k = [int(x) for x in fl.split(" ")]
-    except ValueError:
-        print("Невалиден формат")
-        return
-    try:
-        sl = input("Теглата на козичките - A1 A2 ... AN: ")
-        ws = [int(x) for x in sl.split(" ")]
-        if len(ws) != n: raise ValueError
-    except ValueError:
-        raise
-        print("Броят на козичките не съвпада с въведените тегла")
-        return
-    return n, k, ws
+        if n <= 0 or n >= 1001: 
+            error_message = ("Invalid value for N")
+            raise ValueError
+        if k <= 0 or k >= 1001: 
+            error_message = ("Invalid value for K")
+            raise ValueError
+        sl = input()
+        weights = [int(x) for x in sl.split(" ")]
+        # check for correct number of weights
+        for w in weights:
+            if w <= 0 or w >= 100000: 
+                error_message = ("Invalid weight value")
+                raise ValueError
+        if len(weights) != n: 
+            error_message = ("N not equal to number of weights")
+            raise ValueError
+    except ValueError as e:
+        sys.exit(error_message)
+    else: 
+        return n, k, weights
 
-def calculate_k(n, k, ws):
-    ws = sorted(ws)
+def _sum_combs(ws):
+    # Return as ordered dictionary of sum(key) and corresponding weights(value)
+    tmp = ws
+    tmp.remove(max(ws))
+    sums = {}
+    for i in range(1,len(tmp)):
+        for c in combinations(tmp,i):
+            sums[sum(c)] = c
+    return collections.OrderedDict(sorted(sums.items()))
+
+def calculate(k,ws):
+    # Returns the minimum weight capacity of the boat
     max_w = max(ws)
-   
-def strategy(k,ws,max_w):
-    w, count = 0, 1
-    wl = []
-    for i in range(0,k):
-        count += 1
-        for x in ws:
-            w += x
-            if w > max_w:
-                w -= x
-            else:
-                wl.append(x)
-                ws.remove(x)
-        if sum(ws) <= max_w: break
-    if sum(ws) > max_w : return True
-    else: return True
+    weights = ws.copy()
+    sum_combs = _sum_combs(ws) 
+    for key, value in sum_combs.items():
+        cap = max_w + key
+        if strategy(k, weights,cap): 
+            return cap
+
+def calculate_bf(k,ws):
+    # Returns the minimum weight capacity of the boat
+    max_w = max(ws)
+    while True:
+        if strategy(k, ws, max_w):
+            return max_w
+        max_w += 1
+
+def strategy(k,ws,cap):
+    # param k - number of courses
+    # param ws - a list of weights
+    # param max_w - max boat capacity (weight)
+    if __debug__: print("Testing strategy for capacity:{0}".format(cap))
+    ws = sorted(ws, reverse = True)
+    weights = ws.copy()
+    for i in range(1,k):
+        if __debug__: print("Course #{0}".format(i))
+        w = 0
+        wl = []
+        for x in weights:
+            if x in ws:
+                if __debug__: print("{0} + {1}".format(w,x))
+                w += x
+                if __debug__: print(cap)
+                if w > cap:
+                    w -= x
+                else:
+                    wl.append(x)
+                    ws.remove(x)
+        if __debug__: print("Boat:{0}".format(wl))
+    if __debug__: print(ws)
+    if sum(ws) > cap:
+        return False
+    else: 
+        return True
+
+def test():
+    n, k, weights = handle_input()
+    min_cap = calculate(k, weights)
+    print("Output")
+    print(min_cap)
 
 if __name__ == "__main__":
-    n, k, ws = handle_input()
-    calculate_k(n, k , ws)
+    test()
+   
