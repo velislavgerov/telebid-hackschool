@@ -6,24 +6,24 @@ import sys
 def handle_input():
     try:
         error_message = "Invalid format"
-        print("Input")
+        print("Input:")
         fl = input()
         n, k = [int(x) for x in fl.split(" ")]
         if n <= 0 or n >= 1001: 
-            error_message = ("Invalid value for N")
+            error_message = "Invalid value for N. (1<=N<=1000)"
             raise ValueError
         if k <= 0 or k >= 1001: 
-            error_message = ("Invalid value for K")
+            error_message = "Invalid value for K. (1<=K<=1000)"
             raise ValueError
         sl = input()
         weights = [int(x) for x in sl.split(" ")]
         # check for correct number of weights
         for w in weights:
             if w <= 0 or w >= 100000: 
-                error_message = ("Invalid weight value")
+                error_message = "Invalid weight value (W). (1<=W<=100000)"
                 raise ValueError
         if len(weights) != n: 
-            error_message = ("N not equal to number of weights")
+            error_message = "N not equal to number of weights. Expected {0} received {1}".format(n,len(weights))
             raise ValueError
     except ValueError as e:
         sys.exit(error_message)
@@ -31,7 +31,7 @@ def handle_input():
         return n, k, weights
 
 def _sum_combs(ws):
-    # Return as ordered dictionary of sum(key) and corresponding weights(value)
+    # Return ordered dictionary of sum(key) and corresponding weights(value)
     tmp = ws
     tmp.remove(max(ws))
     sums = {}
@@ -87,9 +87,22 @@ def strategy(k,ws,cap):
         return True
 
 def test():
+    print("""\
+Enter input in the following format:
+-------------------------------------------------------------------------------
+<number of goats> <number of courses>
+<weight of goat 1> <weight of goat 2> ... <weight of goat N>
+-------------------------------------------------------------------------------
+
+Example:
+-------------------------------------------------------------------------------
+6 2
+26 7 10 30 5 4
+-------------------------------------------------------------------------------
+""")
     n, k, weights = handle_input()
     min_cap = calculate(k, weights)
-    print("Output")
+    print("Output:")
     print(min_cap)
 
 if __name__ == "__main__":
