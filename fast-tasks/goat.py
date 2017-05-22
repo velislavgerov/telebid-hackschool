@@ -61,7 +61,7 @@ def calculate_bf(k,ws):
 def strategy(k,ws,cap):
     # param k - number of courses
     # param ws - a list of weights
-    # param max_w - max boat capacity (weight)
+    # param cap - max boat capacity (weight)
     if __debug__: print("Testing strategy for capacity:{0}".format(cap))
     ws = sorted(ws, reverse = True)
     weights = ws.copy()
@@ -69,7 +69,11 @@ def strategy(k,ws,cap):
         if __debug__: print("Course #{0}".format(i))
         w = 0
         wl = []
+        # NOTE: Funny things happen if you try to remove an
+        # element whilst traversing a list. Don't do it.
         for x in weights:
+            # That's why you use a different one. There should be
+            # a smarter way to achieve this. ws = what's left
             if x in ws:
                 if __debug__: print("{0} + {1}".format(w,x))
                 w += x
