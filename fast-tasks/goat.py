@@ -7,7 +7,8 @@ def handle_input():
     try:
         error_message = "Invalid format"
         print("Input:")
-        fl = input()
+        if (sys.version_info > (3, 0)): fl = input()
+        else: fl = raw_input() # Python 2 compatibility
         n, k = [int(x) for x in fl.split(" ")]
         if n <= 0 or n >= 1001: 
             error_message = "Invalid value for N. (1<=N<=1000)"
@@ -15,7 +16,8 @@ def handle_input():
         if k <= 0 or k >= 1001: 
             error_message = "Invalid value for K. (1<=K<=1000)"
             raise ValueError
-        sl = input()
+        if (sys.version_info > (3, 0)): sl = input()
+        else: sl = raw_input() # Python 2 compatibility
         weights = [int(x) for x in sl.split(" ")]
         # check for correct number of weights
         for w in weights:
@@ -31,7 +33,7 @@ def handle_input():
         return n, k, weights
 
 def _sum_combs(ws):
-    # Return ordered dictionary of sum(key) and corresponding weights(value)
+    # Returns ordered dictionary of sum(key) and corresponding weights(value)
     tmp = ws
     tmp.remove(max(ws))
     sums = {}
@@ -41,9 +43,9 @@ def _sum_combs(ws):
     return collections.OrderedDict(sorted(sums.items()))
 
 def calculate(k,ws):
-    # Returns the minimum weight capacity of the boat
+    # Returns the minimum weight capacity of the boat using sums of combinations
     max_w = max(ws)
-    weights = ws.copy()
+    weights = ws[:]
     sum_combs = _sum_combs(ws) 
     for key, value in sum_combs.items():
         cap = max_w + key
@@ -51,7 +53,7 @@ def calculate(k,ws):
             return cap
 
 def calculate_bf(k,ws):
-    # Returns the minimum weight capacity of the boat
+    # Returns the minimum weight capacity of the boat using brute force
     max_w = max(ws)
     while True:
         if strategy(k, ws, max_w):
@@ -64,7 +66,7 @@ def strategy(k,ws,cap):
     # param cap - max boat capacity (weight)
     if __debug__: print("Testing strategy for capacity:{0}".format(cap))
     ws = sorted(ws, reverse = True)
-    weights = ws.copy()
+    weights = ws[:]
     for i in range(1,k):
         if __debug__: print("Course #{0}".format(i))
         w = 0
