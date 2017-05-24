@@ -1,3 +1,4 @@
+from __future__ import division # Python 2.7 compatibility 
 from itertools import combinations
 import collections
 import math
@@ -25,15 +26,32 @@ def handle_input():
                 error_message = "Invalid weight value (W). (1<=W<=100000)"
                 raise ValueError
         if len(weights) != n: 
-            error_message = "N not equal to number of weights. Expected {0} received {1}".format(n,len(weights))
+            error_message = "N not equal to number of weights. \
+                    Expected {0} received {1}".format(n,len(weights))
             raise ValueError
     except ValueError as e:
         sys.exit(error_message)
     else: 
         return n, k, weights
 
+def calculate(k,ws):
+    """
+    Returns the minimum weight capacity of the boat using sums of combinations
+    NOTE: Nothing to gain using this method
+    """
+    max_w = max(ws)
+    weights = ws[:]
+    sum_combs = _sum_combs(ws) 
+    for key, value in sum_combs.items():
+        print(key)
+        cap = max_w + key
+        if strategy(k, weights,cap): 
+            return cap
+
 def _sum_combs(ws):
-    # Returns ordered dictionary of sum(key) and corresponding weights(value)
+    """
+    Returns ordered dictionary of sum(key) and corresponding weights(value)
+    """
     tmp = ws
     tmp.remove(max(ws))
     sums = {}
@@ -42,28 +60,51 @@ def _sum_combs(ws):
             sums[sum(c)] = c
     return collections.OrderedDict(sorted(sums.items()))
 
-def calculate(k,ws):
-    # Returns the minimum weight capacity of the boat using sums of combinations
-    max_w = max(ws)
-    weights = ws[:]
-    sum_combs = _sum_combs(ws) 
-    for key, value in sum_combs.items():
-        cap = max_w + key
-        if strategy(k, weights,cap): 
-            return cap
 
 def calculate_bf(k,ws):
-    # Returns the minimum weight capacity of the boat using brute force
+    """
+    Returns the minimum weight capacity of the boat using brute force
+    """
     max_w = max(ws)
     while True:
+        print("max_w :{}".format(max_w))
         if strategy(k, ws, max_w):
             return max_w
         max_w += 1
 
+def calculate_bs(k,ws):
+    """
+    Returns the minimum weight capacity of the boat using "binary search"
+    """
+    max_w = max(ws)
+    low = max_w
+    high = _get_high(k,ws,max_w)
+    guessed = False
+    while not guessed:
+        if __debug__:
+            print("Capacity: {}".format(max_w))
+            print("Low: {}".format(low))
+            print("High: {}".format(high))
+        if strategy(k,ws,max_w): high = max_w
+        else: low = max_w
+        if high - low == 1: guessed = True
+        else: max_w = (low + high)//2
+    return high
+def _get_high(k,ws,high):
+    """
+    Returns the first capcity that fits the strategy (multiplying each
+    concequitive cap by 2)
+    """
+    while(not strategy(k,ws,high)):
+        high*=2
+    return high
+
 def strategy(k,ws,cap):
-    # param k - number of courses
-    # param ws - a list of weights
-    # param cap - max boat capacity (weight)
+    """
+    param k - number of courses
+    param ws - a list of weights
+    param cap - max boat capacity (weight)
+    """
     if __debug__: print("Testing strategy for capacity:{0}".format(cap))
     ws = sorted(ws, reverse = True)
     weights = ws[:]
@@ -85,8 +126,8 @@ def strategy(k,ws,cap):
                 else:
                     wl.append(x)
                     ws.remove(x)
-        if __debug__: print("Boat:{0}".format(wl))
-    if __debug__: print(ws)
+        if __debug__: print("Boat #{}:{}".format(i,wl))
+    if __debug__: print("Boat #{}:{}".format(k,ws))
     if sum(ws) > cap:
         return False
     else: 
@@ -107,7 +148,7 @@ Example:
 -------------------------------------------------------------------------------
 """)
     n, k, weights = handle_input()
-    min_cap = calculate(k, weights)
+    min_cap = calculate_bs(k,weights)
     print("Output:")
     print(min_cap)
 
