@@ -86,7 +86,7 @@ Returns the minimum weight capacity of the boat using "binary search"
             print("High: {0}".format(high))
         if strategy(k,ws,max_w): high = max_w
         else: low = max_w
-        if high - low == 1: guessed = True
+        if high - low <= 1: guessed = True
         else: max_w = (low + high)//2
     return high
 
