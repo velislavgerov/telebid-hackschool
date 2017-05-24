@@ -6,16 +6,16 @@ import sys
 
 def handle_input():
     try:
-        error_message = "Invalid format"
+        error_message = "Invalid input format"
         print("Input:")
         if (sys.version_info > (3, 0)): fl = input()
         else: fl = raw_input() # Python 2 compatibility
         n, k = [int(x) for x in fl.split(" ")]
         if n <= 0 or n >= 1001: 
-            error_message = "Invalid value for N. (1<=N<=1000)"
+            error_message = "Invalid value {0} for N. (1<=N<=1000)".format(n)
             raise ValueError
         if k <= 0 or k >= 1001: 
-            error_message = "Invalid value for K. (1<=K<=1000)"
+            error_message = "Invalid value {0} for K. (1<=K<=1000)".format(k)
             raise ValueError
         if (sys.version_info > (3, 0)): sl = input()
         else: sl = raw_input() # Python 2 compatibility
@@ -26,18 +26,18 @@ def handle_input():
                 error_message = "Invalid weight value (W). (1<=W<=100000)"
                 raise ValueError
         if len(weights) != n: 
-            error_message = "N not equal to number of weights. \
-                    Expected {0} received {1}".format(n,len(weights))
+            error_message = "N not equal to the number of weights provided. " + \
+                    "Expected {0} but received {1}".format(n,len(weights))
             raise ValueError
     except ValueError as e:
-        sys.exit(error_message)
+        sys.exit("ERROR: " + error_message)
     else: 
         return n, k, weights
 
 def calculate(k,ws):
-    """
-    Returns the minimum weight capacity of the boat using sums of combinations
-    NOTE: Nothing to gain using this method
+    """\
+Returns the minimum weight capacity of the boat using sums of combinations
+NOTE: Nothing to gain using this method
     """
     max_w = max(ws)
     weights = ws[:]
@@ -49,8 +49,8 @@ def calculate(k,ws):
             return cap
 
 def _sum_combs(ws):
-    """
-    Returns ordered dictionary of sum(key) and corresponding weights(value)
+    """\
+Returns ordered dictionary of sum(key) and corresponding weights(value)
     """
     tmp = ws
     tmp.remove(max(ws))
@@ -62,19 +62,18 @@ def _sum_combs(ws):
 
 
 def calculate_bf(k,ws):
-    """
-    Returns the minimum weight capacity of the boat using brute force
+    """\
+Returns the minimum weight capacity of the boat using brute force
     """
     max_w = max(ws)
     while True:
-        print("max_w :{}".format(max_w))
         if strategy(k, ws, max_w):
             return max_w
         max_w += 1
 
 def calculate_bs(k,ws):
-    """
-    Returns the minimum weight capacity of the boat using "binary search"
+    """\
+Returns the minimum weight capacity of the boat using "binary search"
     """
     max_w = max(ws)
     low = max_w
@@ -82,9 +81,9 @@ def calculate_bs(k,ws):
     guessed = False
     while not guessed:
         if __debug__:
-            print("Capacity: {}".format(max_w))
-            print("Low: {}".format(low))
-            print("High: {}".format(high))
+            print("Capacity: {0}".format(max_w))
+            print("Low: {0}".format(low))
+            print("High: {0}".format(high))
         if strategy(k,ws,max_w): high = max_w
         else: low = max_w
         if high - low == 1: guessed = True
@@ -92,19 +91,19 @@ def calculate_bs(k,ws):
     return high
 
 def _get_high(k,ws,high):
-    """
-    Returns the first capcity that fits the strategy (multiplying each
-    concequitive cap by 2)
+    """\
+Returns the first capcity that fits the strategy (multiplying each
+concequitive cap by 2)
     """
     while(not strategy(k,ws,high)):
         high*=2
     return high
 
 def strategy(k,ws,cap):
-    """
-    param k - number of courses
-    param ws - a list of weights
-    param cap - max boat capacity (weight)
+    """\
+param k - number of courses
+param ws - a list of weights
+param cap - max boat capacity (weight)
     """
     if __debug__: print("Testing strategy for capacity:{0}".format(cap))
     ws = sorted(ws, reverse = True)
@@ -127,8 +126,8 @@ def strategy(k,ws,cap):
                 else:
                     wl.append(x)
                     ws.remove(x)
-        if __debug__: print("Boat #{}:{}".format(i,wl))
-    if __debug__: print("Boat #{}:{}".format(k,ws))
+        if __debug__: print("Boat #{0}:{1}".format(i,wl))
+    if __debug__: print("Boat #{0}:{1}".format(k,ws))
     if sum(ws) > cap:
         return False
     else: 
