@@ -90,6 +90,7 @@ def calculate_bs(k,ws):
         if high - low == 1: guessed = True
         else: max_w = (low + high)//2
     return high
+
 def _get_high(k,ws,high):
     """
     Returns the first capcity that fits the strategy (multiplying each
