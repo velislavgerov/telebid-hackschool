@@ -3,6 +3,7 @@ from itertools import combinations
 import collections
 import math
 import sys
+import time
 
 def handle_input():
     try:
@@ -148,9 +149,11 @@ Example:
 -------------------------------------------------------------------------------
 """)
     n, k, weights = handle_input()
+    start_time = time.time()
     min_cap = calculate_bs(k,weights)
     print("Output:")
     print(min_cap)
+    print("--- %s seconds ---" % (time.time() - start_time))
 
 if __name__ == "__main__":
     test()
