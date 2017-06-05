@@ -5,7 +5,7 @@ import time
 import networkx as nx
 
 def handle_input():
-    g = nx.Graph()
+    g = nx.MultiGraph()
     try:
         error_message = "Invalid input format"
         print("Input:")
