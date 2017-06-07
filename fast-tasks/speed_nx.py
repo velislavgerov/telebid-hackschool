@@ -42,10 +42,9 @@ if __name__ == "__main__":
     results = {}
     # All edges sorted by their weight
     edges = sorted(G.edges(keys=True),key = lambda t: t[2])
-    # A list of the unique weights
-    weights = list(set([x[2] for x in edges]))
+    n_edges = len(edges)
     # For each weight
-    for i in range(0,len(weights)):
+    for i in range(0,n_edges):
         # The weights of the minimum spanning edges
         w = []
         # Number of edges
@@ -64,12 +63,9 @@ if __name__ == "__main__":
                 results[diff] = [(min(w),max(w))]
         else:
             break
-        # Remove all of the edges for this weight
-        for u, v, t in edges:
-            if t == weights[0]:
-                G.remove_edge(u,v, key=t)
-        # We're done with this weight
-        weights = weights[1:]
+        G.remove_edge(*edges[0][:2], key=edges[0][2])
+        # We're done with this edge
+        edges = edges[1:]
     # Find our best
     keys = (sorted(results))
     best = results[keys[0]]
