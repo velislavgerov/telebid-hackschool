@@ -1,5 +1,3 @@
-from __future__ import division # Python 2.7 compatibility 
-import math
 import sys
 import time
 import networkx as nx
@@ -31,16 +29,54 @@ def handle_input():
             if S < 1 or S > 30000: 
                 error_message = "Invalid value for S. (1<=W<=30000)"
                 raise ValueError
-            g.add_edge(F,T,weight=S)
+            g.add_edge(F,T,key=S,weight=S)
     except ValueError as e:
         sys.exit("ERROR: " + error_message)
     else: 
         return N, M, g
 
 if __name__ == "__main__":
-    N, M, g = handle_input()
-    t = nx.minimum_spanning_tree(g)
-    s = []
-    for x in t.edges(data='weight'):
-        s.append(x[2])
-    print("Output:\r\n{} {}".format(min(s),max(s)))
+    N, M, G = handle_input()
+    #start_time = time.time() 
+    # A dictionary to refference min, max paris by their difference
+    results = {}
+    # All edges sorted by their weight
+    edges = sorted(G.edges(keys=True),key = lambda t: t[2])
+    # A list of the unique weights
+    weights = list(set([x[2] for x in edges]))
+    # For each weight
+    for i in range(0,len(weights)):
+        # The weights of the minimum spanning edges
+        w = []
+        # Number of edges
+        count = 0
+        # Calculate minimum spanning edges
+        mse = nx.minimum_spanning_edges(G)
+        for x in mse:
+            w.append(x[2]['weight'])
+            count += 1
+        # If count is right, add the values to resutls
+        if count == N - 1:
+            diff = max(w) - min(w)
+            if diff in results:
+                results[diff].append((min(w),max(w)))
+            else:
+                results[diff] = [(min(w),max(w))]
+        else:
+            break
+        # Remove all of the edges for this weight
+        for u, v, t in edges:
+            if t == weights[0]:
+                G.remove_edge(u,v, key=t)
+        # We're done with this weight
+        weights = weights[1:]
+    # Find our best
+    keys = (sorted(results))
+    best = results[keys[0]]
+    best = sorted(best, key = lambda k: k[0])
+    #print(results)
+    #print(best)
+    print("Output:\r\n{} {}".format(best[0][0],best[0][1]))
+    #print("--- %s seconds ---" % (time.time() - start_time))
+   
+
