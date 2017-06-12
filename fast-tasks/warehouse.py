@@ -28,7 +28,7 @@ def handle_input():
     return M, N
 
 def main():
-    print("Input")
+    #print("Input")
     m, n = handle_input()
 
     # Find exits
@@ -72,21 +72,20 @@ def main():
     
     # Analyze groups by column
     n_groups = 0
-    sizes = {len(x) for x in groups}
-    for s in sizes:
-        cur = [x for x in groups if len(x) == s]
-        group = True
-        count = 1
-        first = cur[0][0][0]
+    sizes = {(len(x), x[0][1]) for x in groups}
+    for s, i in sizes:
+        cur = [x for x in groups if len(x) == s and x[0][1] == i]
+        prev = cur[0][0][0]
         for x in cur:
-            if x[0][0] == first: continue
+            if x[0][0] == prev: 
+                n_groups += 1
+                continue
             else:
-                if x[0][0] - first > 1: 
-                    group = False
+                if x[0][0] - prev > 1:
                     n_groups += 1
-        if group: n_groups += 1
+                prev = x[0][0]
 
-    print("Output")
+    #print("Output")
     print("{} {}".format(n_groups, n_paths))
 
 if __name__ == '__main__':
