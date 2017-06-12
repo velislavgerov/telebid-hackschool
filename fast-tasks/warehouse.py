@@ -30,37 +30,31 @@ def handle_input():
 def main():
     print("Input")
     m, n = handle_input()
-    m_b = m[:]
-    #print(m)
 
-    #Check paths
-    exit_r = [] #Exit indexes
-    exit_c = []
+    # Find exits
+    exit_r = [] #row
+    exit_c = [] #column
     for i in range(0, n):
         r = m[i][0]
         c = m[0][i]
         if r == 0: exit_r.append(i)
         if c == 0: exit_c.append(i)
     
-    #print(exit_r)
-    #print(exit_c)
-
-    n_exit = 0
-    #Find horizontal exits
+    # Find paths
+    n_paths = 0
+    # Find horizontal pahts
     for exit in exit_r:
         for i in range(0, n):
             if m[exit][i] != 0: break
-            if i == n - 1: n_exit += 1
-    #Find vertical exits
+            if i == n - 1: n_paths += 1
+    # Find vertical paths
     for exit in exit_c:
         for i in range(0, n):
             if m[i][exit] != 0: break
-            if i == n - 1: n_exit += 1
-    #print(n_exit)
-
+            if i == n - 1: n_paths += 1
+    
+    # Find groups (analyze by row)
     groups = []
-    n_groups = 0
-    tuples = []
     group = []
     is_group = False
     for row in range(0, n):
@@ -75,28 +69,25 @@ def main():
             else:
                 if is_group: is_group = False
         is_group = False
-        #print(groups)
     
-    #Analyze gorups
+    # Analyze groups by column
     n_groups = 0
     sizes = {len(x) for x in groups}
     for s in sizes:
         cur = [x for x in groups if len(x) == s]
-        #print(cur)
         group = True
         count = 1
         first = cur[0][0][0]
-        #print("First: {}".format(first))
         for x in cur:
             if x[0][0] == first: continue
             else:
                 if x[0][0] - first > 1: 
                     group = False
                     n_groups += 1
-        if group:  n_groups += 1
+        if group: n_groups += 1
 
     print("Output")
-    print(n_groups, n_exit)
+    print(n_groups, n_paths)
 
 if __name__ == '__main__':
     main()
