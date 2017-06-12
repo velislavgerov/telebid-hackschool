@@ -87,7 +87,7 @@ def main():
         if group: n_groups += 1
 
     print("Output")
-    print(n_groups, n_paths)
+    print("{} {}".format(n_groups, n_paths))
 
 if __name__ == '__main__':
     main()
