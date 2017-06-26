@@ -1,10 +1,10 @@
-# Asynchronous Multi Target Pinger
+# Asynchronous Multi Target Pinger (AMTP)
 
-AMTP is implemented in Python, levaraging the gevent library. 
+AMTP is implemented in Python, levaraging the gevent library 
 
 ## Input
 
-Parses and handles a proprietery JSON specification (TBMON).
+Parses and handles a proprietery JSON specification (TBMON)
 
 ## ICMP Pinger
 
