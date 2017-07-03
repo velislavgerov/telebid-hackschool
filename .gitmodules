@@ -1,3 +1,6 @@
 [submodule "AMTP/python_ping"]
 	path = AMTP/python_ping
 	url = https://github.com/thunderstruck47/python_ping.git
+[submodule "AMTP/geventhttpclient"]
+	path = AMTP/geventhttpclient
+	url = https://github.com/gwik/geventhttpclient.git
