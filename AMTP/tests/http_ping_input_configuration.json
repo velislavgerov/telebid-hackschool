@@ -5,7 +5,7 @@
       "pings": {
         "home_page": {
           "name": "Tech Shop: home page",
-          "url": "http://heroku.com/index.py",
+          "url": "http://lit-beyond-17973.herokuapp.com/",
           "username": "user",
           "password": "123",
           "expected_response_codes": [
@@ -14,8 +14,9 @@
             "302"
           ],
           "expected_headers": [
-            "Connection: keep-alive",
-            "Server: nginx"
+            "Connection:keep-alive",
+            "Content-Type:text/html; charset=utf-8",
+            "Server:gunicorn/19.7.1"
           ],
           "expected_response_body": [
             "This line indicates that my site is loaded properly."
