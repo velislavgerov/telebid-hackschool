@@ -115,45 +115,7 @@ class HTTPPinger(object):
                 if is_erc and is_ehd and is_erb:
                     print("continue")
                 timestamp = int(time.time())
-                print(timestamp)
-
-
-    def _test_expected_response_codes(self, expected_response_codes, response):
-        """
-        Returns True if one of the specified response codes is in the response
-        
-        :expected_response_codes - array of strings corresponing to HTTP status codes
-        :response - geventhttpclient response object
-
-        """
-        if response.status_code in [int(x) for x in expected_response_codes]:
-            return True
-        else:
-            return False
-    
-    def _test_expected_header(self, expected_headers, response):
-        """
-        Returns True if one of the expected headers is in the response headers
-
-        :expected_headers - array of strings in the '{field:value}' format
-        :response - geventhttpclient response object
-        """
-        for field, value in [x.split(':',1) for x in expected_headers]:
-            if value == response._headers_index.get_all(field)[0]:
-                return True
-        return False
-
-    def _test_expected_body(self, expected_body, response_body):
-        """
-        Returns True if the string specified is to be found in the body of the response
-        
-        :expected_body - string content to be found in the response body
-        :response_body - byte string containing the body of the HTTP response
-        """
-        return True if expected_body.encode() in response_body else False
-
-
-
+                print(timestamp) 
 
 def main():      
     script_path = os.path.dirname(__file__)
