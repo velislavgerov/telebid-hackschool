@@ -23,12 +23,41 @@
           ],
           "items": {
             "ab_test": {
-                "name": "[HTTP Ping] Tech Shop: home page - request loss",
-                "concurrency": "5",
-                "requests": "10"
+              "name": "[HTTP Ping] Tech Shop: home page - request loss",
+              "concurrency": "5",
+              "requests": "10"
             },
             "request_loss": {
               "name": "[HTTP Ping] Tech Shop: home page - request loss"
+            }
+          }
+        },
+        "cart_page": {
+          "name": "Tech Shop: cart page",
+          "url": "http://lit-beyond-17973.herokuapp.com/cart",
+          "requests_count": 10,
+          "request_timeout": 1,
+          "expected_response_codes": [
+            "200",
+            "301",
+            "302"
+          ],
+          "expected_headers": [
+            "Connection:keep-alive",
+            "Content-Type:text/html; charset=utf-8",
+            "Server:gunicorn/19.7.1"
+          ],
+          "expected_response_body": [
+            "Shopping Cart"
+          ],
+          "items": {
+            "ab_test": {
+              "name": "[HTTP Ping] Tech Shop: cart page - request loss",
+              "concurrency": "2",
+              "requests": "10"
+            },
+            "request_loss": {
+              "name": "[HTTP Ping] Tech Shop: cart page - request loss"
             }
           }
         }

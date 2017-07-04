@@ -17,13 +17,15 @@ class Ping(object):
     """
     A class to work with our ping object as specified in TBMON
     """
-    def __init__(self, data):
+    def __init__(self, application, ping,  data):
         """
-        Accepts a single TBMON ping object and creates our http object
+        Accepts a single TBMON ping object and it's corresponding application
         """
         # TODO: validate data
+        self.application = application
+        self.ping = ping
         self.data = data
-        
+
         try:
             self.request_timeout = float(data['request_timeout'])
         except KeyError:
@@ -60,15 +62,8 @@ class Ping(object):
                 "OK" if is_erb else "FAIL"))
 
         if is_erc and is_ehd and is_erb:
-            #print("continue")
-            #print(self.data['items'])
-            #self.do_request_loss()
-            #print(self.data['items']['request_loss'])
-            #print(self.url)
-            #self.do_ab_test()
             for key in self.data['items']:
-                eval('self.do_' + key + '()')
-            #print(self.data)
+                eval('self.do_' + key + '()') # XXX: POF
     
     def get_response(self):
         """
@@ -83,6 +78,8 @@ class Ping(object):
         successful = 0
         failed = 0
         for i in range(self.requests_count):
+            if __debug__:
+                print("Starting response test #{}".format(i+1))
             res = self.get_response()
             body = res.read()
             if self.do_response_tests(res, body):
@@ -96,6 +93,9 @@ class Ping(object):
         self.data['items']['request_loss']['value'] = int(successful / self.requests_count * 100)
     
     def do_response_tests(self, response, body):
+        """
+        Does all of the expected_* tests (should be executed to validate the response)
+        """
         is_erc = self._test_expected_response_codes(response)
         is_ehd = self._test_expected_header(response)
         is_erb = self._test_expected_body(body)
@@ -112,6 +112,9 @@ class Ping(object):
             return True
     
     def do_ab_test(self):
+        """
+        Spawns an apache bench process and performs loadtesting
+        """
         if __debug__:
             print("Starting ab test")
         c = self.data['items']['ab_test']['concurrency']
@@ -194,13 +197,16 @@ class HTTPPinger(object):
             pings = self.data['applications'][a]['pings']
             
             for p in pings:
-                ping = Ping(pings[p])
-                ping.run()
-                self.data['applications'][a]['pings'][p] = ping.data
-                #ping_objects.append(ping)
+                ping = Ping(a, p, pings[p])
+                ping_objects.append(ping)
         
-        #for x in ping_objects:
-        #    x.run()
+        print(ping_objects)
+        pool = gevent.pool.Pool(20)
+        for x in ping_objects:
+            pool.spawn(x.run)
+            
+        pool.join()    
+        self.data['applications'][x.application]['pings'][x.ping] = x.data
             
 def main():      
     script_path = os.path.dirname(__file__)
