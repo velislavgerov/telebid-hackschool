@@ -4,7 +4,7 @@
       "name": "Test google and yahoo pings",
       "pings": {
         "13": {
-          "packets_rate": 0,
+          "packets_rate": 1,
           "items": {
             "packet_loss": {
               "name": "ICMP ping: packet loss %"

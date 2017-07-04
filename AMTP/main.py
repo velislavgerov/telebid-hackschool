@@ -37,6 +37,7 @@ def main():
     from geventhttpclient.url import URL
 
     import os
+    import time
     
     script_path = os.path.dirname(__file__)
     rel_file_path = 'tests/http_ping_input_configuration.json'
@@ -73,6 +74,8 @@ def main():
                 print("yes")
             else:
                 print("no")
+            timestamp = int(time.time())
+            print(timestamp)
 
 
 if __name__ == '__main__':
