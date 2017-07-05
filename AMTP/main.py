@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from __future__ import print_function
+
 import gevent.pool
 import json
 
@@ -6,12 +8,19 @@ from geventhttpclient import HTTPClient
 from geventhttpclient.url import URL
 
 import os
+import sys
 import time
 import re
+import argparse
+from pprint import pprint
 from subprocess import Popen, PIPE
+
+if sys.version[0] == "2":
+    input = raw_input
 
 REQUEST_TIMEOUT = 100
 REQUESTS_COUNT = 1
+VERBOSE = False
 
 class Ping(object):
     """
@@ -21,7 +30,6 @@ class Ping(object):
         """
         Accepts a single TBMON ping object and it's corresponding application
         """
-        # TODO: validate data
         self.application = application
         self.ping = ping
         self.data = data
@@ -42,7 +50,8 @@ class Ping(object):
         """
         Main ping logic - answers to items query
         """
-        print("Ping started ({})".format(self.data['name']))
+        if VERBOSE:
+            print("Ping started ({})".format(self.data['name']))
         
         # do the ping
         res = self.get_response()
@@ -52,8 +61,9 @@ class Ping(object):
         is_ehd = self._test_expected_header(res)
         body = res.read() # bytes
         is_erb = self._test_expected_body(body)
-        
-        if __debug__:
+         
+        if VERBOSE:
+            print("Initial response test results for {}".format(self.data['name']))
             print("Testing expected status code - {}".format(
                 "OK" if is_erc else "FAIL"))
             print("Testing expected header      - {}".format(
@@ -78,11 +88,9 @@ class Ping(object):
         successful = 0
         failed = 0
         for i in range(self.requests_count):
-            if __debug__:
-                print("Starting response test #{}".format(i+1))
             res = self.get_response()
             body = res.read()
-            if self.do_response_tests(res, body):
+            if self.do_response_tests(res, body, i):
                 successful += 1
             else:
                 failed += 1
@@ -90,9 +98,9 @@ class Ping(object):
         self.data['items']['request_loss']['timestamp'] = timestamp
         self.data['items']['request_loss']['units'] = '%'
         self.data['items']['request_loss']['type'] = 'int'
-        self.data['items']['request_loss']['value'] = int(successful / self.requests_count * 100)
+        self.data['items']['request_loss']['value'] = int(failed / self.requests_count * 100)
     
-    def do_response_tests(self, response, body):
+    def do_response_tests(self, response, body, i=None):
         """
         Does all of the expected_* tests (should be executed to validate the response)
         """
@@ -100,7 +108,9 @@ class Ping(object):
         is_ehd = self._test_expected_header(response)
         is_erb = self._test_expected_body(body)
         
-        if __debug__:
+        if VERBOSE:
+            print("Request loss test #{} results for {}".format(i+1, self.data['name']))
+
             print("Testing expected status code - {}".format(
                 "OK" if is_erc else "FAIL"))
             print("Testing expected header      - {}".format(
@@ -115,8 +125,8 @@ class Ping(object):
         """
         Spawns an apache bench process and performs loadtesting
         """
-        if __debug__:
-            print("Starting ab test")
+        if VERBOSE:
+            print("Starting ab test for {}".format(self.data['name']))
         c = self.data['items']['ab_test']['concurrency']
         n = self.data['items']['ab_test']['requests']
 
@@ -125,7 +135,7 @@ class Ping(object):
         output, err = p.communicate()
         rc = p.returncode
         output = output.decode('utf-8')
-        if __debug__:
+        if VERBOSE:
             print(output)
         
         rps = None
@@ -181,46 +191,190 @@ class HTTPPinger(object):
         """
         :data - dictionary object parsed from a TBMON json file
         """
-        # TODO: validate data
         self.data = data
-    
-    def get_json(self):
+        self.pings = []
+
+        if not self.validate():
+            sys.exit(1)
+        
+        # gather out Ping objects
+        for application_name in self.data['applications']:
+            name = self.data['applications'][application_name]['name']
+            pings = self.data['applications'][application_name]['pings']
+
+            for ping_name in pings:
+                ping = Ping(application_name, ping_name, pings[ping_name])
+                self.pings.append(ping)
+
+    def dump(self, file=None):
+        """
+        Dumps the current TBMON json data to stdin or to a file if specified
+        :file(optional) - file object used to dump the TBMON data
+        """
+        if VERBOSE:
+            print('TBMON output:{}'.format(self.dump_json()))
+        else:
+            if file:
+                self.dump_json(file)
+            else:
+                print(self.dump_json())
+
+    def dump_json(self, file=None):
         """
         Returns a JSON string deserilized from self.data
-        """
-        return json.dumps(self.data)
+        Optionally dumps JSON to a file
+        """ 
+        if file:
+            json.dump(self.data, file)
+        else:
+            return json.dumps(self.data)
 
     def run(self):
-        ping_objects = []
-        for a in self.data['applications']:
-            name = self.data['applications'][a]['name']
-            pings = self.data['applications'][a]['pings']
-            
-            for p in pings:
-                ping = Ping(a, p, pings[p])
-                ping_objects.append(ping)
-        
-        print(ping_objects)
         pool = gevent.pool.Pool(20)
-        for x in ping_objects:
+        for x in self.pings:
             pool.spawn(x.run)
+        pool.join()
+
+    def validate(self, data=None):
+        """
+        Returns True if TBMON data matches the specification for HTTP Pinger
+        If no data was specified, validates the data belonging to the object
+        :data(optional) - deserialized JSON object to be validated as TBMON
+        """
+        
+        if not data:
+            data = self.data
+
+        if not 'applications' in data:
+            print("TBMON error: 'applications' array is required", file=sys.stderr)
+            return False
+        
+        applications = data['applications']
+
+        if not len(applications) >= 1:
+            print("TBMON error: there are no 'application' objects in the 'applications' array"\
+                    , file=sys.stderr)
+            return False
+        
+        for application_name in applications:
+            application = applications[application_name]
+        
+            if not 'name' in application:
+                print("TBMON error ({}): the 'name' string ".format(application_name) + 
+                    "is required in an application object", file=sys.stderr)
+                return False
+
+            if not 'pings' in application:
+                print("TBMON error ({}): the 'pings' array ".format(application_name) + 
+                    "is required in an application object", file=sys.stderr)
+                return False
             
-        pool.join()    
-        self.data['applications'][x.application]['pings'][x.ping] = x.data
+            pings = application['pings']
             
+            if not len(pings) >= 1:
+                print("TBMON error ({}): there are no 'ping' objects the 'pings'array "\
+                        .format(application_name) + "is required in an application object"\
+                        , file=sys.stderr)
+                return False
+
+            for ping_name in pings:
+                ping = pings[ping_name]
+
+                if not 'name' in ping:
+                    print("TBMON error ({}:{}): ".format(application_name, ping_name) + 
+                        "the 'name' string is required in a ping object", file=sys.stderr)
+                    return False
+
+                if not 'url' in ping:
+                    print("TBMON error ({}:{}): ".format(application_name, ping_name) + 
+                        "the 'url' string is required in a ping object", file=sys.stderr)
+                    return False
+
+                if not 'items' in ping:
+                    print("TBMON error ({}:{}): ".format(application_name, ping_name) + 
+                        "the 'items' array is required in a ping object", file=sys.stderr)
+                    return False
+
+                items = ping['items']
+
+                if not len(items) >= 1:
+                    print("TBMON error ({}:{}): ".format(application_name, ping_name) + 
+                        "there are no 'item' objects in the 'items' array", file=sys.stderr)
+                    return False
+
+                for item_name in items:
+                    item = items[item_name]
+
+                    if not 'name' in item:
+                        print("TBMON error ({}:{}:{}): ".format(application_name, ping_name,\
+                            item_name) + "the 'name' string is required in an item object",\
+                            file=sys.stderr)
+                        return False
+        return True
+
+
+def get_inputs():
+    """
+    Returns a tuple of input file path and output file path  specified as 
+    command line arguments. Additionally sets the VERBOSE mode if defined
+    """
+    
+    # prepare parser
+    parser = argparse.ArgumentParser(description="""\
+Asynchronous Multi Target Pinger (AMTP)
+""")
+    parser.add_argument('-v', '--verbose', help='display additional information', action='store_true')
+    parser.add_argument('-o', '--output', metavar="FILE", nargs=1, help='specify path to output the TBMON result file', default='stdout')
+    requiredNamed = parser.add_argument_group('required arguments')
+    requiredNamed.add_argument('-c', '--config', metavar="FILE", nargs=1, type=str, help='specify path to a TBMON configuration file', required=True)
+    args = parser.parse_args()
+    
+    # set verbosity
+    global VERBOSE
+    VERBOSE = args.verbose
+
+    # input file path [required]
+    input_file_path = args.config[0]
+    if not os.path.isabs(input_file_path):
+        cwd = os.getcwd()
+        file_path = os.path.join(cwd, input_file_path)
+    if not os.path.isfile(file_path):
+        print('{}: error: {} is not a file'.format(__file__, input_file_path),
+                file=sys.stderr)
+        sys.exit()
+
+    # output file path [optional]
+    if args.output[0] == 'stdout':
+        output_file_path = None
+    else:
+        output_file_path = args.output[0]
+        if not os.path.isabs(output_file_path):
+            cwd = os.getcwd()
+            output_file_path = os.path.join(cwd, output_file_path)
+        if os.path.isfile(output_file_path):
+            answer = str(input('The file {} already exists. '.format(output_file_path) +
+                'Do you wish to continue and overwrite it? [Y/n] '))
+            if not answer.lower() == 'y' or answer.lower() == 'yes':
+                sys.exit()
+        if os.path.isdir(output_file_path):
+            print('{}: error: {} is a directory'.format(__file__, output_file_path),
+                    file=sys.stderr)
+            sys.exit()
+    
+    return input_file_path, output_file_path
+
+
 def main():      
-    script_path = os.path.dirname(__file__)
-    rel_file_path = 'tests/input.json'
-    abs_path = os.path.join(script_path, rel_file_path)
-    with open(abs_path, 'r') as file:
+    inputs = get_inputs()
+    with open(inputs[0], 'r') as file:
         data = json.load(file)
     http_pinger = HTTPPinger(data)
     http_pinger.run()
-
-    rel_file_path = 'tests/output.json'
-    out_path = os.path.join(script_path, rel_file_path)
-    with open(out_path, 'w') as outfile:
-        json.dump(http_pinger.data, outfile)
+    if inputs[1]:
+        with open(inputs[1], 'w') as file:
+            http_pinger.dump(file)
+    else:
+        http_pinger.dump()
 
 if __name__ == '__main__':
     main()
