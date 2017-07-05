@@ -2,6 +2,7 @@
 from __future__ import print_function
 
 import gevent.pool
+import gevent.socket
 import json
 
 from geventhttpclient import HTTPClient
@@ -54,6 +55,13 @@ class Ping(object):
         """
         if VERBOSE:
             print("Ping started ({})".format(self.data['name']))
+        
+        # check if hostname resolves
+        try:
+            gevent.socket.gethostbyname(self.url.host)
+        except gevent.socket.error:
+            print('{}: error: hostname {} does not resolve'.format(__file__, self.url.host), file=sys.stderr)
+            return
 
         # do the ping
         res = self.get_response()
