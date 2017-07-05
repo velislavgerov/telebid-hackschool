@@ -5,22 +5,9 @@
       "pings": {
         "home_page": {
           "name": "Tech Shop: home page",
-          "url": "http://lit-beyond-17973.herokuapp.com/",
+          "url": "216.58.206.174",
           "requests_count": 1,
           "request_timeout": 100,
-          "expected_response_codes": [
-            "200",
-            "301",
-            "302"
-          ],
-          "expected_headers": [
-            "Connection:keep-alive",
-            "Content-Type:text/html; charset=utf-8",
-            "Server:gunicorn/19.7.1"
-          ],
-          "expected_response_body": [
-            "This line indicates that my site is loaded properly."
-          ],
           "items": {
             "ab_test": {
               "name": "[HTTP Ping] Tech Shop: home page - apache bench",
@@ -34,7 +21,7 @@
         },
         "cart_page": {
           "name": "Tech Shop: cart page",
-          "url": "http://lit-beyond-17973.herokuapp.com/cart",
+          "url": "lit-beyond-17973.herokuapp.com/cart",
           "expected_response_codes": [
             "200",
             "301",

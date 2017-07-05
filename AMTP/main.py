@@ -43,37 +43,48 @@ class Ping(object):
         except KeyError:
             self.requests_count = REQUESTS_COUNT
         
-        self.url = URL(data['url'])
+        url = data['url']
+        if url[:7] != 'http://' and url[:7] != 'https:/':
+            url = 'http://' + url
+        self.url = URL(url)
         self.http = HTTPClient(self.url.host, connection_timeout=self.request_timeout)
-
     def run(self):
         """
         Main ping logic - answers to items query
         """
         if VERBOSE:
             print("Ping started ({})".format(self.data['name']))
-        
+
         # do the ping
         res = self.get_response()
 
         # do the tests
-        is_erc = self._test_expected_response_codes(res)
-        is_ehd = self._test_expected_header(res)
-        body = res.read() # bytes
-        is_erb = self._test_expected_body(body)
-         
         if VERBOSE:
             print("Initial response test results for {}".format(self.data['name']))
-            print("Testing expected status code - {}".format(
-                "OK" if is_erc else "FAIL"))
-            print("Testing expected header      - {}".format(
-                "OK" if is_ehd else "FAIL"))
-            print("Testing expected body        - {}".format(
-                "OK" if is_erb else "FAIL"))
+        
+        is_erc, is_ehd, is_erb = True, True, True
+
+        if 'expected_response_codes' in self.data:
+            is_erc = self._test_expected_response_codes(res)
+            if VERBOSE:
+                print("Testing expected status code - {}".format("OK" if is_erc else "FAIL"))
+        if 'expected_headers' in self.data:
+            is_ehd = self._test_expected_header(res)
+            if VERBOSE:
+                print("Testing expected header      - {}".format("OK" if is_ehd else "FAIL"))
+        
+        if 'expected_response_body' in self.data:
+            body = res.read() # bytes
+            is_erb = self._test_expected_body(body)
+            if VERBOSE:
+                print("Testing expected body        - {}".format("OK" if is_erb else "FAIL"))
 
         if is_erc and is_ehd and is_erb:
             for key in self.data['items']:
-                eval('self.do_' + key + '()') # XXX: POF
+                try:
+                    eval('self.do_' + key + '()')
+                except AttributeError:
+                    print("{}: HTTPPinger does not support item '{}'". format(__file__, key), file=sys.stderr)
     
     def get_response(self):
         """
@@ -104,19 +115,21 @@ class Ping(object):
         """
         Does all of the expected_* tests (should be executed to validate the response)
         """
-        is_erc = self._test_expected_response_codes(response)
-        is_ehd = self._test_expected_header(response)
-        is_erb = self._test_expected_body(body)
-        
-        if VERBOSE:
-            print("Request loss test #{} results for {}".format(i+1, self.data['name']))
+        is_erc, is_ehd, is_erb = True, True, True
 
-            print("Testing expected status code - {}".format(
-                "OK" if is_erc else "FAIL"))
-            print("Testing expected header      - {}".format(
-                "OK" if is_ehd else "FAIL"))
-            print("Testing expected body        - {}".format(
-                "OK" if is_erb else "FAIL"))
+        if 'expected_response_codes' in self.data:
+            is_erc = self._test_expected_response_codes(response)
+            if VERBOSE:
+                print("Testing expected status code - {}".format("OK" if is_erc else "FAIL"))
+        if 'expected_headers' in self.data:
+            is_ehd = self._test_expected_header(response)
+            if VERBOSE:
+                print("Testing expected header      - {}".format("OK" if is_ehd else "FAIL"))
+        
+        if 'expected_response_body' in self.data:
+            is_erb = self._test_expected_body(body)
+            if VERBOSE:
+                print("Testing expected body        - {}".format("OK" if is_erb else "FAIL"))
 
         if is_erc and is_ehd and is_erb:
             return True
@@ -131,7 +144,11 @@ class Ping(object):
         n = self.data['items']['ab_test']['requests']
 
         # TODO: What happens if we don't have ab on the system?
-        p = Popen(['ab', '-n', n, '-c', c, str(self.url)], stdout=PIPE)
+        # add / to host if missing (else ab fails)
+        ab_url = str(self.url)
+        if str(self.url)[-len(self.url.host):] == str(self.url.host) and str(self.url.host[-1]) != '/':
+            ab_url = str(self.url) + '/'
+        p = Popen(['ab', '-n', n, '-c', c, ab_url], stdout=PIPE)
         output, err = p.communicate()
         rc = p.returncode
         output = output.decode('utf-8')
@@ -170,8 +187,10 @@ class Ping(object):
         :response - geventhttpclient response object
         """
         for field, value in [x.split(':',1) for x in self.data['expected_headers']]:
-            if value == response._headers_index.get_all(field)[0]:
-                return True
+            header_value = response._headers_index.get_all(field)
+            if header_value:
+                if value == header_value[0]:
+                    return True
         return False
 
     def _test_expected_body(self, response_body):
@@ -344,7 +363,7 @@ Asynchronous Multi Target Pinger (AMTP)
         sys.exit()
 
     # output file path [optional]
-    if args.output[0] == 'stdout':
+    if args.output == 'stdout':
         output_file_path = None
     else:
         output_file_path = args.output[0]
