@@ -1,10 +1,14 @@
-#!/usr/bin/env perl
+# JSON::Diff - JSON Patch (RFC6902) difference of two JSON files
+# Author: Velislav Gerov <vgerov93@gmail.com>
+# Copyright 2017 Velislav Gerov <vgerov93@gmail.com>
+
 package JSON::Diff;
 
 use strict;
 use warnings;
 
 use JSON;
+use Data::Compare;
 use feature 'say';
 
 
@@ -24,29 +28,41 @@ sub compare_values($$$$) {
         say "dst: $dst";
     }
 
+    if (Compare($src, $dst)) {
+        if ($DEBUG) { say "$src is equal to $dst"; }
+        return
+    }
+
     my $ref = \$src;
-    if (ref ($$ref) eq 'HASH') { 
+    if (ref ($$ref) eq 'HASH') {  
         compare_hashes(\@parts, $src, $dst, \@{$diff});
     }
     elsif (ref ($$ref) eq 'ARRAY') {
-        say('ARRAY');
+        compare_arrays(\@parts, $src, $dst, \@{$diff});
     }
     else {
         # value is scalar
-        # XXX: what can go wrong?
-        my $src_str = "$src"; 
-        my $dst_str = "$dst";
-        if ($src_str eq $dst_str) {
-            if ($DEBUG) { say "$src is equal to $dst"; }
-            return
-        }
-        # not equal scalars
-        else {
-            my $ptr = ptr_from_parts(\@parts);
-            @{$diff} = (@{$diff}, qq|{"op": "replace", "path": $ptr, "value": $dst}|);
-            if ($DEBUG) {say "Diff updated: @{$diff}";}
-        }
+        my $ptr = ptr_from_parts(\@parts);
+        @{$diff} = (@{$diff}, qq|{"op": "replace", "path": $ptr, "value": $dst}|);
+        if ($DEBUG) {say "Diff updated: @{$diff}";}
     }
+
+}
+
+sub compare_arrays($$$$) {
+    my ($parts, $src, $dst, $diff) = @_;
+    my @parts = @{$parts};
+    my @diff = @{$diff};
+    
+    if ($DEBUG) {
+        say "Compare arrays";
+        say "parts: $parts";
+        say "diff: $diff";
+        say "src: $src";
+        say "dst: $dst";
+    }
+
+    say "ARRAY";
 
 }
 
