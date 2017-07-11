@@ -83,7 +83,7 @@ sub compare_arrays($$$$) {
                 if ($i != $j) {
                 $parts = ($parts, $i);
                 my $ptr = ptr_from_parts($parts);
-                $diff = ($diff, qq|{"op": "add", "path": "$ptr", "value": @{$dst}{$i}}|);
+                push(@{$diff}, qq|{"op": "add", "path": "$ptr", "value": @{$dst}{$i}}|);
                 my $len_src_new = @src_new;
                 @src_new = (@src_new[0 .. $i], @{$dst}{$i}, @src_new[$i .. $len_src_new]);
                 if ($DEBUG) { 
@@ -98,7 +98,7 @@ sub compare_arrays($$$$) {
             if ($j == $len_dst - 1) {
                 $parts = ($parts, $i);
                 my $ptr = ptr_from_parts($parts);
-                $diff = ($diff, qq|{"op": "add", "path": "$ptr", "value": $left}|);
+                push(@{$diff}, qq|{"op": "add", "path": "$ptr", "value": $left}|);
                 my $len_src_new = @src_new;
                 @src_new = (@src_new[0 .. $i - 1], $left, @src_new[$i .. $len_src_new-1]);
                 if ($DEBUG) { 
@@ -120,7 +120,7 @@ sub compare_arrays($$$$) {
         say "this: $i";
         $parts = ($parts, $i);
         my $ptr = ptr_from_parts($parts);
-        @{$diff} = (@{$diff}, qq|{"op": "remove", "path": "$ptr"}|);
+        push(@{$diff}, qq|{"op": "remove", "path": "$ptr"}|);
         if ($DEBUG) { say "@{$diff}"; }
     }
 
@@ -147,7 +147,7 @@ sub compare_hashes($$$$) {
         if (! exists $$dst{$key}) {
             @parts = (@{$parts}, $key);
             my $ptr = ptr_from_parts($parts);
-            @{$diff} = (@{$diff}, qq|{"op": "remove", "path": "$ptr"}|);
+            push(@{$diff}, qq|{"op": "remove", "path": "$ptr"}|);
             if ($DEBUG) {say "Diff updated: @{$diff}";}
             next
         }
@@ -164,7 +164,7 @@ sub compare_hashes($$$$) {
             @parts = (@{$parts}, $key);
             my $ptr = ptr_from_parts(\@parts);
             my $value = JSON->new->allow_nonref->encode(${$dst}{$key});
-            @{$diff} = (@{$diff}, qq|{"op": "add", "path": "$ptr", "value": $value}|);
+            push(@{$diff}, qq|{"op": "add", "path": "$ptr", "value": $value}|);
             if ($DEBUG) {say "Diff updated: @{$diff}";}
         }
     }
