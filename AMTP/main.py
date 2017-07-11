@@ -64,7 +64,10 @@ class Ping(object):
             return
 
         # do the ping
-        res = self.get_response()
+        try:
+            res = self.get_response()
+        except gevent.socket.error as err:
+            print("timeout")
 
         # do the tests
         if VERBOSE:

@@ -19,8 +19,7 @@ my $DEBUG = 1;
 
 sub compare_values($$$$) {
     my ($parts, $src, $dst, $diff) = @_;
-    my @parts = @{$parts};
-    my @diff = @{$diff};
+
     if ($DEBUG) {
         say "Compare values";
         say "parts: $parts";
@@ -36,19 +35,19 @@ sub compare_values($$$$) {
 
     my $ref = \$src;
     if (ref ($$ref) eq 'HASH') {  
-        compare_hashes(\@parts, $src, $dst, \@{$diff});
+        compare_hashes($parts, $src, $dst, $diff);
     }
     elsif (ref ($$ref) eq 'ARRAY') {
-        compare_arrays(\@parts, $src, $dst, \@{$diff});
+        compare_arrays($parts, $src, $dst, $diff);
     }
     else {
         # value is scalar
-        my $ptr = ptr_from_parts(\@parts);
+        my $ptr = ptr_from_parts($parts);
         # check if string has missing quotes
         if (substr($dst, 0, 1) ne '"' && ! substr($dst, -1) ne '"') {
             if (! looks_like_number($dst)) { $dst = '"' . $dst . '"'; }
         }
-        @{$diff} = (@{$diff}, qq|{"op": "replace", "path": "$ptr", "value": $dst}|);
+        push @{$diff}, qq|{"op": "replace", "path": "$ptr", "value": $dst}|;
         if ($DEBUG) {say "Diff updated: @{$diff}";}
     }
 
@@ -56,8 +55,6 @@ sub compare_values($$$$) {
 
 sub compare_arrays($$$$) {
     my ($parts, $src, $dst, $diff) = @_;
-    my @parts = @{$parts};
-    my @diff = @{$diff};
     
     if ($DEBUG) {
         say "Compare arrays";
@@ -84,9 +81,9 @@ sub compare_arrays($$$$) {
 
         if (Compare($left, $right)) {
                 if ($i != $j) {
-                @parts = (@{$parts}, $i);
-                my $ptr = ptr_from_parts(\@parts);
-                @{$diff} = (@{$diff}, qq|{"op": "add", "path": "$ptr", "value": @{$dst}{$i}}|);
+                $parts = ($parts, $i);
+                my $ptr = ptr_from_parts($parts);
+                $diff = ($diff, qq|{"op": "add", "path": "$ptr", "value": @{$dst}{$i}}|);
                 my $len_src_new = @src_new;
                 @src_new = (@src_new[0 .. $i], @{$dst}{$i}, @src_new[$i .. $len_src_new]);
                 if ($DEBUG) { 
@@ -99,9 +96,9 @@ sub compare_arrays($$$$) {
         }
         else {
             if ($j == $len_dst - 1) {
-                @parts = (@{$parts}, $i);
-                my $ptr = ptr_from_parts(\@parts);
-                @{$diff} = (@{$diff}, qq|{"op": "add", "path": "$ptr", "value": $left}|);
+                $parts = ($parts, $i);
+                my $ptr = ptr_from_parts($parts);
+                $diff = ($diff, qq|{"op": "add", "path": "$ptr", "value": $left}|);
                 my $len_src_new = @src_new;
                 @src_new = (@src_new[0 .. $i - 1], $left, @src_new[$i .. $len_src_new-1]);
                 if ($DEBUG) { 
@@ -121,8 +118,8 @@ sub compare_arrays($$$$) {
     my $len_src_new = @src_new;
     for (my $i=$len_src_new - 1; $i >= $len_dst; $i--) {
         say "this: $i";
-        @parts = (@{$parts}, $i);
-        my $ptr = ptr_from_parts(\@parts);
+        $parts = ($parts, $i);
+        my $ptr = ptr_from_parts($parts);
         @{$diff} = (@{$diff}, qq|{"op": "remove", "path": "$ptr"}|);
         if ($DEBUG) { say "@{$diff}"; }
     }
@@ -133,9 +130,8 @@ sub compare_arrays($$$$) {
 
 sub compare_hashes($$$$) {
     my ($parts, $src, $dst, $diff) = @_;
-    my @parts = @{$parts};
-    my @diff = @{$diff};
-    
+    my @parts;
+
     if ($DEBUG) {
         say "Compare hashes";
         say "parts: $parts";
@@ -150,7 +146,7 @@ sub compare_hashes($$$$) {
         # remove src key if not in dst
         if (! exists $$dst{$key}) {
             @parts = (@{$parts}, $key);
-            my $ptr = ptr_from_parts(\@parts);
+            my $ptr = ptr_from_parts($parts);
             @{$diff} = (@{$diff}, qq|{"op": "remove", "path": "$ptr"}|);
             if ($DEBUG) {say "Diff updated: @{$diff}";}
             next
