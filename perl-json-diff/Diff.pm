@@ -44,7 +44,7 @@ sub compare_values($$$$) {
         else {
             my $ptr = ptr_from_parts(\@parts);
             @{$diff} = (@{$diff}, qq|{"op": "replace", "path": $ptr, "value": $dst}|);
-            if ($DEBUG) {say "@{$diff}";}
+            if ($DEBUG) {say "Diff updated: @{$diff}";}
         }
     }
 
@@ -65,6 +65,7 @@ sub compare_hashes($$$$) {
 
 
     foreach my $key (keys %{$src}) {
+        say "Key: $key";
         # remove src key if not in dst
         if (! exists $$dst{$key}) {
             @parts = (@parts, $key);
@@ -73,17 +74,20 @@ sub compare_hashes($$$$) {
             next
         }
         # else go deeper
-        if (1) { say 'GOING DEEPER'; }
-        @parts = (@parts, $key);
+        if ($DEBUG) { say 'GOING DEEPER'; }
+        @parts = (@{$parts}, $key);
         compare_values(\@parts, $$src{$key}, $$dst{$key}, \@{$diff});
+        if ($DEBUG) { say 'EXIT DEEPER'; }
     }
     
+    if ($DEBUG) { say 'FOR KEY IN DST'; }
     foreach my $key (keys %{$dst}) {
         if (! exists $$src{$key}) {
-            @parts = (@parts, $key);
+            @parts = (@{$parts}, $key);
             my $ptr = ptr_from_parts(\@parts);
-            my $json_text = $json->new->encode($$src{$key});
-            @{$diff} = (@diff, "{'op': 'add', 'path': $ptr, 'value: $json_text");
+            my $value = JSON->new->allow_nonref->encode(${$dst}{$key});
+            @{$diff} = (@{$diff}, "{'op': 'add', 'path': $ptr, 'value': $value}");
+            if ($DEBUG) {say "Diff updated: @{$diff}";}
         }
     }
 }
@@ -134,6 +138,8 @@ close FILE;
 my $src = $json->decode($src_text); # json scalar
 my $dst = $json->decode($dst_text); # json scalar
 
+print "A: ", $src, "\n";
+
 #print $json->pretty->encode( $json_scalar );
 
 sub json_diff($$;$) {
@@ -178,5 +184,3 @@ sub json_diff($$;$) {
 my @parts = qw();
 my @diff = qw();
 compare_values(\@parts, $src, $dst, \@diff);
-
-print "@diff";
