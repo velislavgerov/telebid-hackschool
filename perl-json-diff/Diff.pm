@@ -1,6 +1,8 @@
-# JSON::Diff - JSON Patch (RFC6902) difference of two JSON files
-# Author: Velislav Gerov <vgerov93@gmail.com>
-# Copyright 2017 Velislav Gerov <vgerov93@gmail.com>
+# ---------------------------------------------------------------------------- #
+# JSON::Diff - JSON Patch (RFC6902) difference of two JSON files ------------- #
+# Author: Velislav Gerov <vgerov93@gmail.com> -------------------------------- #
+# Copyright 2017 Velislav Gerov <vgerov93@gmail.com> ------------------------- #
+# ---------------------------------------------------------------------------- #
 
 package JSON::Diff;
 
