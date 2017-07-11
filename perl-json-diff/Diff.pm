@@ -11,6 +11,7 @@ use warnings;
 
 use JSON;
 use Data::Compare;
+use Scalar::Util qw(looks_like_number);
 use feature 'say';
 
 
@@ -45,6 +46,10 @@ sub compare_values($$$$) {
     else {
         # value is scalar
         my $ptr = ptr_from_parts(\@parts);
+        # check if string has missing quotes
+        if (substr($dst, 0, 1) ne '"' && ! substr($dst, -1) ne '"') {
+            if (! looks_like_number($dst)) { $dst = '"' . $dst . '"'; }
+        }
         @{$diff} = (@{$diff}, qq|{"op": "replace", "path": "$ptr", "value": $dst}|);
         if ($DEBUG) {say "Diff updated: @{$diff}";}
     }
