@@ -1,12 +1,8 @@
 {
     "name": "test",
     "value": 1,
-<<<<<<< HEAD
     "cool": {
             "name": "a"
     },
-    "array": [ "1" ]
-=======
-    "cool": "aid"
->>>>>>> bd10ef88bfdf83fe51161ddb1e63ba517bc08f1f
+    "array": [ 1, 2, 3 ]
 }

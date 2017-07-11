@@ -45,7 +45,7 @@ sub compare_values($$$$) {
     else {
         # value is scalar
         my $ptr = ptr_from_parts(\@parts);
-        @{$diff} = (@{$diff}, qq|{"op": "replace", "path": $ptr, "value": $dst}|);
+        @{$diff} = (@{$diff}, qq|{"op": "replace", "path": "$ptr", "value": $dst}|);
         if ($DEBUG) {say "Diff updated: @{$diff}";}
     }
 
@@ -62,6 +62,66 @@ sub compare_arrays($$$$) {
         say "diff: $diff";
         say "src: $src";
         say "dst: $dst";
+    }
+    
+    my @src_new = @{$src};
+
+    my $len_dst = @{$dst};
+    my $i = 0;
+    my $j = 0;
+    while ($i < $len_dst)
+    {
+        #say $i;
+        #say @{$dst}[$i];
+        
+        my $left = @{$dst}[$i];
+        my $right = @src_new[$j];
+    
+        if ($DEBUG) { say "comprating left:$left to right:$right"; }
+
+        if (Compare($left, $right)) {
+                if ($i != $j) {
+                @parts = (@{$parts}, $i);
+                my $ptr = ptr_from_parts(\@parts);
+                @{$diff} = (@{$diff}, qq|{"op": "add", "path": "$ptr", "value": @{$dst}{$i}}|);
+                my $len_src_new = @src_new;
+                @src_new = (@src_new[0 .. $i], @{$dst}{$i}, @src_new[$i .. $len_src_new]);
+                if ($DEBUG) { 
+                    say "@{$diff}";
+                    say "@src_new"; 
+                }
+            }
+            $i += 1;
+            $j = 0;
+        }
+        else {
+            if ($j == $len_dst - 1) {
+                @parts = (@{$parts}, $i);
+                my $ptr = ptr_from_parts(\@parts);
+                @{$diff} = (@{$diff}, qq|{"op": "add", "path": "$ptr", "value": $left}|);
+                my $len_src_new = @src_new;
+                @src_new = (@src_new[0 .. $i - 1], $left, @src_new[$i .. $len_src_new-1]);
+                if ($DEBUG) { 
+                    say "@{$diff}";
+                    say "@src_new"; 
+                }
+
+                $i += 1;
+                $j = 0;
+            }
+            else {
+                $j += 1;
+            }
+        }
+    }
+    say "@src_new"; 
+    my $len_src_new = @src_new;
+    for (my $i=$len_src_new - 1; $i >= $len_dst; $i--) {
+        say "this: $i";
+        @parts = (@{$parts}, $i);
+        my $ptr = ptr_from_parts(\@parts);
+        @{$diff} = (@{$diff}, qq|{"op": "remove", "path": "$ptr"}|);
+        if ($DEBUG) { say "@{$diff}"; }
     }
 
     say "ARRAY";
@@ -88,7 +148,7 @@ sub compare_hashes($$$$) {
         if (! exists $$dst{$key}) {
             @parts = (@{$parts}, $key);
             my $ptr = ptr_from_parts(\@parts);
-            @{$diff} = (@{$diff}, qq|{"op": "remove", "path": $ptr}|);
+            @{$diff} = (@{$diff}, qq|{"op": "remove", "path": "$ptr"}|);
             if ($DEBUG) {say "Diff updated: @{$diff}";}
             next
         }
@@ -105,7 +165,7 @@ sub compare_hashes($$$$) {
             @parts = (@{$parts}, $key);
             my $ptr = ptr_from_parts(\@parts);
             my $value = JSON->new->allow_nonref->encode(${$dst}{$key});
-            @{$diff} = (@{$diff}, qq|{"op": "add", "path": $ptr, "value": $value}|);
+            @{$diff} = (@{$diff}, qq|{"op": "add", "path": "$ptr", "value": $value}|);
             if ($DEBUG) {say "Diff updated: @{$diff}";}
         }
     }
@@ -187,6 +247,14 @@ my $diff = json_diff($src, $dst);
 # output
 my $number = @{$diff};
 say "\nResulting diff ($number operations):";
+say "[";
 foreach (@{$diff}) {
-    say $_;
+    print "  ", $_;
+    if (! Compare($_, @{$diff}[-1])) {
+        say ",";
+    }
+    else {
+        say "";
+    }
 }
+say "]"
