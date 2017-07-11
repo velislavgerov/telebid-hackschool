@@ -61,17 +61,21 @@ foreach my $key (keys %{$$json_scalar{applications}})
 }
 
 sub ptr_from_parts($) {
+    # Returns JSON Pointer string
+    # Input
+    #  :parts - array containing JSON path elements
+    
     my @parts = @{$_[0]};
     my $ptr;
 
     foreach (@parts){
-        $_ =~ s/~/~0/g;
-        $_ =~ s/\//~1/g;
-        $ptr .= '/' . $_;
+        $_ =~ s/~/~0/g;   # replace ~ with ~0
+        $_ =~ s/\//~1/g;  # replace / with ~1
+        $ptr .= '/' . $_; # 
     }
 
     return $ptr;
 }
 
-my @array = qw(m~n \ ");
+my @array = qw();
 print ptr_from_parts \@array, "\n";
