@@ -80,7 +80,7 @@ sub compare_arrays($$$$) {
         #say @{$dst}[$i];
         
         my $left = @{$dst}[$i];
-        my $right = @src_new[$j];
+        my $right = $src_new[$j];
     
         if ($DEBUG) { say "comprating left:$left to right:$right"; }
 
