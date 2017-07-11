@@ -67,11 +67,15 @@ sub ptr_from_parts($) {
     
     my @parts = @{$_[0]};
     my $ptr;
+    
+    if (!@parts) {
+        return '';        # path to whole document
+    }
 
     foreach (@parts){
         $_ =~ s/~/~0/g;   # replace ~ with ~0
         $_ =~ s/\//~1/g;  # replace / with ~1
-        $ptr .= '/' . $_; # 
+        $ptr .= '/' . $_; # parts prefixed by /
     }
 
     return $ptr;
