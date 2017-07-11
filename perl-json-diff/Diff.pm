@@ -65,12 +65,13 @@ sub compare_hashes($$$$) {
 
 
     foreach my $key (keys %{$src}) {
-        say "Key: $key";
+        if ($DEBUG) { say "Key: $key"; }
         # remove src key if not in dst
         if (! exists $$dst{$key}) {
-            @parts = (@parts, $key);
+            @parts = (@{$parts}, $key);
             my $ptr = ptr_from_parts(\@parts);
-            @{$diff} = (@diff, "{'op': 'remove', 'path': $ptr}");
+            @{$diff} = (@{$diff}, qq|{"op": "remove", "path": $ptr}|);
+            if ($DEBUG) {say "Diff updated: @{$diff}";}
             next
         }
         # else go deeper
@@ -86,7 +87,7 @@ sub compare_hashes($$$$) {
             @parts = (@{$parts}, $key);
             my $ptr = ptr_from_parts(\@parts);
             my $value = JSON->new->allow_nonref->encode(${$dst}{$key});
-            @{$diff} = (@{$diff}, "{'op': 'add', 'path': $ptr, 'value': $value}");
+            @{$diff} = (@{$diff}, qq|{"op": "add", "path": $ptr, "value": $value}|);
             if ($DEBUG) {say "Diff updated: @{$diff}";}
         }
     }
@@ -113,6 +114,21 @@ sub ptr_from_parts($) {
     return $ptr;
 }
 
+sub json_diff($$;$) {
+    my ( $src_json, $dst_json, $options ) = @_;
+    my $diff = [];
+    my $parts = [];
+    # $src_json е HASH или STRING
+    # $dst_json е HASH или STRING
+    # $options е HASH или UNDEF, да се игнорира към момента
+    #   ... тук се случва магията
+    
+    compare_values($parts, $src_json, $dst_json, $diff);
+    
+    return $diff;
+}
+
+
 
 # ---------------------------------------------------------------------------- #
 # -------------------------------   TESTING   -------------------------------- #
@@ -134,53 +150,25 @@ binmode FILE;
 my $dst_text = <FILE>;
 close FILE;
 
-
+# decode both files
 my $src = $json->decode($src_text); # json scalar
 my $dst = $json->decode($dst_text); # json scalar
 
-print "A: ", $src, "\n";
+$DEBUG = 0;
 
-#print $json->pretty->encode( $json_scalar );
+# source json texts
+say "From JSON:";
+print $json->pretty->encode($src);
 
-sub json_diff($$;$) {
-    my ( $src_json, $dst_json, $options ) = @_;
-    my $diff = [];
+say "\nTo JSON:";
+print $json->pretty->encode($dst);
 
-    # $src_json е HASH или STRING
-    # $dst_json е HASH или STRING
-    # $options е HASH или UNDEF, да се игнорира към момента
-    #   ... тук се случва магията
+# calculate diff array
+my $diff = json_diff($src, $dst);
 
-    return $diff;
+# output
+my $number = @{$diff};
+say "\nResulting diff ($number operations):";
+foreach (@{$diff}) {
+    say $_;
 }
-
-#my @array = json_diff($json_scalar, $json_scalar);
-#my $size = @array;
-#print "${size}\n";
-#print "@array[0]\n";
-
-#say $json_scalar;
-#foreach my $key (keys %{$$json_scalar{applications}})
-#{
-#    say $key;
-#    say $$json_scalar{applications}{$key}{name};
-#    my $my_ref = \$$json_scalar{applications}{$key}{pings}{cart_page}{expected_response_codes};
-#    say ref($$my_ref);
-#    if (ref ($$my_ref) eq 'HASH')
-#    {
-#            say ('HASH');
-#    }
-#    elsif (ref ($$my_ref) eq 'ARRAY')
-#    {
-#            say('ARRAY');
-#    }
-#    else
-#    {
-#            say('SCALAR');
-#    }
-#}
-
-
-my @parts = qw();
-my @diff = qw();
-compare_values(\@parts, $src, $dst, \@diff);
