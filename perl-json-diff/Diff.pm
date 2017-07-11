@@ -14,9 +14,7 @@ use Data::Compare;
 use Scalar::Util qw(looks_like_number);
 use feature 'say';
 
-
-# JSON OO interface
-my $json = JSON->new->allow_nonref;
+# GLOBALS
 my $DEBUG = 1;
 
 sub compare_values($$$$) {
@@ -216,19 +214,27 @@ sub json_diff($$;$) {
 # ---------------------------------------------------------------------------- #
 # -------------------------------   TESTING   -------------------------------- #
 # ---------------------------------------------------------------------------- #
-#
+
+# JSON OO interface
+my $json = JSON->new->allow_nonref;
+
+# FILENAMES
+
+my $srcfile = 'src.json';
+my $dstfile = 'dst.json';
+
 # open src file and read text
 local $/=undef;
 
-open ( FILE, '<:encoding(UTF-8)', 'src.json') 
-    or die "Could not open file 'src.json' $!";
+open ( FILE, '<:encoding(UTF-8)', $srcfile) 
+    or die "Could not open file $srcfile $!";
 binmode FILE;
 my $src_text = <FILE>;
 close FILE;
 
 # open dst file and read text
-open ( FILE, '<:encoding(UTF-8)', 'dst.json') 
-    or die "Could not open file 'dst.json' $!";
+open ( FILE, '<:encoding(UTF-8)', $dstfile) 
+    or die "Could not open file $dstfile $!";
 binmode FILE;
 my $dst_text = <FILE>;
 close FILE;
