@@ -1,5 +1,5 @@
 # JSON::Diff
-Compares two JSON documents and produce resulting JSON Patch [(RFC6902)](https://tools.ietf.org/html/rfc6902).
+Compare two JSON documents and produce resulting JSON Patch [(RFC6902)](https://tools.ietf.org/html/rfc6902).
 
 ## Installation
     ...
