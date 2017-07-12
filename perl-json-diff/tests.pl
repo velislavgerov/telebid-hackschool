@@ -3,10 +3,8 @@
 # ---------------------------------------------------------------------------- #
 
 use lib "lib";
-use lib "perl-json-patch/lib";
 
 use JSON::Diff;
-use JSON::Patch;
 
 use strict;
 use warnings;
@@ -18,8 +16,6 @@ use feature 'say';
 
 ## set JSON OO interface
 my $json = JSON->new->allow_nonref;
-my $json_patch = new JSON::Patch;
-
 
 ## set JSON tests filename
 

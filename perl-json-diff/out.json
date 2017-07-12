@@ -1,53 +1,53 @@
 [
    {
       "doc" : {},
-      "exp" : {},
-      "patch" : []
+      "patch" : [],
+      "exp" : {}
    },
    {
-      "doc" : {
-         "foo" : 1
-      },
       "exp" : {
          "foo" : 1
       },
-      "patch" : []
+      "patch" : [],
+      "doc" : {
+         "foo" : 1
+      }
    },
    {
-      "patch" : [],
       "exp" : {
          "bar" : 2,
          "foo" : 1
       },
       "doc" : {
-         "foo" : 1,
-         "bar" : 2
-      }
-   },
-   {
-      "doc" : [
-         {
-            "bar" : 2,
-            "foo" : 1
-         }
-      ],
-      "exp" : [
-         {
-            "bar" : 2,
-            "foo" : 1
-         }
-      ],
+         "bar" : 2,
+         "foo" : 1
+      },
       "patch" : []
    },
    {
-      "doc" : {
-         "foo" : {
+      "exp" : [
+         {
             "foo" : 1,
             "bar" : 2
          }
+      ],
+      "patch" : [],
+      "doc" : [
+         {
+            "foo" : 1,
+            "bar" : 2
+         }
+      ]
+   },
+   {
+      "exp" : {
+         "foo" : {
+            "bar" : 2,
+            "foo" : 1
+         }
       },
       "patch" : [],
-      "exp" : {
+      "doc" : {
          "foo" : {
             "foo" : 1,
             "bar" : 2
@@ -57,122 +57,122 @@
    {
       "patch" : [
          {
+            "value" : 1,
             "op" : "replace",
-            "path" : "/foo",
-            "value" : 1
+            "path" : "/foo"
          }
       ],
-      "exp" : {
-         "foo" : 1
-      },
       "doc" : {
          "foo" : null
+      },
+      "exp" : {
+         "foo" : 1
       }
    },
    {
+      "exp" : [
+         "foo"
+      ],
+      "doc" : [],
       "patch" : [
          {
             "value" : "foo",
             "path" : "/0",
             "op" : "add"
          }
-      ],
-      "exp" : [
-         "foo"
-      ],
-      "doc" : []
+      ]
    },
    {
       "doc" : [
          "foo"
       ],
+      "patch" : [],
       "exp" : [
          "foo"
-      ],
-      "patch" : []
-   },
-   {
-      "patch" : [
-         {
-            "op" : "add",
-            "path" : "/foo",
-            "value" : "1"
-         }
-      ],
-      "exp" : {
-         "foo" : "1"
-      },
-      "doc" : {}
-   },
-   {
-      "doc" : {},
-      "exp" : {
-         "foo" : 1
-      },
-      "patch" : [
-         {
-            "op" : "add",
-            "path" : "/foo",
-            "value" : 1
-         }
       ]
    },
    {
-      "doc" : {},
-      "patch" : [
-         {
-            "value" : [],
-            "path" : "",
-            "op" : "replace"
-         }
-      ],
-      "exp" : []
-   },
-   {
-      "doc" : [],
-      "patch" : [
-         {
-            "value" : {},
-            "path" : "",
-            "op" : "replace"
-         }
-      ],
-      "exp" : {}
-   },
-   {
-      "exp" : [
-         "hi"
-      ],
-      "patch" : [
-         {
-            "path" : "/0",
-            "op" : "add",
-            "value" : "hi"
-         }
-      ],
-      "doc" : []
-   },
-   {
       "exp" : {
-         "" : 1
+         "foo" : "1"
       },
       "patch" : [
          {
-            "value" : 1,
-            "path" : "/",
+            "value" : "1",
+            "path" : "/foo",
             "op" : "add"
          }
       ],
       "doc" : {}
    },
    {
-      "doc" : {
-         "foo" : {}
+      "patch" : [
+         {
+            "value" : 1,
+            "op" : "add",
+            "path" : "/foo"
+         }
+      ],
+      "doc" : {},
+      "exp" : {
+         "foo" : 1
+      }
+   },
+   {
+      "patch" : [
+         {
+            "path" : "",
+            "op" : "replace",
+            "value" : []
+         }
+      ],
+      "doc" : {},
+      "exp" : []
+   },
+   {
+      "exp" : {},
+      "doc" : [],
+      "patch" : [
+         {
+            "value" : {},
+            "op" : "replace",
+            "path" : ""
+         }
+      ]
+   },
+   {
+      "exp" : [
+         "hi"
+      ],
+      "doc" : [],
+      "patch" : [
+         {
+            "op" : "add",
+            "path" : "/0",
+            "value" : "hi"
+         }
+      ]
+   },
+   {
+      "exp" : {
+         "" : 1
       },
+      "doc" : {},
+      "patch" : [
+         {
+            "op" : "add",
+            "path" : "/",
+            "value" : 1
+         }
+      ]
+   },
+   {
       "exp" : {
          "foo" : {
             "" : 1
          }
+      },
+      "doc" : {
+         "foo" : {}
       },
       "patch" : [
          {
@@ -188,12 +188,12 @@
       },
       "patch" : [
          {
+            "path" : "/bar",
+            "op" : "add",
             "value" : [
                1,
                2
-            ],
-            "path" : "/bar",
-            "op" : "add"
+            ]
          }
       ],
       "exp" : {
@@ -205,11 +205,12 @@
       }
    },
    {
-      "doc" : {
+      "exp" : {
          "foo" : 1,
          "baz" : [
             {
-               "qux" : "hello"
+               "qux" : "hello",
+               "foo" : "world"
             }
          ]
       },
@@ -219,35 +220,34 @@
                "qux" : "hello",
                "foo" : "world"
             },
-            "op" : "add",
-            "path" : "/baz/0"
+            "path" : "/baz/0",
+            "op" : "add"
          },
          {
-            "path" : "/baz/0/1",
-            "op" : "remove"
+            "op" : "remove",
+            "path" : "/baz/0/1"
          }
       ],
-      "exp" : {
+      "doc" : {
+         "foo" : 1,
          "baz" : [
             {
-               "qux" : "hello",
-               "foo" : "world"
+               "qux" : "hello"
             }
-         ],
-         "foo" : 1
+         ]
       }
    },
    {
+      "patch" : [
+         {
+            "op" : "add",
+            "path" : "/bar",
+            "value" : true
+         }
+      ],
       "doc" : {
          "foo" : 1
       },
-      "patch" : [
-         {
-            "value" : true,
-            "path" : "/bar",
-            "op" : "add"
-         }
-      ],
       "exp" : {
          "bar" : true,
          "foo" : 1
@@ -255,25 +255,21 @@
    },
    {
       "exp" : {
-         "bar" : false,
+         "foo" : 1,
+         "bar" : false
+      },
+      "doc" : {
          "foo" : 1
       },
       "patch" : [
          {
-            "value" : false,
             "path" : "/bar",
-            "op" : "add"
+            "op" : "add",
+            "value" : false
          }
-      ],
-      "doc" : {
-         "foo" : 1
-      }
+      ]
    },
    {
-      "exp" : {
-         "bar" : null,
-         "foo" : 1
-      },
       "patch" : [
          {
             "path" : "/bar",
@@ -283,57 +279,11 @@
       ],
       "doc" : {
          "foo" : 1
-      }
-   },
-   {
-      "doc" : {
-         "foo" : 1
       },
-      "patch" : [
-         {
-            "value" : "bar",
-            "op" : "add",
-            "path" : "/0"
-         }
-      ],
       "exp" : {
-         "0" : "bar",
+         "bar" : null,
          "foo" : 1
       }
-   },
-   {
-      "doc" : [
-         "foo"
-      ],
-      "patch" : [
-         {
-            "op" : "add",
-            "path" : "/1",
-            "value" : "bar"
-         }
-      ],
-      "exp" : [
-         "foo",
-         "bar"
-      ]
-   },
-   {
-      "doc" : [
-         "foo",
-         "sil"
-      ],
-      "exp" : [
-         "foo",
-         "bar",
-         "sil"
-      ],
-      "patch" : [
-         {
-            "value" : "bar",
-            "op" : "add",
-            "path" : "/1"
-         }
-      ]
    },
    {
       "patch" : [
@@ -343,54 +293,94 @@
             "value" : "bar"
          }
       ],
-      "exp" : [
-         "bar",
-         "foo",
-         "sil"
-      ],
-      "doc" : [
-         "foo",
-         "sil"
-      ]
+      "doc" : {
+         "foo" : 1
+      },
+      "exp" : {
+         "foo" : 1,
+         "0" : "bar"
+      }
    },
    {
       "exp" : [
          "foo",
-         "sil",
          "bar"
       ],
       "patch" : [
          {
-            "value" : "bar",
             "op" : "add",
-            "path" : "/2"
+            "path" : "/1",
+            "value" : "bar"
          }
       ],
       "doc" : [
-         "foo",
-         "sil"
+         "foo"
       ]
    },
    {
-      "doc" : {
-         "1e0" : "foo"
-      },
-      "patch" : [],
-      "exp" : {
-         "1e0" : "foo"
-      }
+      "doc" : [
+         "foo",
+         "sil"
+      ],
+      "patch" : [
+         {
+            "path" : "/1",
+            "op" : "add",
+            "value" : "bar"
+         }
+      ],
+      "exp" : [
+         "foo",
+         "bar",
+         "sil"
+      ]
    },
    {
       "patch" : [
          {
             "op" : "add",
-            "path" : "/1",
-            "value" : [
-               "bar",
-               "baz"
-            ]
+            "path" : "/0",
+            "value" : "bar"
          }
       ],
+      "doc" : [
+         "foo",
+         "sil"
+      ],
+      "exp" : [
+         "bar",
+         "foo",
+         "sil"
+      ]
+   },
+   {
+      "patch" : [
+         {
+            "value" : "bar",
+            "path" : "/2",
+            "op" : "add"
+         }
+      ],
+      "doc" : [
+         "foo",
+         "sil"
+      ],
+      "exp" : [
+         "foo",
+         "sil",
+         "bar"
+      ]
+   },
+   {
+      "exp" : {
+         "1e0" : "foo"
+      },
+      "doc" : {
+         "1e0" : "foo"
+      },
+      "patch" : []
+   },
+   {
       "exp" : [
          "foo",
          [
@@ -402,40 +392,44 @@
       "doc" : [
          "foo",
          "sil"
+      ],
+      "patch" : [
+         {
+            "path" : "/1",
+            "op" : "add",
+            "value" : [
+               "bar",
+               "baz"
+            ]
+         }
       ]
    },
    {
-      "patch" : [
-         {
-            "op" : "remove",
-            "path" : "/bar"
-         }
-      ],
       "exp" : {
          "foo" : 1
       },
       "doc" : {
-         "foo" : 1,
          "bar" : [
             1,
             2,
             3,
             4
-         ]
-      }
-   },
-   {
-      "exp" : {
-         "baz" : [
-            {}
          ],
          "foo" : 1
       },
       "patch" : [
          {
+            "op" : "remove",
+            "path" : "/bar"
+         }
+      ]
+   },
+   {
+      "patch" : [
+         {
+            "value" : {},
             "op" : "add",
-            "path" : "/baz/0",
-            "value" : {}
+            "path" : "/baz/0"
          },
          {
             "path" : "/baz/0/1",
@@ -449,17 +443,15 @@
             }
          ],
          "foo" : 1
+      },
+      "exp" : {
+         "foo" : 1,
+         "baz" : [
+            {}
+         ]
       }
    },
    {
-      "doc" : {
-         "foo" : 1,
-         "baz" : [
-            {
-               "qux" : "hello"
-            }
-         ]
-      },
       "patch" : [
          {
             "value" : [
@@ -468,10 +460,18 @@
                3,
                4
             ],
-            "op" : "replace",
-            "path" : "/foo"
+            "path" : "/foo",
+            "op" : "replace"
          }
       ],
+      "doc" : {
+         "baz" : [
+            {
+               "qux" : "hello"
+            }
+         ],
+         "foo" : 1
+      },
       "exp" : {
          "foo" : [
             1,
@@ -487,6 +487,19 @@
       }
    },
    {
+      "exp" : {
+         "baz" : [
+            {
+               "qux" : "world"
+            }
+         ],
+         "foo" : [
+            1,
+            2,
+            3,
+            4
+         ]
+      },
       "patch" : [
          {
             "value" : {
@@ -500,19 +513,6 @@
             "path" : "/baz/0/1"
          }
       ],
-      "exp" : {
-         "baz" : [
-            {
-               "qux" : "world"
-            }
-         ],
-         "foo" : [
-            1,
-            2,
-            3,
-            4
-         ]
-      },
       "doc" : {
          "baz" : [
             {
@@ -528,25 +528,31 @@
       }
    },
    {
-      "patch" : [
-         {
-            "value" : "bar",
-            "path" : "/0",
-            "op" : "add"
-         },
-         {
-            "path" : "/0/1",
-            "op" : "remove"
-         }
-      ],
       "exp" : [
          "bar"
       ],
       "doc" : [
          "foo"
+      ],
+      "patch" : [
+         {
+            "value" : "bar",
+            "op" : "add",
+            "path" : "/0"
+         },
+         {
+            "op" : "remove",
+            "path" : "/0/1"
+         }
       ]
    },
    {
+      "exp" : [
+         0
+      ],
+      "doc" : [
+         ""
+      ],
       "patch" : [
          {
             "path" : "/0",
@@ -557,31 +563,25 @@
             "op" : "remove",
             "path" : "/0/1"
          }
-      ],
-      "exp" : [
-         0
-      ],
-      "doc" : [
-         ""
       ]
    },
    {
-      "doc" : [
-         ""
-      ],
       "exp" : [
          true
       ],
       "patch" : [
          {
-            "op" : "add",
             "path" : "/0",
+            "op" : "add",
             "value" : true
          },
          {
             "path" : "/0/1",
             "op" : "remove"
          }
+      ],
+      "doc" : [
+         ""
       ]
    },
    {
@@ -591,12 +591,12 @@
       "patch" : [
          {
             "value" : false,
-            "op" : "add",
-            "path" : "/0"
+            "path" : "/0",
+            "op" : "add"
          },
          {
-            "path" : "/0/1",
-            "op" : "remove"
+            "op" : "remove",
+            "path" : "/0/1"
          }
       ],
       "doc" : [
@@ -604,25 +604,32 @@
       ]
    },
    {
-      "doc" : [
-         ""
-      ],
       "exp" : [
          null
       ],
+      "doc" : [
+         ""
+      ],
       "patch" : [
          {
-            "value" : null,
+            "path" : "/0",
             "op" : "add",
-            "path" : "/0"
+            "value" : null
          },
          {
-            "path" : "/0/1",
-            "op" : "remove"
+            "op" : "remove",
+            "path" : "/0/1"
          }
       ]
    },
    {
+      "exp" : [
+         "foo",
+         [
+            "bar",
+            "baz"
+         ]
+      ],
       "doc" : [
          "foo",
          "sil"
@@ -637,29 +644,22 @@
             "op" : "add"
          },
          {
-            "path" : "/1/2",
-            "op" : "remove"
+            "op" : "remove",
+            "path" : "/1/2"
          }
-      ],
-      "exp" : [
-         "foo",
-         [
-            "bar",
-            "baz"
-         ]
       ]
    },
    {
-      "doc" : {
-         "foo" : "bar"
-      },
       "exp" : {
          "baz" : "qux"
       },
+      "doc" : {
+         "foo" : "bar"
+      },
       "patch" : [
          {
-            "op" : "remove",
-            "path" : "/foo"
+            "path" : "/foo",
+            "op" : "remove"
          },
          {
             "op" : "add",
@@ -669,10 +669,10 @@
       ]
    },
    {
+      "patch" : [],
       "doc" : {
          "foo" : 1
       },
-      "patch" : [],
       "exp" : {
          "foo" : 1
       }
@@ -681,100 +681,100 @@
       "exp" : {
          "foo" : "truthy"
       },
+      "doc" : {
+         "foo" : null
+      },
       "patch" : [
          {
             "value" : "truthy",
-            "path" : "/foo",
-            "op" : "replace"
+            "op" : "replace",
+            "path" : "/foo"
          }
-      ],
-      "doc" : {
-         "foo" : null
-      }
+      ]
    },
    {
-      "patch" : [],
       "exp" : {
          "bar" : null
       },
       "doc" : {
          "foo" : null
-      }
+      },
+      "patch" : []
    },
    {
       "doc" : {
          "foo" : null
       },
-      "exp" : {
-         "bar" : null,
-         "foo" : null
-      },
       "patch" : [
          {
+            "value" : null,
             "op" : "add",
-            "path" : "/bar",
-            "value" : null
+            "path" : "/bar"
          }
-      ]
+      ],
+      "exp" : {
+         "foo" : null,
+         "bar" : null
+      }
    },
    {
+      "exp" : {},
       "patch" : [
          {
             "op" : "remove",
             "path" : "/foo"
          }
       ],
-      "exp" : {},
       "doc" : {
          "foo" : null
       }
    },
    {
+      "exp" : {
+         "foo" : null
+      },
       "doc" : {
          "foo" : "bar"
       },
       "patch" : [
          {
-            "value" : null,
+            "path" : "/foo",
             "op" : "replace",
-            "path" : "/foo"
+            "value" : null
          }
-      ],
-      "exp" : {
-         "foo" : null
-      }
+      ]
    },
    {
       "exp" : {
          "foo" : 1
       },
-      "patch" : [],
       "doc" : {
          "foo" : 1
-      }
+      },
+      "patch" : []
    },
    {
-      "exp" : {
-         "bar" : 1,
+      "patch" : [
+         {
+            "op" : "remove",
+            "path" : "/foo"
+         },
+         {
+            "value" : 1,
+            "op" : "add",
+            "path" : "/bar"
+         }
+      ],
+      "doc" : {
          "baz" : [
             {
                "qux" : "hello"
             }
-         ]
+         ],
+         "foo" : 1
       },
-      "patch" : [
-         {
-            "path" : "/foo",
-            "op" : "remove"
-         },
-         {
-            "op" : "add",
-            "path" : "/bar",
-            "value" : 1
-         }
-      ],
-      "doc" : {
-         "foo" : 1,
+      "exp" : {
+         "bar" : 1,
          "baz" : [
             {
                "qux" : "hello"
@@ -790,32 +790,40 @@
          ],
          "bar" : 1
       },
+      "doc" : {
+         "baz" : [
+            {
+               "qux" : "hello"
+            }
+         ],
+         "bar" : 1
+      },
       "patch" : [
          {
+            "value" : {},
             "op" : "add",
-            "path" : "/baz/0",
-            "value" : {}
+            "path" : "/baz/0"
          },
          {
+            "value" : "hello",
             "path" : "/baz/0/1",
-            "op" : "add",
-            "value" : "hello"
+            "op" : "add"
          },
          {
             "path" : "/baz/0/1/2",
             "op" : "remove"
          }
-      ],
+      ]
+   },
+   {
       "doc" : {
-         "bar" : 1,
          "baz" : [
             {
                "qux" : "hello"
             }
-         ]
-      }
-   },
-   {
+         ],
+         "bar" : 1
+      },
       "patch" : [
          {
             "value" : {
@@ -826,18 +834,10 @@
          }
       ],
       "exp" : {
-         "baz" : [
-            {
-               "qux" : "hello"
-            }
-         ],
+         "bar" : 1,
          "boo" : {
             "qux" : "hello"
          },
-         "bar" : 1
-      },
-      "doc" : {
-         "bar" : 1,
          "baz" : [
             {
                "qux" : "hello"
@@ -846,8 +846,8 @@
       }
    },
    {
-      "doc" : {
-         "foo" : "bar"
+      "exp" : {
+         "baz" : "qux"
       },
       "patch" : [
          {
@@ -855,31 +855,31 @@
             "path" : "/foo"
          },
          {
-            "value" : "qux",
+            "op" : "add",
             "path" : "/baz",
-            "op" : "add"
+            "value" : "qux"
          }
       ],
-      "exp" : {
-         "baz" : "qux"
+      "doc" : {
+         "foo" : "bar"
       }
    },
    {
-      "doc" : [
-         1,
-         2
-      ],
       "patch" : [
          {
-            "path" : "/2",
-            "op" : "add",
             "value" : {
                "foo" : [
                   "bar",
                   "baz"
                ]
-            }
+            },
+            "path" : "/2",
+            "op" : "add"
          }
+      ],
+      "doc" : [
+         1,
+         2
       ],
       "exp" : [
          1,
@@ -893,6 +893,29 @@
       ]
    },
    {
+      "patch" : [
+         {
+            "path" : "/2",
+            "op" : "add",
+            "value" : [
+               3,
+               [
+                  4,
+                  5,
+                  {
+                     "foo" : [
+                        "bar",
+                        "baz"
+                     ]
+                  }
+               ]
+            ]
+         },
+         {
+            "path" : "/2/3",
+            "op" : "remove"
+         }
+      ],
       "doc" : [
          1,
          2,
@@ -920,43 +943,19 @@
                }
             ]
          ]
-      ],
-      "patch" : [
-         {
-            "op" : "add",
-            "path" : "/2",
-            "value" : [
-               3,
-               [
-                  4,
-                  5,
-                  {
-                     "foo" : [
-                        "bar",
-                        "baz"
-                     ]
-                  }
-               ]
-            ]
-         },
-         {
-            "op" : "remove",
-            "path" : "/2/3"
-         }
       ]
    },
    {
-      "doc" : [
-         1,
+      "exp" : [
          2,
          3,
          4
       ],
       "patch" : [
          {
-            "value" : 2,
+            "path" : "/0",
             "op" : "add",
-            "path" : "/0"
+            "value" : 2
          },
          {
             "path" : "/0/1",
@@ -965,45 +964,42 @@
          },
          {
             "value" : 4,
-            "path" : "/0/1/2",
-            "op" : "add"
+            "op" : "add",
+            "path" : "/0/1/2"
          },
          {
             "op" : "remove",
             "path" : "/0/1/2/8"
          },
          {
-            "path" : "/0/1/2/8/7",
-            "op" : "remove"
+            "op" : "remove",
+            "path" : "/0/1/2/8/7"
          },
          {
-            "path" : "/0/1/2/8/7/6",
-            "op" : "remove"
+            "op" : "remove",
+            "path" : "/0/1/2/8/7/6"
          },
          {
-            "path" : "/0/1/2/8/7/6/5",
-            "op" : "remove"
+            "op" : "remove",
+            "path" : "/0/1/2/8/7/6/5"
          },
          {
             "path" : "/0/1/2/8/7/6/5/4",
             "op" : "remove"
          },
          {
-            "path" : "/0/1/2/8/7/6/5/4/3",
-            "op" : "remove"
+            "op" : "remove",
+            "path" : "/0/1/2/8/7/6/5/4/3"
          }
       ],
-      "exp" : [
+      "doc" : [
+         1,
          2,
          3,
          4
       ]
    },
    {
-      "exp" : [
-         1,
-         3
-      ],
       "patch" : [
          {
             "path" : "/1",
@@ -1015,8 +1011,8 @@
             "op" : "remove"
          },
          {
-            "op" : "remove",
-            "path" : "/1/4/3"
+            "path" : "/1/4/3",
+            "op" : "remove"
          },
          {
             "op" : "remove",
@@ -1028,22 +1024,26 @@
          2,
          3,
          4
+      ],
+      "exp" : [
+         1,
+         3
       ]
    },
    {
+      "exp" : {
+         "FOO" : "BAR",
+         "foo" : "bar"
+      },
       "doc" : {
          "foo" : "bar"
       },
       "patch" : [
          {
-            "value" : "BAR",
             "path" : "/FOO",
-            "op" : "add"
+            "op" : "add",
+            "value" : "BAR"
          }
-      ],
-      "exp" : {
-         "FOO" : "BAR",
-         "foo" : "bar"
-      }
+      ]
    }
 ]
