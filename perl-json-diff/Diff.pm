@@ -14,7 +14,6 @@ use Data::Compare;
 use Scalar::Util qw(looks_like_number);
 use feature 'say';
 
-# GLOBALS
 my $DEBUG = 1;
 
 sub compare_values($$$$) {
@@ -28,26 +27,25 @@ sub compare_values($$$$) {
         say "dst: $dst";
     }
 
+    # TODO: implement a smarter compare method. Consider the case of 1 and "1"
     if (Compare($src, $dst)) {
         if ($DEBUG) { say "$src is equal to $dst"; }
         return
     }
 
-    my $ref = \$src;
-    if (ref ($$ref) eq 'HASH') {  
+    if (ref ($src) eq 'HASH') {  
         compare_hashes($parts, $src, $dst, $diff);
     }
-    elsif (ref ($$ref) eq 'ARRAY') {
+    elsif (ref ($src) eq 'ARRAY') {
         compare_arrays($parts, $src, $dst, $diff);
     }
-    else {
-        # value is scalar
+    else { # SCALAR
         my $ptr = ptr_from_parts($parts);
-        # check if string has missing quotes
-        if (substr($dst, 0, 1) ne '"' && ! substr($dst, -1) ne '"') {
-            if (! looks_like_number($dst)) { $dst = '"' . $dst . '"'; }
-        }
-        push @{$diff}, qq|{"op": "replace", "path": "$ptr", "value": $dst}|;
+        # Check if the string has missing quotes. Consider 127.0.0.1
+        #if (substr($dst, 0, 1) ne '"' && ! substr($dst, -1) ne '"') {
+        #    if (! looks_like_number($dst)) { $dst = '"' . $dst . '"'; }
+        #}
+        push @{$diff}, {"op"=>"replace", "path"=>$ptr, "value"=>$dst}; 
         if ($DEBUG) {say "Diff updated: @{$diff}";}
     }
 
@@ -81,9 +79,9 @@ sub compare_arrays($$$$) {
 
         if (Compare($left, $right)) {
                 if ($i != $j) {
-                $parts = ($parts, $i);
+                push @{$parts}, $i;
                 my $ptr = ptr_from_parts($parts);
-                push(@{$diff}, qq|{"op": "add", "path": "$ptr", "value": @{$dst}{$i}}|);
+                push @{$diff}, {"op" => "add", "path" => $ptr, "value" => @{$dst}{$i}};
                 my $len_src_new = @src_new;
                 @src_new = (@src_new[0 .. $i], @{$dst}{$i}, @src_new[$i .. $len_src_new]);
                 if ($DEBUG) { 
@@ -96,9 +94,9 @@ sub compare_arrays($$$$) {
         }
         else {
             if ($j == $len_dst - 1) {
-                $parts = ($parts, $i);
+                push @{$parts}, $i;
                 my $ptr = ptr_from_parts($parts);
-                push(@{$diff}, qq|{"op": "add", "path": "$ptr", "value": $left}|);
+                push @{$diff}, {"op" => "add", "path" => $ptr, "value" => $left};
                 my $len_src_new = @src_new;
                 @src_new = (@src_new[0 .. $i - 1], $left, @src_new[$i .. $len_src_new-1]);
                 if ($DEBUG) { 
@@ -118,9 +116,9 @@ sub compare_arrays($$$$) {
     my $len_src_new = @src_new;
     for (my $i=$len_src_new - 1; $i >= $len_dst; $i--) {
         say "this: $i";
-        $parts = ($parts, $i);
+        push @{$parts}, $i;
         my $ptr = ptr_from_parts($parts);
-        push(@{$diff}, qq|{"op": "remove", "path": "$ptr"}|);
+        push @{$diff}, {"op" => "remove", "path" => $ptr};
         if ($DEBUG) { say "@{$diff}"; }
     }
 
@@ -146,16 +144,16 @@ sub compare_hashes($$$$) {
         # remove src key if not in dst
         if (! exists $$dst{$key}) {
             @parts = (@{$parts}, $key);
-            my $ptr = ptr_from_parts($parts);
-            push(@{$diff}, qq|{"op": "remove", "path": "$ptr"}|);
+            my $ptr = ptr_from_parts(\@parts);
+            push @{$diff}, {"op" => "remove", "path" => $ptr};
             if ($DEBUG) {say "Diff updated: @{$diff}";}
             next
         }
         # else go deeper
-        if ($DEBUG) { say 'GOING DEEPER'; }
+        if ($DEBUG) { say "GOING DEEPER $key"; }
         @parts = (@{$parts}, $key);
-        compare_values(\@parts, $$src{$key}, $$dst{$key}, \@{$diff});
-        if ($DEBUG) { say 'EXIT DEEPER'; }
+        compare_values(\@parts, $$src{$key}, $$dst{$key}, $diff);
+        if ($DEBUG) { say "EXIT DEEPER $key"; }
     }
     
     if ($DEBUG) { say 'FOR KEY IN DST'; }
@@ -163,8 +161,8 @@ sub compare_hashes($$$$) {
         if (! exists $$src{$key}) {
             @parts = (@{$parts}, $key);
             my $ptr = ptr_from_parts(\@parts);
-            my $value = JSON->new->allow_nonref->encode(${$dst}{$key});
-            push(@{$diff}, qq|{"op": "add", "path": "$ptr", "value": $value}|);
+            my $value = ${$dst}{$key};
+            push @{$diff}, {"op" => "add", "path" => $ptr, "value" => $value};
             if ($DEBUG) {say "Diff updated: @{$diff}";}
         }
     }
@@ -216,8 +214,8 @@ my $json = JSON->new->allow_nonref;
 
 # FILENAMES
 
-my $srcfile = 'src.json';
-my $dstfile = 'dst.json';
+my $srcfile = 's.txt';
+my $dstfile = 'd.txt';
 
 # open src file and read text
 local $/=undef;
@@ -254,14 +252,4 @@ my $diff = json_diff($src, $dst);
 # output
 my $number = @{$diff};
 say "\nResulting diff ($number operations):";
-say "[";
-foreach (@{$diff}) {
-    print "  ", $_;
-    if (! Compare($_, @{$diff}[-1])) {
-        say ",";
-    }
-    else {
-        say "";
-    }
-}
-say "]"
+print $json->pretty->encode($diff);
