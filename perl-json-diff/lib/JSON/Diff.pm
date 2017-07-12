@@ -34,10 +34,10 @@ sub compare_values {
         return
     }
 
-    if (ref ($src) eq 'HASH') {  
+    if (ref ($src) eq 'HASH' && ref($dst) eq 'HASH') {  
         compare_hashes($parts, $src, $dst, $diff);
     }
-    elsif (ref ($src) eq 'ARRAY') {
+    elsif (ref ($src) eq 'ARRAY' && ref ($dst) eq 'ARRAY') {
         compare_arrays($parts, $src, $dst, $diff);
     }
     else { # SCALAR
@@ -78,9 +78,9 @@ sub compare_arrays {
                 if ($i != $j) {
                 push @{$parts}, $i;
                 my $ptr = ptr_from_parts($parts);
-                push @{$diff}, {"op" => "add", "path" => $ptr, "value" => @{$dst}{$i}};
+                push @{$diff}, {"op" => "add", "path" => $ptr, "value" => @{$dst}[$i]};
                 my $len_src_new = @src_new;
-                @src_new = (@src_new[0 .. $i], @{$dst}{$i}, @src_new[$i .. $len_src_new]);
+                @src_new = (@src_new[0 .. $i], @{$dst}[$i], @src_new[$i .. $len_src_new]);
                 if ($DEBUG) { 
                     say "@{$diff}";
                     say "@src_new"; 

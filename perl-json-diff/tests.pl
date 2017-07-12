@@ -11,6 +11,8 @@ use warnings;
 use Data::Compare;
 use feature 'say';
 
+#$DEBUG = 1;
+
 ## set JSON OO interface
 my $json = JSON->new->allow_nonref;
 
@@ -34,34 +36,48 @@ my $count_ok = 0;
 my $count_fail = 0;
 
 foreach my $test (@{$tests}){
-    my $src = $json->pretty->encode(@{$test}{doc});
-    my $dst = $json->pretty->encode(@{$test}{expected});
-    my $patch = $json->pretty->encode(@{$test}{patch});
-    my $comment = $json->encode(@{$test}{comment});
+    my $src = @{$test}{doc};
+    my $dst = @{$test}{expected};
+    my $src_text = $json->pretty->encode($src);
+    my $dst_text = $json->pretty->encode($dst);
+    my $patch = @{$test}{patch};
+    my $patch_text = $json->pretty->encode($patch);
+    my $comment_text = $json->encode(@{$test}{comment});
     my $diff = JSON::Diff->json_diff($src, $dst);
     my $result_patch = $json->pretty->encode($diff);
     
     #TODO: Use Data::Compare JSON extension
-    if (Compare($patch, $result_patch)) {
-        print "[ OK ] $comment";
+    if (Compare($patch, $diff)) {
+        print "[ OK ] $comment_text";
         $count_ok += 1;
     }
     else {
-        print "[FAIL] $comment";
+        print "[FAIL] $comment_text";
         print "Source document:\n";
-        print $src;
+        print $src_text;
         print "Destination document:\n";
-        print $dst;
+        print $dst_text;
         print "Expected patch:\n";
-        print $patch;
+        print $patch_text;
         print "Got:\n";
         print "$result_patch\n";
         $count_fail += 1;
     }
 }
 
+## RESULTS
+
 my $total = $count_ok + $count_fail;
+print "----------------\n";
 print "Total OK    - ${count_ok}\n";
 print "Total FAIL  - ${count_fail}\n";
 print "Total tests - ${total}\n";
+
+if ($total > 0 && $count_fail > 0) {
+    print "---- FAILED ----\n";
+}
+else {
+    print "----   OK   ----\n";
+}
+
 
