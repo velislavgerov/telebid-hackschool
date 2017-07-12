@@ -1,5 +1,4 @@
 {
-  "baz": "qux",
-  "foo": "bar",
-  "data": 1
+  "foo": 1,
+  "bar": 2
 }

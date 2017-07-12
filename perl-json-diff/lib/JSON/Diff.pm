@@ -13,12 +13,13 @@ use JSON;
 use Data::Compare;
 use Scalar::Util qw(looks_like_number);
 use feature 'say';
+use parent 'Exporter';
 
-my $DEBUG = 1;
+our $DEBUG = 0;
+our @EXPORT = qw($DEBUG);
 
-sub compare_values($$$$) {
+sub compare_values {
     my ($parts, $src, $dst, $diff) = @_;
-
     if ($DEBUG) {
         say "Compare values";
         say "parts: $parts";
@@ -48,10 +49,9 @@ sub compare_values($$$$) {
         push @{$diff}, {"op"=>"replace", "path"=>$ptr, "value"=>$dst}; 
         if ($DEBUG) {say "Diff updated: @{$diff}";}
     }
-
 }
 
-sub compare_arrays($$$$) {
+sub compare_arrays {
     my ($parts, $src, $dst, $diff) = @_;
     
     if ($DEBUG) {
@@ -68,10 +68,7 @@ sub compare_arrays($$$$) {
     my $i = 0;
     my $j = 0;
     while ($i < $len_dst)
-    {
-        #say $i;
-        #say @{$dst}[$i];
-        
+    {   
         my $left = @{$dst}[$i];
         my $right = $src_new[$j];
     
@@ -112,7 +109,7 @@ sub compare_arrays($$$$) {
             }
         }
     }
-    say "@src_new"; 
+ 
     my $len_src_new = @src_new;
     for (my $i=$len_src_new - 1; $i >= $len_dst; $i--) {
         say "this: $i";
@@ -121,12 +118,9 @@ sub compare_arrays($$$$) {
         push @{$diff}, {"op" => "remove", "path" => $ptr};
         if ($DEBUG) { say "@{$diff}"; }
     }
-
-    say "ARRAY";
-
 }
 
-sub compare_hashes($$$$) {
+sub compare_hashes {
     my ($parts, $src, $dst, $diff) = @_;
     my @parts;
 
@@ -137,7 +131,6 @@ sub compare_hashes($$$$) {
         say "src: $src";
         say "dst: $dst";
     }
-
 
     foreach my $key (keys %{$src}) {
         if ($DEBUG) { say "Key: $key"; }
@@ -168,7 +161,7 @@ sub compare_hashes($$$$) {
     }
 }
 
-sub ptr_from_parts($) {
+sub ptr_from_parts {
     # Returns JSON Pointer string
     # Input
     #  :parts - reference to array specifying JSON path elements
@@ -189,10 +182,19 @@ sub ptr_from_parts($) {
     return $ptr;
 }
 
-sub json_diff($$;$) {
-    my ( $src_json, $dst_json, $options ) = @_;
+sub json_diff {
+    # XXX: needs more elaborate input checking
+    my ($class, $src_json, $dst_json, $options);
+    if ($_[0] eq 'JSON::Diff'){
+        ($class, $src_json, $dst_json, $options ) = @_;
+    }
+    else {
+        ($src_json, $dst_json, $options ) = @_;
+    }
+    
     my $diff = [];
     my $parts = [];
+
     # $src_json е HASH или STRING
     # $dst_json е HASH или STRING
     # $options е HASH или UNDEF, да се игнорира към момента
@@ -203,53 +205,4 @@ sub json_diff($$;$) {
     return $diff;
 }
 
-
-
-# ---------------------------------------------------------------------------- #
-# -------------------------------   TESTING   -------------------------------- #
-# ---------------------------------------------------------------------------- #
-
-# JSON OO interface
-my $json = JSON->new->allow_nonref;
-
-# FILENAMES
-
-my $srcfile = 's.txt';
-my $dstfile = 'd.txt';
-
-# open src file and read text
-local $/=undef;
-
-open ( FILE, '<:encoding(UTF-8)', $srcfile) 
-    or die "Could not open file $srcfile $!";
-binmode FILE;
-my $src_text = <FILE>;
-close FILE;
-
-# open dst file and read text
-open ( FILE, '<:encoding(UTF-8)', $dstfile) 
-    or die "Could not open file $dstfile $!";
-binmode FILE;
-my $dst_text = <FILE>;
-close FILE;
-
-# decode both files
-my $src = $json->decode($src_text); # json scalar
-my $dst = $json->decode($dst_text); # json scalar
-
-$DEBUG = 0;
-
-# source json texts
-say "From JSON:";
-print $json->pretty->encode($src);
-
-say "\nTo JSON:";
-print $json->pretty->encode($dst);
-
-# calculate diff array
-my $diff = json_diff($src, $dst);
-
-# output
-my $number = @{$diff};
-say "\nResulting diff ($number operations):";
-print $json->pretty->encode($diff);
+1;

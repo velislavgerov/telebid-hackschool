@@ -1,5 +1,4 @@
 {
-  "baz": "boo",
-  "hello": "",
-  "data" : "1"
+  "bar":2,
+  "foo":1
 }
