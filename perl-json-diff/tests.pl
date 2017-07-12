@@ -3,7 +3,10 @@
 # ---------------------------------------------------------------------------- #
 
 use lib "lib";
+use lib "perl-json-patch/lib";
+
 use JSON::Diff;
+use JSON::Patch;
 
 use strict;
 use warnings;
@@ -15,6 +18,8 @@ use feature 'say';
 
 ## set JSON OO interface
 my $json = JSON->new->allow_nonref;
+my $json_patch = new JSON::Patch;
+
 
 ## set JSON tests filename
 
@@ -35,7 +40,28 @@ my $tests = $json->decode($tests_text);
 my $count_ok = 0;
 my $count_fail = 0;
 
+my $out_json = [];
+
 foreach my $test (@{$tests}){
+    if (exists ${$test}{disabled}) { 
+        if ($DEBUG) {
+            print "(disabled) skipping...\n";
+        }
+        next; 
+    }
+    elsif (exists ${$test}{error}) {
+        if ($DEBUG) {
+            print "(error) skipping...\n";
+        }
+        next; 
+    }
+    elsif (! exists ${$test}{expected}) {
+        if ($DEBUG) {
+            print "(no expected) skipping...\n";
+        }
+        next; 
+    }
+    
     my $src = @{$test}{doc};
     my $dst = @{$test}{expected};
     my $src_text = $json->pretty->encode($src);
@@ -46,6 +72,8 @@ foreach my $test (@{$tests}){
     my $diff = JSON::Diff->json_diff($src, $dst);
     my $result_patch = $json->pretty->encode($diff);
     
+    push @{$out_json}, {"doc" => $src, "exp" => $dst, "patch" => $diff};
+
     #TODO: Use Data::Compare JSON extension
     if (Compare($patch, $diff)) {
         print "[ OK ] $comment_text";
@@ -53,14 +81,23 @@ foreach my $test (@{$tests}){
     }
     else {
         print "[FAIL] $comment_text";
-        print "Source document:\n";
-        print $src_text;
-        print "Destination document:\n";
-        print $dst_text;
-        print "Expected patch:\n";
-        print $patch_text;
-        print "Got:\n";
-        print "$result_patch\n";
+        if (1) {
+                print "Source document:\n";
+                print $src_text;
+                print "Destination document:\n";
+                print $dst_text;
+                print "Expected patch:\n";
+                print $patch_text;
+                print "Got:\n";
+                print "$result_patch\n";
+        }
+        #foreach (@{$diff}){
+        #    $json_patch->load_operators(%{$_});
+        #}
+
+        $DEBUG = 1;
+        my $diff = JSON::Diff->json_diff($src, $dst);
+        $DEBUG = 0;
         $count_fail += 1;
     }
 }
@@ -80,4 +117,9 @@ else {
     print "----   OK   ----\n";
 }
 
+my $outfile = 'out.json';
+open ( FILE, '>:encoding(UTF-8)', $outfile) 
+    or die "Could not open file $outfile $!";
+print FILE $json->pretty->encode($out_json);
+close FILE;
 

@@ -72,7 +72,7 @@ sub compare_arrays {
         my $left = @{$dst}[$i];
         my $right = $src_new[$j];
     
-        if ($DEBUG) { say "comprating left:$left to right:$right"; }
+        if ($DEBUG) { say "comprating dst:$left to src:$right"; }
 
         if (Compare($left, $right)) {
                 if ($i != $j) {
@@ -112,7 +112,7 @@ sub compare_arrays {
  
     my $len_src_new = @src_new;
     for (my $i=$len_src_new - 1; $i >= $len_dst; $i--) {
-        say "this: $i";
+            #say "this: $i";
         push @{$parts}, $i;
         my $ptr = ptr_from_parts($parts);
         push @{$diff}, {"op" => "remove", "path" => $ptr};

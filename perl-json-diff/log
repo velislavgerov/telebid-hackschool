@@ -1,0 +1,491 @@
+[ OK ] "A.1.  Adding an Object Member"
+[ OK ] "A.2.  Adding an Array Element"
+[ OK ] "A.3.  Removing an Object Member"
+[FAIL] "A.4.  Removing an Array Element"
+Source document:
+{
+   "foo" : [
+      "bar",
+      "qux",
+      "baz"
+   ]
+}
+Destination document:
+{
+   "foo" : [
+      "bar",
+      "baz"
+   ]
+}
+Expected patch:
+[
+   {
+      "op" : "remove",
+      "path" : "/foo/1"
+   }
+]
+Got:
+[
+   {
+      "op" : "add",
+      "value" : "baz",
+      "path" : "/foo/1"
+   },
+   {
+      "op" : "remove",
+      "path" : "/foo/1/3"
+   },
+   {
+      "op" : "remove",
+      "path" : "/foo/1/3/2"
+   }
+]
+
+Compare values
+parts: ARRAY(0x2b24348)
+diff: ARRAY(0x2b253a8)
+src: HASH(0x2b46678)
+dst: HASH(0x2b46588)
+Compare hashes
+parts: ARRAY(0x2b24348)
+diff: ARRAY(0x2b253a8)
+src: HASH(0x2b46678)
+dst: HASH(0x2b46588)
+Key: foo
+GOING DEEPER foo
+Compare values
+parts: ARRAY(0x2a922f8)
+diff: ARRAY(0x2b253a8)
+src: ARRAY(0x2b46648)
+dst: ARRAY(0x2b46510)
+Compare arrays
+parts: ARRAY(0x2a922f8)
+diff: ARRAY(0x2b253a8)
+src: ARRAY(0x2b46648)
+dst: ARRAY(0x2b46510)
+comprating dst:bar to src:bar
+comprating dst:baz to src:bar
+comprating dst:baz to src:qux
+HASH(0x2b242b8)
+bar baz qux baz
+HASH(0x2b242b8) HASH(0x2b253d8)
+HASH(0x2b242b8) HASH(0x2b253d8) HASH(0x2b25660)
+EXIT DEEPER foo
+FOR KEY IN DST
+[ OK ] "A.5.  Replacing a Value"
+[FAIL] "A.6.  Moving a Value"
+Source document:
+{
+   "qux" : {
+      "corge" : "grault"
+   },
+   "foo" : {
+      "waldo" : "fred",
+      "bar" : "baz"
+   }
+}
+Destination document:
+{
+   "qux" : {
+      "corge" : "grault",
+      "thud" : "fred"
+   },
+   "foo" : {
+      "bar" : "baz"
+   }
+}
+Expected patch:
+[
+   {
+      "path" : "/qux/thud",
+      "op" : "move",
+      "from" : "/foo/waldo"
+   }
+]
+Got:
+[
+   {
+      "op" : "add",
+      "path" : "/qux/thud",
+      "value" : "fred"
+   },
+   {
+      "op" : "remove",
+      "path" : "/foo/waldo"
+   }
+]
+
+Compare values
+parts: ARRAY(0x2b47c38)
+diff: ARRAY(0x2b47830)
+src: HASH(0x2b462b8)
+dst: HASH(0x2b46198)
+Compare hashes
+parts: ARRAY(0x2b47c38)
+diff: ARRAY(0x2b47830)
+src: HASH(0x2b462b8)
+dst: HASH(0x2b46198)
+Key: qux
+GOING DEEPER qux
+Compare values
+parts: ARRAY(0x2a922f8)
+diff: ARRAY(0x2b47830)
+src: HASH(0x2b46270)
+dst: HASH(0x2b3eea0)
+Compare hashes
+parts: ARRAY(0x2a922f8)
+diff: ARRAY(0x2b47830)
+src: HASH(0x2b46270)
+dst: HASH(0x2b3eea0)
+Key: corge
+GOING DEEPER corge
+Compare values
+parts: ARRAY(0x2b47b78)
+diff: ARRAY(0x2b47830)
+src: grault
+dst: grault
+grault is equal to grault
+EXIT DEEPER corge
+FOR KEY IN DST
+Diff updated: HASH(0x2b47fb0)
+EXIT DEEPER qux
+Key: foo
+GOING DEEPER foo
+Compare values
+parts: ARRAY(0x2a922f8)
+diff: ARRAY(0x2b47830)
+src: HASH(0x2b46288)
+dst: HASH(0x2b3e930)
+Compare hashes
+parts: ARRAY(0x2a922f8)
+diff: ARRAY(0x2b47830)
+src: HASH(0x2b46288)
+dst: HASH(0x2b3e930)
+Key: waldo
+Diff updated: HASH(0x2b47fb0) HASH(0x2b480e8)
+Key: bar
+GOING DEEPER bar
+Compare values
+parts: ARRAY(0x2b47b78)
+diff: ARRAY(0x2b47830)
+src: baz
+dst: baz
+baz is equal to baz
+EXIT DEEPER bar
+FOR KEY IN DST
+EXIT DEEPER foo
+FOR KEY IN DST
+[FAIL] "A.7.  Moving an Array Element"
+Source document:
+{
+   "foo" : [
+      "all",
+      "grass",
+      "cows",
+      "eat"
+   ]
+}
+Destination document:
+{
+   "foo" : [
+      "all",
+      "cows",
+      "eat",
+      "grass"
+   ]
+}
+Expected patch:
+[
+   {
+      "path" : "/foo/3",
+      "op" : "move",
+      "from" : "/foo/1"
+   }
+]
+Got:
+[
+   {
+      "value" : "cows",
+      "path" : "/foo/1",
+      "op" : "add"
+   },
+   {
+      "op" : "add",
+      "path" : "/foo/1/2",
+      "value" : "eat"
+   },
+   {
+      "op" : "add",
+      "value" : "grass",
+      "path" : "/foo/1/2/3"
+   },
+   {
+      "path" : "/foo/1/2/3/10",
+      "op" : "remove"
+   },
+   {
+      "op" : "remove",
+      "path" : "/foo/1/2/3/10/9"
+   },
+   {
+      "op" : "remove",
+      "path" : "/foo/1/2/3/10/9/8"
+   },
+   {
+      "op" : "remove",
+      "path" : "/foo/1/2/3/10/9/8/7"
+   },
+   {
+      "path" : "/foo/1/2/3/10/9/8/7/6",
+      "op" : "remove"
+   },
+   {
+      "op" : "remove",
+      "path" : "/foo/1/2/3/10/9/8/7/6/5"
+   },
+   {
+      "path" : "/foo/1/2/3/10/9/8/7/6/5/4",
+      "op" : "remove"
+   }
+]
+
+Compare values
+parts: ARRAY(0x2b5bd98)
+diff: ARRAY(0x2b47ff8)
+src: HASH(0x2b3ed68)
+dst: HASH(0x2b46828)
+Compare hashes
+parts: ARRAY(0x2b5bd98)
+diff: ARRAY(0x2b47ff8)
+src: HASH(0x2b3ed68)
+dst: HASH(0x2b46828)
+Key: foo
+GOING DEEPER foo
+Compare values
+parts: ARRAY(0x2a922f8)
+diff: ARRAY(0x2b47ff8)
+src: ARRAY(0x2b3ebe8)
+dst: ARRAY(0x2b3e858)
+Compare arrays
+parts: ARRAY(0x2a922f8)
+diff: ARRAY(0x2b47ff8)
+src: ARRAY(0x2b3ebe8)
+dst: ARRAY(0x2b3e858)
+comprating dst:all to src:all
+comprating dst:cows to src:all
+comprating dst:cows to src:grass
+comprating dst:cows to src:cows
+HASH(0x2b5bdc8)
+all grass cows grass cows eat 
+comprating dst:eat to src:all
+comprating dst:eat to src:grass
+comprating dst:eat to src:cows
+comprating dst:eat to src:grass
+HASH(0x2b5bdc8) HASH(0x2b5bf18)
+all grass eat cows grass cows eat 
+comprating dst:grass to src:all
+comprating dst:grass to src:grass
+HASH(0x2b5bdc8) HASH(0x2b5bf18) HASH(0x2b5c080)
+all grass eat cows grass cows grass cows eat  
+HASH(0x2b5bdc8) HASH(0x2b5bf18) HASH(0x2b5c080) HASH(0x2b5c008)
+HASH(0x2b5bdc8) HASH(0x2b5bf18) HASH(0x2b5c080) HASH(0x2b5c008) HASH(0x2b5c128)
+HASH(0x2b5bdc8) HASH(0x2b5bf18) HASH(0x2b5c080) HASH(0x2b5c008) HASH(0x2b5c128) HASH(0x2b5c170)
+HASH(0x2b5bdc8) HASH(0x2b5bf18) HASH(0x2b5c080) HASH(0x2b5c008) HASH(0x2b5c128) HASH(0x2b5c170) HASH(0x2b5c338)
+HASH(0x2b5bdc8) HASH(0x2b5bf18) HASH(0x2b5c080) HASH(0x2b5c008) HASH(0x2b5c128) HASH(0x2b5c170) HASH(0x2b5c338) HASH(0x2b5c3c8)
+HASH(0x2b5bdc8) HASH(0x2b5bf18) HASH(0x2b5c080) HASH(0x2b5c008) HASH(0x2b5c128) HASH(0x2b5c170) HASH(0x2b5c338) HASH(0x2b5c3c8) HASH(0x2b5c458)
+HASH(0x2b5bdc8) HASH(0x2b5bf18) HASH(0x2b5c080) HASH(0x2b5c008) HASH(0x2b5c128) HASH(0x2b5c170) HASH(0x2b5c338) HASH(0x2b5c3c8) HASH(0x2b5c458) HASH(0x2b5c4e8)
+EXIT DEEPER foo
+FOR KEY IN DST
+[FAIL] "A.8.  Testing a Value: Success"
+Source document:
+{
+   "baz" : "qux",
+   "foo" : [
+      "a",
+      2,
+      "c"
+   ]
+}
+Destination document:
+{
+   "foo" : [
+      "a",
+      2,
+      "c"
+   ],
+   "baz" : "qux"
+}
+Expected patch:
+[
+   {
+      "value" : "qux",
+      "path" : "/baz",
+      "op" : "test"
+   },
+   {
+      "path" : "/foo/1",
+      "value" : 2,
+      "op" : "test"
+   }
+]
+Got:
+[]
+
+Compare values
+parts: ARRAY(0x2b48238)
+diff: ARRAY(0x2b480e8)
+src: HASH(0x2b3edc8)
+dst: HASH(0x2b3ed80)
+HASH(0x2b3edc8) is equal to HASH(0x2b3ed80)
+[ OK ] "A.10.  Adding a nested Member Object"
+[FAIL] "A.11.  Ignoring Unrecognized Elements"
+Source document:
+{
+   "foo" : "bar"
+}
+Destination document:
+{
+   "baz" : "qux",
+   "foo" : "bar"
+}
+Expected patch:
+[
+   {
+      "value" : "qux",
+      "path" : "/baz",
+      "xyz" : 123,
+      "op" : "add"
+   }
+]
+Got:
+[
+   {
+      "op" : "add",
+      "path" : "/baz",
+      "value" : "qux"
+   }
+]
+
+Compare values
+parts: ARRAY(0x2b5bf48)
+diff: ARRAY(0x2b5bfd8)
+src: HASH(0x2ac4090)
+dst: HASH(0x2ac4120)
+Compare hashes
+parts: ARRAY(0x2b5bf48)
+diff: ARRAY(0x2b5bfd8)
+src: HASH(0x2ac4090)
+dst: HASH(0x2ac4120)
+Key: foo
+GOING DEEPER foo
+Compare values
+parts: ARRAY(0x2a922f8)
+diff: ARRAY(0x2b5bfd8)
+src: bar
+dst: bar
+bar is equal to bar
+EXIT DEEPER foo
+FOR KEY IN DST
+Diff updated: HASH(0x2b61348)
+[FAIL] "A.14. ~ Escape Ordering"
+Source document:
+{
+   "~1" : 10,
+   "/" : 9
+}
+Destination document:
+{
+   "/" : 9,
+   "~1" : 10
+}
+Expected patch:
+[
+   {
+      "value" : 10,
+      "path" : "/~01",
+      "op" : "test"
+   }
+]
+Got:
+[]
+
+Compare values
+parts: ARRAY(0x2b61360)
+diff: ARRAY(0x2b47fb0)
+src: HASH(0x2ac44f8)
+dst: HASH(0x2ac45a0)
+HASH(0x2ac44f8) is equal to HASH(0x2ac45a0)
+[FAIL] "A.16. Adding an Array Value"
+Source document:
+{
+   "foo" : [
+      "bar"
+   ]
+}
+Destination document:
+{
+   "foo" : [
+      "bar",
+      [
+         "abc",
+         "def"
+      ]
+   ]
+}
+Expected patch:
+[
+   {
+      "path" : "/foo/-",
+      "value" : [
+         "abc",
+         "def"
+      ],
+      "op" : "add"
+   }
+]
+Got:
+[
+   {
+      "op" : "add",
+      "path" : "/foo/1",
+      "value" : [
+         "abc",
+         "def"
+      ]
+   }
+]
+
+Compare values
+parts: ARRAY(0x2b5c2d8)
+diff: ARRAY(0x2b47fc8)
+src: HASH(0x2ac4810)
+dst: HASH(0x2ac4a68)
+Compare hashes
+parts: ARRAY(0x2b5c2d8)
+diff: ARRAY(0x2b47fc8)
+src: HASH(0x2ac4810)
+dst: HASH(0x2ac4a68)
+Key: foo
+GOING DEEPER foo
+Compare values
+parts: ARRAY(0x2a922f8)
+diff: ARRAY(0x2b47fc8)
+src: ARRAY(0x2ac4840)
+dst: ARRAY(0x2ac4af8)
+Compare arrays
+parts: ARRAY(0x2a922f8)
+diff: ARRAY(0x2b47fc8)
+src: ARRAY(0x2ac4840)
+dst: ARRAY(0x2ac4af8)
+comprating dst:bar to src:bar
+comprating dst:ARRAY(0x2ac4b10) to src:bar
+comprating dst:ARRAY(0x2ac4b10) to src:
+HASH(0x2b5c140)
+bar ARRAY(0x2ac4b10)
+EXIT DEEPER foo
+FOR KEY IN DST
+----------------
+Total OK    - 5
+Total FAIL  - 7
+Total tests - 12
+---- FAILED ----
