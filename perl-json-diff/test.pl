@@ -4,7 +4,6 @@ use JSON::Diff;
 use strict;
 use warnings;
 
-use JSON;
 use feature 'say';
 
 # ---------------------------------------------------------------------------- #
