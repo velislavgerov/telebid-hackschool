@@ -45,10 +45,17 @@ class Ping(object):
             self.requests_count = REQUESTS_COUNT
         
         url = data['url']
-        if url[:7] != 'http://' and url[:7] != 'https:/':
-            url = 'http://' + url
+        
+        # check whether protocol is present
+        if isinstance(url, str):
+            if not str.startswith(url, 'http://') or not str.startswith(url, 'https://'):
+                url = 'http://' + url
+        else:
+            raise TypeError("invalid type for url.")
+  
         self.url = URL(url)
         self.http = HTTPClient(self.url.host, connection_timeout=self.request_timeout)
+    
     def run(self):
         """
         Main ping logic - answers to items query
@@ -61,34 +68,34 @@ class Ping(object):
             gevent.socket.gethostbyname(self.url.host)
         except gevent.socket.error:
             print('{}: error: hostname {} does not resolve'.format(__file__, self.url.host), file=sys.stderr)
-            return
 
         # do the ping
         try:
             res = self.get_response()
         except gevent.socket.error as err:
-            print("timeout")
+            res = None
 
         # do the tests
         if VERBOSE:
             print("Initial response test results for {}".format(self.data['name']))
         
         is_erc, is_ehd, is_erb = True, True, True
-
-        if 'expected_response_codes' in self.data:
-            is_erc = self._test_expected_response_codes(res)
-            if VERBOSE:
-                print("Testing expected status code - {}".format("OK" if is_erc else "FAIL"))
-        if 'expected_headers' in self.data:
-            is_ehd = self._test_expected_header(res)
-            if VERBOSE:
-                print("Testing expected header      - {}".format("OK" if is_ehd else "FAIL"))
-        
-        if 'expected_response_body' in self.data:
-            body = res.read() # bytes
-            is_erb = self._test_expected_body(body)
-            if VERBOSE:
-                print("Testing expected body        - {}".format("OK" if is_erb else "FAIL"))
+    
+        if res:
+            if 'expected_response_codes' in self.data:
+                is_erc = self._test_expected_response_codes(res)
+                if VERBOSE:
+                    print("Testing expected status code - {}".format("OK" if is_erc else "FAIL"))
+            if 'expected_headers' in self.data:
+                is_ehd = self._test_expected_header(res)
+                if VERBOSE:
+                    print("Testing expected header      - {}".format("OK" if is_ehd else "FAIL"))
+            
+            if 'expected_response_body' in self.data:
+                body = res.read() # bytes
+                is_erb = self._test_expected_body(body)
+                if VERBOSE:
+                    print("Testing expected body        - {}".format("OK" if is_erb else "FAIL"))
 
         if is_erc and is_ehd and is_erb:
             for key in self.data['items']:
@@ -110,10 +117,16 @@ class Ping(object):
         successful = 0
         failed = 0
         for i in range(self.requests_count):
-            res = self.get_response()
-            body = res.read()
-            if self.do_response_tests(res, body, i):
-                successful += 1
+            try:
+                res = self.get_response()
+            except gevent.socket.error:
+                res = None
+            if res:
+                body = res.read()
+                if self.do_response_tests(res, body, i):
+                    successful += 1
+                else:
+                    failed += 1
             else:
                 failed += 1
         timestamp = int(time.time())
@@ -159,25 +172,25 @@ class Ping(object):
         ab_url = str(self.url)
         if str(self.url)[-len(self.url.host):] == str(self.url.host) and str(self.url.host[-1]) != '/':
             ab_url = str(self.url) + '/'
-        p = Popen(['ab', '-n', n, '-c', c, ab_url], stdout=PIPE)
+        p = Popen(['ab', '-n', n, '-c', c, ab_url], stdout=PIPE, stderr=PIPE)
         output, err = p.communicate()
         rc = p.returncode
-        output = output.decode('utf-8')
-        if VERBOSE:
-            print(output)
-        
-        rps = None
-        for line in output.split("\n"):
-            if "Requests per second" in line:
-                line = line.split()
-                rps = line[3]
-                break
-        
-        timestamp = int(time.time())
-        self.data['items']['ab_test']['timestamp'] = timestamp
-        self.data['items']['ab_test']['units'] = 'r/sec'
-        self.data['items']['ab_test']['type'] = 'float'
-        self.data['items']['ab_test']['value'] = float(rps)
+        if not err:
+            output = output.decode('utf-8')
+            if VERBOSE:
+                print(output)
+            
+            rps = None
+            for line in output.split("\n"):
+                if "Requests per second" in line:
+                    line = line.split()
+                    rps = line[3]
+                    break 
+            timestamp = int(time.time())
+            self.data['items']['ab_test']['timestamp'] = timestamp
+            self.data['items']['ab_test']['units'] = 'r/sec'
+            self.data['items']['ab_test']['type'] = 'float'
+            self.data['items']['ab_test']['value'] = float(rps)
 
 
     def _test_expected_response_codes(self, response):
