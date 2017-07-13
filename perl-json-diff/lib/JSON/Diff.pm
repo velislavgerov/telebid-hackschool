@@ -53,7 +53,8 @@ sub compare_values {
 
 sub compare_arrays {
     my ($parts, $src, $dst, $diff) = @_;
-    
+    my @parts;
+
     if ($DEBUG) {
         say "Compare arrays";
         say "parts: $parts";
@@ -76,8 +77,8 @@ sub compare_arrays {
 
         if (Compare($left, $right)) {
                 if ($i != $j) {
-                push @{$parts}, $i;
-                my $ptr = ptr_from_parts($parts);
+                @parts = (@{$parts}, $i);
+                my $ptr = ptr_from_parts(\@parts);
                 push @{$diff}, {"op" => "add", "path" => $ptr, "value" => @{$dst}[$i]};
                 my $len_src_new = @src_new;
                 @src_new = (@src_new[0 .. $i], @{$dst}[$i], @src_new[$i .. $len_src_new]);
@@ -91,8 +92,8 @@ sub compare_arrays {
         }
         else {
             if ($j == $len_dst - 1) {
-                push @{$parts}, $i;
-                my $ptr = ptr_from_parts($parts);
+                @parts = (@{$parts}, $i);
+                my $ptr = ptr_from_parts(\@parts);
                 push @{$diff}, {"op" => "add", "path" => $ptr, "value" => $left};
                 my $len_src_new = @src_new;
                 @src_new = (@src_new[0 .. $i - 1], $left, @src_new[$i .. $len_src_new-1]);
@@ -113,8 +114,8 @@ sub compare_arrays {
     my $len_src_new = @src_new;
     for (my $i=$len_src_new - 1; $i >= $len_dst; $i--) {
             #say "this: $i";
-        push @{$parts}, $i;
-        my $ptr = ptr_from_parts($parts);
+        @parts = (@{$parts}, $i);
+        my $ptr = ptr_from_parts(\@parts);
         push @{$diff}, {"op" => "remove", "path" => $ptr};
         if ($DEBUG) { say "@{$diff}"; }
     }

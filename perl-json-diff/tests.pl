@@ -68,7 +68,7 @@ foreach my $test (@{$tests}){
     my $diff = JSON::Diff->json_diff($src, $dst);
     my $result_patch = $json->pretty->encode($diff);
     
-    push @{$out_json}, {"doc" => $src, "exp" => $dst, "patch" => $diff};
+    push @{$out_json}, {"src" => $src, "dst" => $dst, "patch" => $diff};
 
     #TODO: Use Data::Compare JSON extension
     if (Compare($patch, $diff)) {

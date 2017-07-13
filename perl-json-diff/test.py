@@ -13,22 +13,22 @@ if __name__ == '__main__':
     for data in out:
         patch = JsonPatch(data['patch'])
         try:
-            result = patch.apply(data['doc'])
+            result = patch.apply(data['src'])
         except (JsonPatchConflict, TypeError, JsonPointerException) as err:
             print(data['patch'])
-            print(data['doc'])
-            print(data['exp'])
+            print(data['src'])
+            print(data['dst'])
             print(err)
             print("FAIL")
             fail += 1
             continue
-        if result == data['exp']:
+        if result == data['dst']:
             ok += 1
         else:
             fail +=1
             print(data['patch'])
-            print(data['doc'])
-            print(data['exp'])
+            print(data['src'])
+            print(data['dst'])
             print(result)
 
     print("Fail {}".format(fail))

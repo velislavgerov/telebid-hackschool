@@ -15,8 +15,8 @@ my $json = JSON->new->allow_nonref;
 
 ## FILENAMES
 
-my $srcfile = 'json-files/src.json';
-my $dstfile = 'json-files/dst.json';
+my $srcfile = 'json-files/s.json';
+my $dstfile = 'json-files/d.json';
 
 ## open src file and read text
 local $/=undef;
