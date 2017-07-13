@@ -51,10 +51,10 @@ class Ping(object):
             if not str.startswith(url, 'http://') or not str.startswith(url, 'https://'):
                 url = 'http://' + url
         else:
-            raise TypeError("invalid type for url.")
-  
+            raise TypeError("invalid type for url")
         self.url = URL(url)
-        self.http = HTTPClient(self.url.host, connection_timeout=self.request_timeout)
+        self.http = HTTPClient.from_url(self.url)
+        self.http.connection_timeout=self.request_timeout
     
     def run(self):
         """
@@ -73,6 +73,7 @@ class Ping(object):
         try:
             res = self.get_response()
         except gevent.socket.error as err:
+            #raise
             res = None
 
         # do the tests
@@ -121,14 +122,14 @@ class Ping(object):
                 res = self.get_response()
             except gevent.socket.error:
                 res = None
+                failed += 1
             if res:
                 body = res.read()
                 if self.do_response_tests(res, body, i):
                     successful += 1
                 else:
                     failed += 1
-            else:
-                failed += 1
+       
         timestamp = int(time.time())
         self.data['items']['request_loss']['timestamp'] = timestamp
         self.data['items']['request_loss']['units'] = '%'
@@ -170,11 +171,18 @@ class Ping(object):
         # TODO: What happens if we don't have ab on the system?
         # add / to host if missing (else ab fails)
         ab_url = str(self.url)
-        if str(self.url)[-len(self.url.host):] == str(self.url.host) and str(self.url.host[-1]) != '/':
+
+        if self.url.path == '': 
             ab_url = str(self.url) + '/'
-        p = Popen(['ab', '-n', n, '-c', c, ab_url], stdout=PIPE, stderr=PIPE)
-        output, err = p.communicate()
-        rc = p.returncode
+        try:
+            p = Popen(['ab', '-n', n, '-c', c, ab_url], stdout=PIPE, stderr=PIPE)
+            output, err = p.communicate()
+            rc = p.returncode
+        except FileNotFoundError:
+            print('{}: error: could not find ab'.format(__file__, self.url.host), file=sys.stderr)
+            err = 1 
+        timestamp = int(time.time())
+        #err = None
         if not err:
             output = output.decode('utf-8')
             if VERBOSE:
@@ -186,11 +194,15 @@ class Ping(object):
                     line = line.split()
                     rps = line[3]
                     break 
-            timestamp = int(time.time())
             self.data['items']['ab_test']['timestamp'] = timestamp
             self.data['items']['ab_test']['units'] = 'r/sec'
             self.data['items']['ab_test']['type'] = 'float'
             self.data['items']['ab_test']['value'] = float(rps)
+        else:
+            self.data['items']['ab_test']['timestamp'] = timestamp
+            self.data['items']['ab_test']['units'] = 'r/sec'
+            self.data['items']['ab_test']['type'] = 'float'
+            self.data['items']['ab_test']['value'] = ''
 
 
     def _test_expected_response_codes(self, response):
