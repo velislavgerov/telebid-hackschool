@@ -15,8 +15,8 @@ my $json = JSON->new->allow_nonref;
 
 ## FILENAMES
 
-my $srcfile = 'json-files/s.json';
-my $dstfile = 'json-files/d.json';
+my $srcfile = 'json-files/s.txt';
+my $dstfile = 'json-files/d.txt';
 
 ## open src file and read text
 local $/=undef;
@@ -47,7 +47,7 @@ say "\nTo JSON:";
 print $json->pretty->encode($dst);
 
 ## optinally set DEBUG
-$DEBUG = 1;
+#$DEBUG = 1;
 my $diff = json_diff($src, $dst);
 
 ## output
@@ -55,3 +55,4 @@ my $number = @{$diff};
 say "\nResulting diff ($number operations):";
 print $json->pretty->encode($diff);
 
+exit;

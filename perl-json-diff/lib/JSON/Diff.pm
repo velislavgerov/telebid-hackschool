@@ -215,7 +215,4 @@ sub json_diff {
     return $diff;
 }
 
-say $json->encode(1);
-say $json->encode("2");
-
 1;
