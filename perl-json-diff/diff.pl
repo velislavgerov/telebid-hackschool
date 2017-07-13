@@ -48,7 +48,7 @@ print $json->pretty->encode($dst);
 
 ## optinally set DEBUG
 $DEBUG = 1;
-my $diff = JSON::Diff->json_diff($src, $dst);
+my $diff = json_diff($src, $dst);
 
 ## output
 my $number = @{$diff};

@@ -16,9 +16,10 @@ use Scalar::Util qw(looks_like_number);
 use feature 'say';
 use parent 'Exporter';
 
-our $DEBUG = 0;
-our @EXPORT = qw($DEBUG);
+my $json = JSON->new->allow_nonref;
 
+our $DEBUG = 0;
+our @EXPORT = qw($DEBUG json_diff); 
 sub compare_values {
     my ($parts, $src, $dst, $diff) = @_;
     if ($DEBUG) {
@@ -28,29 +29,27 @@ sub compare_values {
         say "src: $src";
         say "dst: $dst";
     }
-    
+   
+    $json = $json->canonical([1]);
     # TODO: implement a smarter compare method. Consider the case of 1 and "1"
-    if (eq_deeply($src, $dst)) {
-        if ($DEBUG) { say "$src is equal to $dst"; }
-        return
-        #if (isnum($src) == isnum($dst)) {
-        #    # values are equal only if they are are from the same type
-        #    return
-        #}
+    my$src_text = $json->encode($src);
+    my $dst_text = $json->encode($dst);
+    
+    if (eq_deeply($src_text, $dst_text)) {     
+        # return only if the case is not like "1" == 1
+        if (isnum($src) == isnum($dst)) {
+            return;
+        }
     }
-
+        
     if (ref ($src) eq 'HASH' && ref($dst) eq 'HASH') {
         compare_hashes($parts, $src, $dst, $diff);
     }
     elsif (ref ($src) eq 'ARRAY' && ref ($dst) eq 'ARRAY') {
         compare_arrays($parts, $src, $dst, $diff);
     }
-    else { # SCALAR
+    else { 
         my $ptr = ptr_from_parts($parts);
-        # Check if the string has missing quotes. Consider 127.0.0.1
-        #if (substr($dst, 0, 1) ne '"' && ! substr($dst, -1) ne '"') {
-        #    if (! looks_like_number($dst)) { $dst = '"' . $dst . '"'; }
-        #}
         push @{$diff}, {"op"=>"replace", "path"=>$ptr, "value"=>$dst}; 
         if ($DEBUG) {say "Diff updated: @{$diff}";}
     }
@@ -81,7 +80,7 @@ sub compare_arrays {
         if ($DEBUG) { say "comprating dst:$left to src:$right"; }
 
         if (eq_deeply($left, $right)) {
-                if ($i != $j) {
+            if ($i != $j) {
                 @parts = (@{$parts}, $i);
                 my $ptr = ptr_from_parts(\@parts);
                 push @{$diff}, {"op" => "add", "path" => $ptr, "value" => @{$dst}[$i]};
@@ -215,5 +214,8 @@ sub json_diff {
     
     return $diff;
 }
+
+say $json->encode(1);
+say $json->encode("2");
 
 1;
