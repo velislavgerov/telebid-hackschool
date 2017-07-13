@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
-mkdir json-files/
+mkdir -p json-files/
 perl tests.pl
 python evaluate.py
