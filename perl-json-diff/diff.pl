@@ -39,7 +39,6 @@ my $src = $json->decode($src_text); # json scalar
 my $dst = $json->decode($dst_text); # json scalar
 
 
-
 ## source json texts
 say "From JSON:";
 print $json->pretty->encode($src);
@@ -48,7 +47,7 @@ say "\nTo JSON:";
 print $json->pretty->encode($dst);
 
 ## optinally set DEBUG
-#$DEBUG = 1;
+$DEBUG = 1;
 my $diff = JSON::Diff->json_diff($src, $dst);
 
 ## output

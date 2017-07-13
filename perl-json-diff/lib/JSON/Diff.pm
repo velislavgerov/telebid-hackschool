@@ -10,7 +10,8 @@ use strict;
 use warnings;
 
 use JSON;
-use Data::Compare;
+use Test::Deep::NoTest;
+
 use Scalar::Util qw(looks_like_number);
 use feature 'say';
 use parent 'Exporter';
@@ -27,14 +28,18 @@ sub compare_values {
         say "src: $src";
         say "dst: $dst";
     }
-
+    
     # TODO: implement a smarter compare method. Consider the case of 1 and "1"
-    if (Compare($src, $dst)) {
+    if (eq_deeply($src, $dst)) {
         if ($DEBUG) { say "$src is equal to $dst"; }
         return
+        #if (isnum($src) == isnum($dst)) {
+        #    # values are equal only if they are are from the same type
+        #    return
+        #}
     }
 
-    if (ref ($src) eq 'HASH' && ref($dst) eq 'HASH') {  
+    if (ref ($src) eq 'HASH' && ref($dst) eq 'HASH') {
         compare_hashes($parts, $src, $dst, $diff);
     }
     elsif (ref ($src) eq 'ARRAY' && ref ($dst) eq 'ARRAY') {
@@ -75,20 +80,20 @@ sub compare_arrays {
     
         if ($DEBUG) { say "comprating dst:$left to src:$right"; }
 
-        if (Compare($left, $right)) {
+        if (eq_deeply($left, $right)) {
                 if ($i != $j) {
                 @parts = (@{$parts}, $i);
                 my $ptr = ptr_from_parts(\@parts);
                 push @{$diff}, {"op" => "add", "path" => $ptr, "value" => @{$dst}[$i]};
                 my $len_src_new = @src_new;
-                @src_new = (@src_new[0 .. $i], @{$dst}[$i], @src_new[$i .. $len_src_new]);
+                @src_new = (@src_new[0 .. $i - 1], @{$dst}[$i], @src_new[$i .. $len_src_new - 1]);
                 if ($DEBUG) { 
                     say "@{$diff}";
                     say "@src_new"; 
                 }
             }
             $i += 1;
-            $j = 0;
+            $j = $i;
         }
         else {
             if ($j == $len_dst - 1) {
@@ -110,7 +115,7 @@ sub compare_arrays {
             }
         }
     }
- 
+    
     my $len_src_new = @src_new;
     for (my $i=$len_src_new - 1; $i >= $len_dst; $i--) {
             #say "this: $i";
@@ -181,6 +186,11 @@ sub ptr_from_parts {
     }
 
     return $ptr;
+}
+
+sub isnum ($) {
+    return 0 if $_[0] eq '';
+    $_[0] ^ $_[0] ? 0 : 1
 }
 
 sub json_diff {
