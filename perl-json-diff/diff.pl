@@ -103,6 +103,7 @@ if ($is_pretty) {
 }
 else {
     print $json->encode($diff);
+    print "\n";
 }
 
 # Save JSON Pointer
