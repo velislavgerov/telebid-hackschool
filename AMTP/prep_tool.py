@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import csv
 import json
 import copy
@@ -14,7 +15,7 @@ with open('tests/input.json') as jsonfile:
             data['applications']['application_key_1']['pings'][str(row['Rank'])] = copy.deepcopy(new)
             cur = data['applications']['application_key_1']['pings'][str(row['Rank'])]
             cur['name'] = row['URL']
-            cur['request_timeout'] = 1
+            cur['request_timeout'] = 5
             cur['requests_count'] = 1
             cur['url'] = row['URL']
             del cur['items']['ab_test']

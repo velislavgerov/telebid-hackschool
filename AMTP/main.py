@@ -58,7 +58,7 @@ class Ping(object):
         else:
             raise TypeError("invalid type for url")
         self.url = URL(url)
-        self.http = HTTPClient.from_url(self.url, concurrency=100)
+        self.http = HTTPClient.from_url(self.url, concurrency=500)
         self.http.connection_timeout=self.request_timeout
     
     def run(self):
@@ -69,46 +69,16 @@ class Ping(object):
             print("Ping started ({})".format(self.data['name']))
         
         # check if hostname resolves
-        try:
-            gevent.socket.gethostbyname(self.url.host)
-        except gevent.socket.error:
-            print('{}: error: hostname {} does not resolve'.format(__file__, self.url.host), file=sys.stderr)
+        #try:
+        #    gevent.socket.gethostbyname(self.url.host)
+        #except gevent.socket.error:
+        #    print('{}: error: hostname {} does not resolve'.format(__file__, self.url.host), file=sys.stderr)
 
-        # do the ping
-        try:
-            res = self.get_response()
-        except gevent.socket.error as err:
-            #raise
-            res = None
-
-        # do the tests
-        if VERBOSE:
-            print("Initial response test results for {}".format(self.data['name']))
-        
-        is_erc, is_ehd, is_erb = True, True, True
-    
-        if res:
-            if 'expected_response_codes' in self.data:
-                is_erc = self._test_expected_response_codes(res)
-                if VERBOSE:
-                    print("Testing expected status code - {}".format("OK" if is_erc else "FAIL"))
-            if 'expected_headers' in self.data:
-                is_ehd = self._test_expected_header(res)
-                if VERBOSE:
-                    print("Testing expected header      - {}".format("OK" if is_ehd else "FAIL"))
-            
-            if 'expected_response_body' in self.data:
-                body = res.read() # bytes
-                is_erb = self._test_expected_body(body)
-                if VERBOSE:
-                    print("Testing expected body        - {}".format("OK" if is_erb else "FAIL"))
-
-        if is_erc and is_ehd and is_erb:
-            for key in self.data['items']:
-                try:
-                    eval('self.do_' + key + '()')
-                except AttributeError:
-                    print("{}: HTTPPinger does not support item '{}'". format(__file__, key), file=sys.stderr)
+        for key in self.data['items']:
+            try:
+                eval('self.do_' + key + '()')
+            except AttributeError:
+                print("{}: HTTPPinger does not support item '{}'". format(__file__, key), file=sys.stderr)
         
         self.http.close()
 
@@ -127,11 +97,11 @@ class Ping(object):
         for i in range(self.requests_count):
             try:
                 res = self.get_response()
+                body = res.read()
             except gevent.socket.error:
                 res = None
                 failed += 1
             if res:
-                body = res.read()
                 if self.do_response_tests(res, body, i):
                     successful += 1
                 else:
@@ -268,8 +238,7 @@ class HTTPPinger(object):
                 ping = Ping(application_name, ping_name, pings[ping_name])
                 self.pings.append(ping)
     
-        self.pool = Pool(500)
-        #self.pool.start()
+        self.pool = Pool(500) 
     
     def shutdown(self):
         self.pool.kill()
@@ -297,9 +266,6 @@ class HTTPPinger(object):
             return json.dumps(self.data)
 
     def run(self):
-        
-        #gevent.joinall([gevent.spawn(x.run) for x in self.pings])
-        #with gevent.Timeout(100, False):
         for x in self.pings:
             self.pool.spawn(x.run)
         self.pool.join()
@@ -394,6 +360,7 @@ Asynchronous Multi Target Pinger (AMTP)
 """)
     parser.add_argument('-v', '--verbose', help='display additional information', action='store_true')
     parser.add_argument('-o', '--output', metavar="FILE", nargs=1, help='specify path to output the TBMON result file', default='stdout')
+    parser.add_argument('-i', '--interactive', help='interactive mode', action='store_true')
     requiredNamed = parser.add_argument_group('required arguments')
     requiredNamed.add_argument('-c', '--config', metavar="FILE", nargs=1, type=str, help='specify path to a TBMON configuration file', required=True)
     args = parser.parse_args()
@@ -401,7 +368,6 @@ Asynchronous Multi Target Pinger (AMTP)
     # set verbosity
     global VERBOSE
     VERBOSE = args.verbose
-
     # input file path [required]
     input_file_path = args.config[0]
     if not os.path.isabs(input_file_path):
@@ -420,11 +386,13 @@ Asynchronous Multi Target Pinger (AMTP)
         if not os.path.isabs(output_file_path):
             cwd = os.getcwd()
             output_file_path = os.path.join(cwd, output_file_path)
-        if os.path.isfile(output_file_path):
-            answer = str(input('The file {} already exists. '.format(output_file_path) +
-                'Do you wish to continue and overwrite it? [Y/n] '))
-            if not answer.lower() == 'y' or answer.lower() == 'yes':
-                sys.exit()
+        if args.interactive:
+            if os.path.isfile(output_file_path):
+                print('The file {} already exists. '.format(output_file_path) +
+                    'Do you wish to continue and overwrite it? [Y/n] ', end='')
+                answer = str(input())
+                if not answer.lower() == 'y' or answer.lower() == 'yes':
+                    sys.exit()
         if os.path.isdir(output_file_path):
             print('{}: error: {} is a directory'.format(__file__, output_file_path),
                     file=sys.stderr)
