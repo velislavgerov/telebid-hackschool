@@ -13,23 +13,49 @@ use feature 'say';
 ## set JSON OO interface
 my $json = JSON->new->allow_nonref;
 
-## FILENAMES
+## input filenames
+my $ARGC = @ARGV;
 
-my $srcfile = 'json-files/s.txt';
-my $dstfile = 'json-files/d.txt';
+if ($ARGC == 0) {
+    say "$0: missing operand after '$0'";
+    say "$0: Try '$0 --help' for more information.";
+    exit;
+}
+elsif ($ARGC == 1) {
+    if ($ARGV[0] eq "--help" || $ARGV[0] eq "-h") {
+        say "Usage: $0 SOURCE DEST";
+        say "Calculates JSON Patch from SOURCE and DEST files.";
+        say "";
+        say "Options:";
+        say "  -h, --help   dispaly this help and exit";
+        say "";
+        exit;
+    }
+    else {
+        say "$0: missing destination file operand.";
+        exit;
+    }
+}
+elsif ($ARGC > 2) {
+    say "$0: extra operand $ARGV[2]";
+    exit;
+}
+
+my $srcfile = $ARGV[0];
+my $dstfile = $ARGV[1];
 
 ## open src file and read text
 local $/=undef;
 
 open ( FILE, '<:encoding(UTF-8)', $srcfile) 
-    or die "Could not open file $srcfile $!";
+    or die "Could not open file $srcfile: $!";
 binmode FILE;
 my $src_text = <FILE>;
 close FILE;
 
 ## open dst file and read text
 open ( FILE, '<:encoding(UTF-8)', $dstfile) 
-    or die "Could not open file $dstfile $!";
+    or die "Could not open file $dstfile: $!";
 binmode FILE;
 my $dst_text = <FILE>;
 close FILE;

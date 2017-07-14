@@ -127,16 +127,16 @@ class Ping(object):
         if 'expected_response_codes' in self.data:
             is_erc = self._test_expected_response_codes(response)
             if VERBOSE:
-                print("Testing expected status code - {} - {}".format("OK" if is_erc else "FAIL", self.url))
+                print("Testing expected status code - {} - {}".format(" OK " if is_erc else "FAIL", self.url))
         if 'expected_headers' in self.data:
             is_ehd = self._test_expected_header(response)
             if VERBOSE:
-                print("Testing expected header      - {} - {}".format("OK" if is_ehd else "FAIL", self.url))
+                print("Testing expected header      - {} - {}".format(" OK " if is_ehd else "FAIL", self.url))
         
         if 'expected_response_body' in self.data:
             is_erb = self._test_expected_body(body)
             if VERBOSE:
-                print("Testing expected body        - {} - {}".format("OK" if is_erb else "FAIL", self.url))
+                print("Testing expected body        - {} - {}".format(" OK " if is_erb else "FAIL", self.url))
 
         if is_erc and is_ehd and is_erb:
             return True
