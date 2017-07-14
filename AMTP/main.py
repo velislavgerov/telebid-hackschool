@@ -1,12 +1,17 @@
 #!/usr/bin/env python
 from __future__ import print_function
 
-import gevent.pool
+import gevent
+from gevent.pool import Group
+from gevent.pool import Pool
 import gevent.socket
+from gevent import monkey
 import json
 
 from geventhttpclient import HTTPClient
 from geventhttpclient.url import URL
+
+monkey.patch_all()
 
 import os
 import sys
@@ -53,7 +58,7 @@ class Ping(object):
         else:
             raise TypeError("invalid type for url")
         self.url = URL(url)
-        self.http = HTTPClient.from_url(self.url)
+        self.http = HTTPClient.from_url(self.url, concurrency=100)
         self.http.connection_timeout=self.request_timeout
     
     def run(self):
@@ -104,7 +109,9 @@ class Ping(object):
                     eval('self.do_' + key + '()')
                 except AttributeError:
                     print("{}: HTTPPinger does not support item '{}'". format(__file__, key), file=sys.stderr)
-    
+        
+        self.http.close()
+
     def get_response(self):
         """
         Makes a request and returns a geventhttpclient response object
@@ -260,6 +267,12 @@ class HTTPPinger(object):
             for ping_name in pings:
                 ping = Ping(application_name, ping_name, pings[ping_name])
                 self.pings.append(ping)
+    
+        self.pool = Pool(500)
+        #self.pool.start()
+    
+    def shutdown(self):
+        self.pool.kill()
 
     def dump(self, file=None):
         """
@@ -285,10 +298,12 @@ class HTTPPinger(object):
             return json.dumps(self.data)
 
     def run(self):
-        pool = gevent.pool.Pool(20)
+        
+        #gevent.joinall([gevent.spawn(x.run) for x in self.pings])
+        #with gevent.Timeout(100, False):
         for x in self.pings:
-            pool.spawn(x.run)
-        pool.join()
+            self.pool.spawn(x.run)
+        self.pool.join()
 
     def validate(self, data=None):
         """
