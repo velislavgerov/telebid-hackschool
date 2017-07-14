@@ -7,78 +7,113 @@ use JSON::Diff;
 
 use strict;
 use warnings;
+use JSON;
+use Getopt::Long qw(GetOptions);
 
 use feature 'say';
 
-## set JSON OO interface
-my $json = JSON->new->allow_nonref;
+## Handle OPTIONS
+my $is_help;
+my $is_pretty;
+my $is_verbose;
+my $output;
 
-## input filenames
+GetOptions(
+        'help|h' => \$is_help,
+        'pretty|p' => \$is_pretty,
+        'verbose|v' => \$is_verbose,
+        'output|o=s' => \$output
+) or die "$0: missing operand after '$0'\n$0: Try '$0 --help' for more information.";
+
+if ($is_help) {
+    print "Usage: $0 [OPTION]... [-o FILE] FILES\n";
+    print "Calculates JSON Patch difference from source to destination files.\n\n";
+    print "Mandatory arguments to long options are mandatory for short options too.\n";
+    print "  -o, --output=FILE  save output to FILE\n";
+    print "  -p, --pretty       display pretty formatted JSON Patch\n";
+    print "  -v, --verbose      display extra text\n";
+    print "  -h, --help         dispaly this help and exit\n\n";
+    print "Report bugs to: velislav\@telebid-pro.com\n";
+    exit;
+}
+
+## Handle FILES
 my $ARGC = @ARGV;
 
 if ($ARGC == 0) {
-    say "$0: missing operand after '$0'";
-    say "$0: Try '$0 --help' for more information.";
+    print "$0: missing operand after '$0'\n";
+    print "$0: Try '$0 --help' for more information.\n";
     exit;
 }
-elsif ($ARGC == 1) {
-    if ($ARGV[0] eq "--help" || $ARGV[0] eq "-h") {
-        say "Usage: $0 SOURCE DEST";
-        say "Calculates JSON Patch from SOURCE and DEST files.";
-        say "";
-        say "Options:";
-        say "  -h, --help   dispaly this help and exit";
-        say "";
-        exit;
-    }
-    else {
-        say "$0: missing destination file operand.";
-        exit;
-    }
+if ($ARGC == 1) {
+    print "$0: missing destination file operand.\n";
+    exit;
 }
 elsif ($ARGC > 2) {
-    say "$0: extra operand $ARGV[2]";
+    print "$0: extra operand '$ARGV[2]'\n";
     exit;
+}
+
+if ($is_verbose) {
+    $DEBUG = 1;
 }
 
 my $srcfile = $ARGV[0];
 my $dstfile = $ARGV[1];
 
-## open src file and read text
+# Open source FILE
 local $/=undef;
-
 open ( FILE, '<:encoding(UTF-8)', $srcfile) 
     or die "Could not open file $srcfile: $!";
 binmode FILE;
 my $src_text = <FILE>;
 close FILE;
 
-## open dst file and read text
+# Open destination FILE
 open ( FILE, '<:encoding(UTF-8)', $dstfile) 
     or die "Could not open file $dstfile: $!";
 binmode FILE;
 my $dst_text = <FILE>;
 close FILE;
 
-## decode both files
+# JSON OO interface
+my $json = JSON->new->allow_nonref;
+
+# Decode both FILES to JSON
 my $src = $json->decode($src_text); # json scalar
 my $dst = $json->decode($dst_text); # json scalar
 
-
-## source json texts
-say "From JSON:";
-print $json->pretty->encode($src);
-
-say "\nTo JSON:";
-print $json->pretty->encode($dst);
-
-## optinally set DEBUG
-#$DEBUG = 1;
+# Calculate JSON Patch difference
 my $diff = json_diff($src, $dst);
 
-## output
-my $number = @{$diff};
-say "\nResulting diff ($number operations):";
-print $json->pretty->encode($diff);
+# Output
+if ($DEBUG) {
+    say "From JSON:";
+    print $json->pretty->encode($src);
+
+    say "\nTo JSON:";
+    print $json->pretty->encode($dst);
+    
+    my $number_of_ops = @{$diff};
+    say "\nResulting diff ($number_of_ops " . ($number_of_ops == 1 ? "operation" : "operations") . "):";
+}
+
+if ($is_pretty) {
+    print $json->pretty->encode($diff);
+}
+else {
+    print $json->encode($diff);
+}
+
+# Save JSON Pointer
+if ($output) {
+    if ($DEBUG) { 
+        print "Saving JSON Pointer to: $output.\n"; 
+    }
+    open ( FILE, '>:encoding(UTF-8)', $output) 
+        or die "Could not open file $output $!";
+    print FILE to_json($diff, {"utf8"=>1});
+    close FILE;
+}
 
 exit;

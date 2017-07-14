@@ -16,15 +16,16 @@ use Scalar::Util qw(looks_like_number);
 use feature 'say';
 use parent 'Exporter';
 
-my $json = JSON->new->allow_nonref;
-
 our $DEBUG = 0;
 our @EXPORT = qw($DEBUG json_diff); 
+
+my $json = JSON->new->allow_nonref;
+
 sub compare_values {
-    my ($parts, $src, $dst, $diff) = @_;
+    my ($path, $src, $dst, $diff) = @_;
     if ($DEBUG) {
         say "Compare values";
-        say "parts: $parts";
+        say "path: $path";
         say "diff: $diff";
         say "src: $src";
         say "dst: $dst";
@@ -43,25 +44,25 @@ sub compare_values {
     }
         
     if (ref ($src) eq 'HASH' && ref($dst) eq 'HASH') {
-        compare_hashes($parts, $src, $dst, $diff);
+        compare_hashes($path, $src, $dst, $diff);
     }
     elsif (ref ($src) eq 'ARRAY' && ref ($dst) eq 'ARRAY') {
-        compare_arrays($parts, $src, $dst, $diff);
+        compare_arrays($path, $src, $dst, $diff);
     }
     else { 
-        my $ptr = ptr_from_parts($parts);
+        my $ptr = get_json_ptr($path);
         push @{$diff}, {"op"=>"replace", "path"=>$ptr, "value"=>$dst}; 
         if ($DEBUG) {say "Diff updated: @{$diff}";}
     }
 }
 
 sub compare_arrays {
-    my ($parts, $src, $dst, $diff) = @_;
-    my @parts;
+    my ($path, $src, $dst, $diff) = @_;
+    my @path;
 
     if ($DEBUG) {
         say "Compare arrays";
-        say "parts: $parts";
+        say "path: $path";
         say "diff: $diff";
         say "src: $src";
         say "dst: $dst";
@@ -81,8 +82,8 @@ sub compare_arrays {
 
         if (eq_deeply($left, $right)) {
             if ($i != $j) {
-                @parts = (@{$parts}, $i);
-                my $ptr = ptr_from_parts(\@parts);
+                @path = (@{$path}, $i);
+                my $ptr = get_json_ptr(\@path);
                 push @{$diff}, {"op" => "add", "path" => $ptr, "value" => @{$dst}[$i]};
                 my $len_src_new = @src_new;
                 @src_new = (@src_new[0 .. $i - 1], @{$dst}[$i], @src_new[$i .. $len_src_new - 1]);
@@ -96,8 +97,8 @@ sub compare_arrays {
         }
         else {
             if ($j == $len_dst - 1) {
-                @parts = (@{$parts}, $i);
-                my $ptr = ptr_from_parts(\@parts);
+                @path = (@{$path}, $i);
+                my $ptr = get_json_ptr(\@path);
                 push @{$diff}, {"op" => "add", "path" => $ptr, "value" => $left};
                 my $len_src_new = @src_new;
                 @src_new = (@src_new[0 .. $i - 1], $left, @src_new[$i .. $len_src_new-1]);
@@ -118,20 +119,20 @@ sub compare_arrays {
     my $len_src_new = @src_new;
     for (my $i=$len_src_new - 1; $i >= $len_dst; $i--) {
             #say "this: $i";
-        @parts = (@{$parts}, $i);
-        my $ptr = ptr_from_parts(\@parts);
+        @path = (@{$path}, $i);
+        my $ptr = get_json_ptr(\@path);
         push @{$diff}, {"op" => "remove", "path" => $ptr};
         if ($DEBUG) { say "@{$diff}"; }
     }
 }
 
 sub compare_hashes {
-    my ($parts, $src, $dst, $diff) = @_;
-    my @parts;
+    my ($path, $src, $dst, $diff) = @_;
+    my @path;
 
     if ($DEBUG) {
         say "Compare hashes";
-        say "parts: $parts";
+        say "path: $path";
         say "diff: $diff";
         say "src: $src";
         say "dst: $dst";
@@ -141,24 +142,24 @@ sub compare_hashes {
         if ($DEBUG) { say "Key: $key"; }
         # remove src key if not in dst
         if (! exists $$dst{$key}) {
-            @parts = (@{$parts}, $key);
-            my $ptr = ptr_from_parts(\@parts);
+            @path = (@{$path}, $key);
+            my $ptr = get_json_ptr(\@path);
             push @{$diff}, {"op" => "remove", "path" => $ptr};
             if ($DEBUG) {say "Diff updated: @{$diff}";}
             next
         }
         # else go deeper
         if ($DEBUG) { say "GOING DEEPER $key"; }
-        @parts = (@{$parts}, $key);
-        compare_values(\@parts, $$src{$key}, $$dst{$key}, $diff);
+        @path = (@{$path}, $key);
+        compare_values(\@path, $$src{$key}, $$dst{$key}, $diff);
         if ($DEBUG) { say "EXIT DEEPER $key"; }
     }
     
     if ($DEBUG) { say 'FOR KEY IN DST'; }
     foreach my $key (keys %{$dst}) {
         if (! exists $$src{$key}) {
-            @parts = (@{$parts}, $key);
-            my $ptr = ptr_from_parts(\@parts);
+            @path = (@{$path}, $key);
+            my $ptr = get_json_ptr(\@path);
             my $value = ${$dst}{$key};
             push @{$diff}, {"op" => "add", "path" => $ptr, "value" => $value};
             if ($DEBUG) {say "Diff updated: @{$diff}";}
@@ -166,22 +167,22 @@ sub compare_hashes {
     }
 }
 
-sub ptr_from_parts {
+sub get_json_ptr {
     # Returns JSON Pointer string
     # Input
-    #  :parts - reference to array specifying JSON path elements
+    #  :path - reference to array specifying JSON path elements
     
-    my @parts = @{$_[0]};
+    my @path = @{$_[0]};
     my $ptr;
     
-    if (!@parts) {
+    if (!@path) {
         return '';        # path to whole document
     }
 
-    foreach (@parts){
+    foreach (@path){
         $_ =~ s/~/~0/g;   # replace ~ with ~0
         $_ =~ s/\//~1/g;  # replace / with ~1
-        $ptr .= '/' . $_; # parts prefixed by /
+        $ptr .= '/' . $_; # prefix result with /
     }
 
     return $ptr;
@@ -194,23 +195,23 @@ sub isnum ($) {
 
 sub json_diff {
     # XXX: needs more elaborate input checking
-    my ($class, $src_json, $dst_json, $options);
+    my ($self, $src, $dst, $options);
     if ($_[0] eq 'JSON::Diff'){
-        ($class, $src_json, $dst_json, $options ) = @_;
+        ($self, $src, $dst, $options ) = @_;
     }
     else {
-        ($src_json, $dst_json, $options ) = @_;
+        ($src, $dst, $options ) = @_;
     }
     
-    my $diff = [];
-    my $parts = [];
-
     # $src_json е HASH или STRING
     # $dst_json е HASH или STRING
     # $options е HASH или UNDEF, да се игнорира към момента
     #   ... тук се случва магията
     
-    compare_values($parts, $src_json, $dst_json, $diff);
+    my $diff = [];
+    my $path = [];
+
+    compare_values($path, $src, $dst, $diff);
     
     return $diff;
 }
