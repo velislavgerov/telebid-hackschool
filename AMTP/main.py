@@ -279,13 +279,12 @@ class HTTPPinger(object):
         Dumps the current TBMON json data to stdin or to a file if specified
         :file(optional) - file object used to dump the TBMON data
         """
-        if VERBOSE:
-            print('TBMON output:{}'.format(self.dump_json()))
+        if file:
+            self.dump_json(file)
+            if VERBOSE:
+                print('TBMON output:{}'.format(self.dump_json()))
         else:
-            if file:
-                self.dump_json(file)
-            else:
-                print(self.dump_json())
+            print(self.dump_json())
 
     def dump_json(self, file=None):
         """
@@ -440,6 +439,7 @@ def main():
         data = json.load(file)
     http_pinger = HTTPPinger(data)
     http_pinger.run()
+  
     if inputs[1]:
         with open(inputs[1], 'w') as file:
             http_pinger.dump(file)
