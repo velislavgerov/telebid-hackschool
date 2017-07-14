@@ -10,6 +10,7 @@ import json
 
 from geventhttpclient import HTTPClient
 from geventhttpclient.url import URL
+from geventhttpclient._parser import HTTPParseError
 
 monkey.patch_all()
 
@@ -94,14 +95,18 @@ class Ping(object):
         """
         successful = 0
         failed = 0
+        res = None
+        body = None
         for i in range(self.requests_count):
             try:
                 res = self.get_response()
                 body = res.read()
             except gevent.socket.error:
-                res = None
                 failed += 1
-            if res:
+            except HTTPParseError as err:
+                print(err, self.url, file=sys.stderr)
+                failed += 1
+            if res and body:
                 if self.do_response_tests(res, body, i):
                     successful += 1
                 else:
@@ -122,16 +127,16 @@ class Ping(object):
         if 'expected_response_codes' in self.data:
             is_erc = self._test_expected_response_codes(response)
             if VERBOSE:
-                print("Testing expected status code - {}".format("OK" if is_erc else "FAIL"))
+                print("Testing expected status code - {} - {}".format("OK" if is_erc else "FAIL", self.url))
         if 'expected_headers' in self.data:
             is_ehd = self._test_expected_header(response)
             if VERBOSE:
-                print("Testing expected header      - {}".format("OK" if is_ehd else "FAIL"))
+                print("Testing expected header      - {} - {}".format("OK" if is_ehd else "FAIL", self.url))
         
         if 'expected_response_body' in self.data:
             is_erb = self._test_expected_body(body)
             if VERBOSE:
-                print("Testing expected body        - {}".format("OK" if is_erb else "FAIL"))
+                print("Testing expected body        - {} - {}".format("OK" if is_erb else "FAIL", self.url))
 
         if is_erc and is_ehd and is_erb:
             return True

@@ -10,7 +10,7 @@ with open('tests/500_o.json') as jsonfile:
         ping = data['applications']['application_key_1']['pings'][name]
         url = ping['url']
         if 'value' in ping['items']['request_loss']:
-            if ping['items']['request_loss']['value'] == 100:
+            if ping['items']['request_loss']['value'] > 0:
                 print(str(ping['items']['request_loss']['value']) + "%", url)
         else:
             print("Did not get results for:", url)
