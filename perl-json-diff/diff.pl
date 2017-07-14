@@ -1,7 +1,3 @@
-# ---------------------------------------------------------------------------- #
-# -------------------------------     DIFF    -------------------------------- #
-# ---------------------------------------------------------------------------- #
-
 use lib "lib";
 use JSON::Diff;
 
@@ -27,7 +23,7 @@ GetOptions(
 
 if ($is_help) {
     print "Usage: $0 [OPTION]... [-o FILE] FILES\n";
-    print "Calculates JSON Patch difference from source to destination files.\n\n";
+    print "Calculate JSON Patch difference from source to destination JSON FILES.\n\n";
     print "Mandatory arguments to long options are mandatory for short options too.\n";
     print "  -o, --output=FILE  save output to FILE\n";
     print "  -p, --pretty       display pretty formatted JSON Patch\n";
@@ -61,7 +57,7 @@ if ($is_verbose) {
 my $srcfile = $ARGV[0];
 my $dstfile = $ARGV[1];
 
-# Open source FILE
+## Open source FILE
 local $/=undef;
 open ( FILE, '<:encoding(UTF-8)', $srcfile) 
     or die "Could not open file $srcfile: $!";
@@ -69,24 +65,22 @@ binmode FILE;
 my $src_text = <FILE>;
 close FILE;
 
-# Open destination FILE
+## Open destination FILE
 open ( FILE, '<:encoding(UTF-8)', $dstfile) 
     or die "Could not open file $dstfile: $!";
 binmode FILE;
 my $dst_text = <FILE>;
 close FILE;
 
-# JSON OO interface
+## Open JSON OO interface and decode FILES
 my $json = JSON->new->allow_nonref;
+my $src = $json->decode($src_text);
+my $dst = $json->decode($dst_text);
 
-# Decode both FILES to JSON
-my $src = $json->decode($src_text); # json scalar
-my $dst = $json->decode($dst_text); # json scalar
-
-# Calculate JSON Patch difference
+## Calculate JSON Patch difference
 my $diff = json_diff($src, $dst);
 
-# Output
+## Output
 if ($DEBUG) {
     say "From JSON:";
     print $json->pretty->encode($src);
@@ -106,7 +100,7 @@ else {
     print "\n";
 }
 
-# Save JSON Pointer
+## Save JSON Pointer
 if ($output) {
     if ($DEBUG) { 
         print "Saving JSON Pointer to: $output.\n"; 
@@ -118,3 +112,48 @@ if ($output) {
 }
 
 exit;
+
+__END__
+
+=encoding utf8
+
+=head1 NAME
+
+diff.pl - perl script utilizing JSON::Diff
+
+=head1 SYNOPSIS
+
+diff.pl [OPTION]... [-o FILE] FILES
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-o, --output=FILE>
+
+Used to specify the output FILE for the resulting JSON Patch.
+
+
+=item B<-p, --pretty>
+
+Used to pretty print the resulting JSON Pointer.
+
+=item B<-v, --verbose>
+
+Enters verbose mode.
+
+=item B<-h, --help>
+ 
+Displays help text and exits.
+
+=back
+
+=head1 DESCRIPTION
+
+Using JSON::Diff to calculate JSON Patch difference between two FILES.
+
+=head1 AUTHOR
+
+Velislav Gerov E<lt>velislav@telebid-pro.comE<gt>
+
+=cut
