@@ -1,4 +1,4 @@
-#!/usr/bin/perl -wT
+#!/usr/bin/perl -w
 
 use lib "lib";
 use JSON::Diff;
@@ -80,7 +80,7 @@ my $src = $json->decode($src_text);
 my $dst = $json->decode($dst_text);
 
 ## Calculate JSON Patch difference
-my $diff = json_diff($src, $dst);
+my $diff = diff($src, $dst);
 
 ## Output
 if ($DEBUG) {
