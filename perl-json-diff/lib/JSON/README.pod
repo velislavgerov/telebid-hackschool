@@ -1,1 +1,1 @@
-Diff.pm
+./Diff.pm
