@@ -1,3 +1,5 @@
+#!/usr/bin/perl -wT
+
 use lib "lib";
 use JSON::Diff;
 

@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------------- #
 # JSON::Diff - JSON Patch (RFC6902) difference of two JSON files ------------- #
-# Author: Velislav Gerov <vgerov93@gmail.com> -------------------------------- #
-# Copyright 2017 Velislav Gerov <vgerov93@gmail.com> ------------------------- #
+# Author: Velislav Gerov <velislav@telebid-pro.com> -------------------------- #
+# Copyright 2017 Velislav Gerov <velislav@telebid-pro.com> ------------------- #
 # ---------------------------------------------------------------------------- #
 
 package JSON::Diff;
@@ -11,17 +11,16 @@ use warnings;
 
 use JSON;
 use Test::Deep::NoTest;
-
 use Scalar::Util qw(looks_like_number);
 use feature 'say';
 use parent 'Exporter';
 
 our $DEBUG = 0;
-our @EXPORT = qw($DEBUG json_diff); 
+our @EXPORT = qw($DEBUG diff); 
 
-my $json = JSON->new->allow_nonref;
+my $JSON = JSON->new->allow_nonref;
 
-sub compare_values {
+sub compareValues {
     my ($path, $src, $dst, $diff) = @_;
     if ($DEBUG) {
         say "Compare values";
@@ -31,32 +30,31 @@ sub compare_values {
         say "dst: $dst";
     }
    
-    $json = $json->canonical([1]);
-    # TODO: implement a smarter compare method. Consider the case of 1 and "1"
-    my$src_text = $json->encode($src);
-    my $dst_text = $json->encode($dst);
+    $JSON = $JSON->canonical([1]);
+    my $src_text = $JSON->encode($src);
+    my $dst_text = $JSON->encode($dst);
     
     if (eq_deeply($src_text, $dst_text)) {     
         # return only if the case is not like "1" == 1
-        if (isnum($src) == isnum($dst)) {
+        if (isNum($src) == isNum($dst)) {
             return;
         }
     }
         
     if (ref ($src) eq 'HASH' && ref($dst) eq 'HASH') {
-        compare_hashes($path, $src, $dst, $diff);
+        compareHashes($path, $src, $dst, $diff);
     }
     elsif (ref ($src) eq 'ARRAY' && ref ($dst) eq 'ARRAY') {
-        compare_arrays($path, $src, $dst, $diff);
+        compareArrays($path, $src, $dst, $diff);
     }
     else { 
-        my $ptr = get_json_ptr($path);
+        my $ptr = getJsonPtr($path);
         push @{$diff}, {"op"=>"replace", "path"=>$ptr, "value"=>$dst}; 
         if ($DEBUG) {say "Diff updated: @{$diff}";}
     }
 }
 
-sub compare_arrays {
+sub compareArrays {
     my ($path, $src, $dst, $diff) = @_;
     my @path;
 
@@ -83,7 +81,7 @@ sub compare_arrays {
         if (eq_deeply($left, $right)) {
             if ($i != $j) {
                 @path = (@{$path}, $i);
-                my $ptr = get_json_ptr(\@path);
+                my $ptr = getJsonPtr(\@path);
                 push @{$diff}, {"op" => "add", "path" => $ptr, "value" => @{$dst}[$i]};
                 my $len_src_new = @src_new;
                 @src_new = (@src_new[0 .. $i - 1], @{$dst}[$i], @src_new[$i .. $len_src_new - 1]);
@@ -98,7 +96,7 @@ sub compare_arrays {
         else {
             if ($j == $len_dst - 1) {
                 @path = (@{$path}, $i);
-                my $ptr = get_json_ptr(\@path);
+                my $ptr = getJsonPtr(\@path);
                 push @{$diff}, {"op" => "add", "path" => $ptr, "value" => $left};
                 my $len_src_new = @src_new;
                 @src_new = (@src_new[0 .. $i - 1], $left, @src_new[$i .. $len_src_new-1]);
@@ -120,13 +118,13 @@ sub compare_arrays {
     for (my $i=$len_src_new - 1; $i >= $len_dst; $i--) {
             #say "this: $i";
         @path = (@{$path}, $i);
-        my $ptr = get_json_ptr(\@path);
+        my $ptr = getJsonPtr(\@path);
         push @{$diff}, {"op" => "remove", "path" => $ptr};
         if ($DEBUG) { say "@{$diff}"; }
     }
 }
 
-sub compare_hashes {
+sub compareHashes {
     my ($path, $src, $dst, $diff) = @_;
     my @path;
 
@@ -143,7 +141,7 @@ sub compare_hashes {
         # remove src key if not in dst
         if (! exists $$dst{$key}) {
             @path = (@{$path}, $key);
-            my $ptr = get_json_ptr(\@path);
+            my $ptr = getJsonPtr(\@path);
             push @{$diff}, {"op" => "remove", "path" => $ptr};
             if ($DEBUG) {say "Diff updated: @{$diff}";}
             next
@@ -151,7 +149,7 @@ sub compare_hashes {
         # else go deeper
         if ($DEBUG) { say "GOING DEEPER $key"; }
         @path = (@{$path}, $key);
-        compare_values(\@path, $$src{$key}, $$dst{$key}, $diff);
+        compareValues(\@path, $$src{$key}, $$dst{$key}, $diff);
         if ($DEBUG) { say "EXIT DEEPER $key"; }
     }
     
@@ -159,7 +157,7 @@ sub compare_hashes {
     foreach my $key (keys %{$dst}) {
         if (! exists $$src{$key}) {
             @path = (@{$path}, $key);
-            my $ptr = get_json_ptr(\@path);
+            my $ptr = getJsonPtr(\@path);
             my $value = ${$dst}{$key};
             push @{$diff}, {"op" => "add", "path" => $ptr, "value" => $value};
             if ($DEBUG) {say "Diff updated: @{$diff}";}
@@ -167,7 +165,7 @@ sub compare_hashes {
     }
 }
 
-sub get_json_ptr {
+sub getJsonPtr {
     # Returns JSON Pointer string
     # Input
     #  :path - reference to array specifying JSON path elements
@@ -188,12 +186,12 @@ sub get_json_ptr {
     return $ptr;
 }
 
-sub isnum ($) {
+sub isNum ($) {
     return 0 if $_[0] eq '';
     $_[0] ^ $_[0] ? 0 : 1
 }
 
-sub json_diff {
+sub diff {
     # XXX: needs more elaborate input checking
     my ($self, $src, $dst, $options);
     if ($_[0] eq 'JSON::Diff'){
@@ -202,18 +200,31 @@ sub json_diff {
     else {
         ($src, $dst, $options ) = @_;
     }
-    
-    # $src_json е HASH или STRING
-    # $dst_json е HASH или STRING
-    # $options е HASH или UNDEF, да се игнорира към момента
-    #   ... тук се случва магията
-    
+
     my $diff = [];
     my $path = [];
 
-    compare_values($path, $src, $dst, $diff);
+    compareValues($path, $src, $dst, $diff);
     
     return $diff;
 }
 
 1;
+
+__END__
+
+=encoding utf8
+
+=head1 NAME
+
+JSON::Diff
+
+=head1 DESCRIPTION
+
+A minimalistic module to calculate JSON Patch difference between two FILES.
+
+=head1 AUTHOR
+
+Velislav Gerov E<lt>velislav@telebid-pro.comE<gt>
+
+=cut
