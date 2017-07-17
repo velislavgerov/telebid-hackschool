@@ -4,7 +4,7 @@ import json
 import copy
 
 
-with open('tests/input.json') as jsonfile:
+with open('../tests/input.json') as jsonfile:
     data = json.loads(jsonfile.read())
     data['applications']['application_key_1']['name'] = 'Ping top 500 websites'
     new = data['applications']['application_key_1']['pings']['google']
