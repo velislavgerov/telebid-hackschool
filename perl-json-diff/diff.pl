@@ -1,9 +1,5 @@
-<<<<<<< HEAD
-#! /usr/bin/perl -wT
-=======
 #!/usr/bin/perl -w
 
->>>>>>> d89e01180fee75694c5f086e7f97be91b5d5cd2e
 use lib "lib";
 use JSON::Diff;
 
