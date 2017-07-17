@@ -1,4 +1,6 @@
 {
+  "version": "3.0",
+  "update_interval": 0,
   "applications": {
     "application_key_1": {
       "name": "HTTP Tech Shop monitoring",
@@ -9,9 +11,9 @@
           "requests_count": 20,
           "request_timeout": 0.00001,
           "expected_response_codes": [
-            "200",
-            "301",
-            "302"
+            200,
+            301,
+            302
           ],
           "items": {
             "ab_test": {

@@ -1,18 +1,13 @@
 #!/usr/bin/env python
 from __future__ import print_function
 
-import gevent
-from gevent.pool import Group
+from jsonschema import validate
 from gevent.pool import Pool
 import gevent.socket
-from gevent import monkey
-import json
 
 from geventhttpclient import HTTPClient
 from geventhttpclient.url import URL
 from geventhttpclient._parser import HTTPParseError
-
-monkey.patch_all()
 
 import os
 import sys
@@ -21,6 +16,8 @@ import re
 import argparse
 from pprint import pprint
 from subprocess import Popen, PIPE
+import json
+
 
 if sys.version[0] == "2":
     input = raw_input
@@ -224,16 +221,21 @@ class HTTPPinger(object):
     Our main application object. Responsible for managing and conducting the pings
     """
 
-    def __init__(self, data):
+    def __init__(self, data, schema_path=None):
         """
         :data - dictionary object parsed from a TBMON json file
         """
         self.data = data
         self.pings = []
-
-        if not self.validate():
-            sys.exit(1)
         
+        # Load TBMON HTTP Ping Schema
+        schema_path = schema_path or 'schema/TBMON_HTTP_Ping_Schema.json'
+        file_dir = os.path.dirname(os.path.realpath(__file__))
+        rel_path = os.path.join(file_dir, schema_path)
+        with open(rel_path, 'r', encoding='utf8') as json_file:
+            schema = json.load(json_file)
+            validate(self.data, schema)
+
         # gather out Ping objects
         for application_name in self.data['applications']:
             name = self.data['applications'][application_name]['name']
@@ -275,83 +277,6 @@ class HTTPPinger(object):
             self.pool.spawn(x.run)
         self.pool.join()
 
-    def validate(self, data=None):
-        """
-        Returns True if TBMON data matches the specification for HTTP Pinger
-        If no data was specified, validates the data belonging to the object
-        :data(optional) - deserialized JSON object to be validated as TBMON
-        """
-        
-        if not data:
-            data = self.data
-
-        if not 'applications' in data:
-            print("TBMON error: 'applications' array is required", file=sys.stderr)
-            return False
-        
-        applications = data['applications']
-
-        if not len(applications) >= 1:
-            print("TBMON error: there are no 'application' objects in the 'applications' array"\
-                    , file=sys.stderr)
-            return False
-        
-        for application_name in applications:
-            application = applications[application_name]
-        
-            if not 'name' in application:
-                print("TBMON error ({}): the 'name' string ".format(application_name) + 
-                    "is required in an application object", file=sys.stderr)
-                return False
-
-            if not 'pings' in application:
-                print("TBMON error ({}): the 'pings' array ".format(application_name) + 
-                    "is required in an application object", file=sys.stderr)
-                return False
-            
-            pings = application['pings']
-            
-            if not len(pings) >= 1:
-                print("TBMON error ({}): there are no 'ping' objects the 'pings'array "\
-                        .format(application_name) + "is required in an application object"\
-                        , file=sys.stderr)
-                return False
-
-            for ping_name in pings:
-                ping = pings[ping_name]
-
-                if not 'name' in ping:
-                    print("TBMON error ({}:{}): ".format(application_name, ping_name) + 
-                        "the 'name' string is required in a ping object", file=sys.stderr)
-                    return False
-
-                if not 'url' in ping:
-                    print("TBMON error ({}:{}): ".format(application_name, ping_name) + 
-                        "the 'url' string is required in a ping object", file=sys.stderr)
-                    return False
-
-                if not 'items' in ping:
-                    print("TBMON error ({}:{}): ".format(application_name, ping_name) + 
-                        "the 'items' array is required in a ping object", file=sys.stderr)
-                    return False
-
-                items = ping['items']
-
-                if not len(items) >= 1:
-                    print("TBMON error ({}:{}): ".format(application_name, ping_name) + 
-                        "there are no 'item' objects in the 'items' array", file=sys.stderr)
-                    return False
-
-                for item_name in items:
-                    item = items[item_name]
-
-                    if not 'name' in item:
-                        print("TBMON error ({}:{}:{}): ".format(application_name, ping_name,\
-                            item_name) + "the 'name' string is required in an item object",\
-                            file=sys.stderr)
-                        return False
-        return True
-
 
 def get_inputs():
     """
@@ -379,7 +304,7 @@ Asynchronous Multi Target Pinger (AMTP)
         cwd = os.getcwd()
         file_path = os.path.join(cwd, input_file_path)
     if not os.path.isfile(file_path):
-        print('{}: error: {} is not a file'.format(__file__, input_file_path),
+        print('{}: error: {} is not a file'.format(os.relpath(__file__), input_file_path),
                 file=sys.stderr)
         sys.exit()
 
