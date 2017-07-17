@@ -23,7 +23,7 @@ with open('../tests/input.json') as jsonfile:
 
     del data['applications']['application_key_1']['pings']['google']
 
-    with open('tests/500.json', 'w') as file:
+    with open('500.json', 'w') as file:
         json.dump(data, file)
             #data['applications']
             #print(row['URL'])
