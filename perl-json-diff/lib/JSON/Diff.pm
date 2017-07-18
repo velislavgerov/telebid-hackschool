@@ -57,11 +57,11 @@ sub CompareValues($$$$)
         
     if (ref($src) eq 'HASH' && ref($dst) eq 'HASH') 
     {
-        compareHashes($path, $src, $dst, $diff);
+        CompareHashes($path, $src, $dst, $diff);
     }
     elsif (ref($src) eq 'ARRAY' && ref($dst) eq 'ARRAY') 
     {
-        compareArrays($path, $src, $dst, $diff);
+        CompareArrays($path, $src, $dst, $diff);
     }
     else 
     {
@@ -71,11 +71,11 @@ sub CompareValues($$$$)
             "path"  => $ptr,
             "value" => $dst
         };
-        TRACE("DIFF updated: ", Dumper($diff));
+        TRACE("DIFF updated: ", $diff);
     }
 }
 
-sub compareArrays($$$$)
+sub CompareArrays($$$$)
 {
     my ($path, $src, $dst, $diff) = @_;
     my @curr_path;
@@ -84,7 +84,7 @@ sub compareArrays($$$$)
     TRACE("PATH:   ", $path);
     TRACE("SOURCE: ", $src);
     TRACE("DEST:   ", $dst);
-
+    
     my @src_new = @{$src};
     my $len_dst = @{$dst};
     my $i = 0;
@@ -98,14 +98,13 @@ sub compareArrays($$$$)
             if ($i != $j) {
                 @curr_path = (@{$path}, $i);
                 my $ptr = getJsonPtr(\@curr_path);
-                push @{$diff}, {"op" => "add",
-                                "path" => $ptr, 
-                                "value" => @{$dst}[$i]
+                push @{$diff}, {
+                    "op" => "add",
+                    "path" => $ptr, 
+                    "value" => @{$dst}[$i]
                 };
-                TRACE(
-                    "DIFF updated: ",
-                    Dumper($diff)
-                );
+
+                TRACE("DIFF updated: ",$diff);
 
                 my $len_src_new = @src_new;
                 @src_new = (
@@ -126,10 +125,7 @@ sub compareArrays($$$$)
                     "path" => $ptr,
                     "value" => $left
                 };
-                TRACE(
-                    "DIFF updated: ",
-                    Dumper($diff)
-                );
+                TRACE("DIFF updated: ", $diff);
                 my $len_src_new = @src_new;
                 @src_new = (@src_new[0 .. ($i - 1)],
                             $left, 
@@ -154,14 +150,30 @@ sub compareArrays($$$$)
             "op" => "remove", 
             "path" => $ptr
         }; 
-        TRACE(
-            "DIFF updated: ",
-            Dumper($diff)
-        );
+        TRACE("DIFF updated: ", $diff);
     }
 }
+=pod
+sub AddOperation
+{
+    @curr_path = (@{$path}, $i);
+    my $ptr = getJsonPtr(\@curr_path);
+    push @{$diff}, {
+            "op" => "add",
+            "path" => $ptr,
+            "value" => $left
+    };
 
-sub compareHashes($$$$) {
+    TRACE("DIFF updated: ", $diff);
+    
+    my $len_src_new = @src_new;
+    @src_new = (@src_new[0 .. ($i - 1)],
+                $left, 
+                @src_new[$i .. ($len_src_new-1)]
+    );
+}
+=cut
+sub CompareHashes($$$$) {
     my ($path, $src, $dst, $diff) = @_;
     my @curr_path;
 
@@ -212,7 +224,8 @@ sub compareHashes($$$$) {
     }
 }
 
-sub getJsonPtr($) {
+sub getJsonPtr($) 
+{
     # Returns JSON Pointer string
     # Input
     #  :path - reference to array specifying JSON path elements
@@ -220,11 +233,13 @@ sub getJsonPtr($) {
     my @curr_path = @{$_[0]};
     my $ptr;
     
-    if (!@curr_path) {
+    if (!@curr_path) 
+    {
         return '';        # path to whole document
     }
 
-    foreach my $point (@curr_path){
+    foreach my $point (@curr_path)
+    {
         $point =~ s/~/~0/g;   # replace ~ with ~0
         $point =~ s/\//~1/g;  # replace / with ~1
         $ptr .= '/' . $point; # prefix result with /
@@ -233,7 +248,8 @@ sub getJsonPtr($) {
     return $ptr;
 }
 
-sub isNum($) {
+sub isNum($) 
+{
     # Input: Perl Scalar
     # Returns: 1 if perl scalar is a number, 0 otherwise
     # Source: PerlMonks

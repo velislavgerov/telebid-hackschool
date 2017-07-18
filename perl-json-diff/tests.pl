@@ -62,19 +62,19 @@ foreach my $test_file (@test_files) {
 
         foreach my $test (@{${$test_file}{text}}){
             if (exists ${$test}{disabled}) { 
-                if ($DEBUG) {
+                if ($JSON::Diff::DEBUG) {
                     print "(disabled) skipping...\n";
                 }
                 next; 
             }
             elsif (exists ${$test}{error}) {
-                if ($DEBUG) {
+                if ($JSON::Diff::DEBUG) {
                     print "(error) skipping...\n";
                 }
                 next; 
             }
             elsif (! exists ${$test}{expected}) {
-                if ($DEBUG) {
+                if ($JSON::Diff::DEBUG) {
                     print "(no expected) skipping...\n";
                 }
                 next; 
@@ -113,9 +113,9 @@ foreach my $test_file (@test_files) {
                 #print "Got:\n";
                 #print "$result_patch\n";
 
-                #$DEBUG = 1;
+                #$JSON::Diff::DEBUG = 1;
                 #my $diff = JSON::Diff->json_diff($src, $dst);
-                #$DEBUG = 0;
+                #$JSON::Diff::DEBUG = 0;
                 $count_fail += 1;
             }
         }
