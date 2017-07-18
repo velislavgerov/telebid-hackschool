@@ -1,9 +1,3 @@
-# ---------------------------------------------------------------------------- #
-# JSON::Diff - JSON Patch (RFC6902) difference of two JSON files ------------- #
-# Author: Velislav Gerov <velislav@telebid-pro.com> -------------------------- #
-# Copyright 2017 Velislav Gerov <velislav@telebid-pro.com> ------------------- #
-# ---------------------------------------------------------------------------- #
-
 package JSON::Diff;
 
 use strict;
@@ -18,9 +12,9 @@ use parent 'Exporter';
 our $DEBUG = 0;
 our @EXPORT = qw($DEBUG diff); 
 
-my $JSON = JSON->new->allow_nonref;
+my $json = JSON->new->allow_nonref;
 
-sub diff($$;$) {
+sub diff {
     # XXX: needs more elaborate input checking
     my ($src, $dst, $options ) = @_;
     
@@ -28,24 +22,17 @@ sub diff($$;$) {
     my $path = [];
 
     compareValues($path, $src, $dst, $diff);
-    
+
     return $diff;
 }
 
 sub compareValues {
     my ($path, $src, $dst, $diff) = @_;
-    
-    Trace(
-        "Comparing values",
-        "path: $path",
-        "diff: $diff",
-        "src: $src",
-        "dst: $dst"
-    );
+
    
-    $JSON = $JSON->canonical([1]);
-    my $src_text = $JSON->encode($src);
-    my $dst_text = $JSON->encode($dst);
+    $json = $json->canonical([1]);
+    my $src_text = $json->encode($src);
+    my $dst_text = $json->encode($dst);
     
     if (eq_deeply($src_text, $dst_text)) {     
         # return only if the case is not like "1" == 1
@@ -54,7 +41,7 @@ sub compareValues {
         }
     }
         
-    if (ref ($src) eq 'HASH' && ref($dst) eq 'HASH') {
+    if (ref ($src) eq 'HASH' && ref ($dst) eq 'HASH') {
         compareHashes($path, $src, $dst, $diff);
     }
     elsif (ref ($src) eq 'ARRAY' && ref ($dst) eq 'ARRAY') {
@@ -67,7 +54,6 @@ sub compareValues {
                 "path"=>$ptr,
                 "value"=>$dst
         }; 
-        Trace("Diff updated: @{$diff}");
     }
 }
 
@@ -75,14 +61,6 @@ sub compareArrays {
     my ($path, $src, $dst, $diff) = @_;
     my @path;
 
-    Trace(
-        "Comparing arrays",
-        "path: $path",
-        "diff: $diff",
-        "src: $src",
-        "dst: $dst"
-    );    
-    
     my @src_new = @{$src};
     my $len_dst = @{$dst};
     my $i = 0;
@@ -91,8 +69,6 @@ sub compareArrays {
     {   
         my $left = @{$dst}[$i];
         my $right = $src_new[$j];
-    
-        Trace("comprating dst:$left to src:$right");
 
         if (eq_deeply($left, $right)) {
             if ($i != $j) {
@@ -106,10 +82,6 @@ sub compareArrays {
                 @src_new = (@src_new[0 .. $i - 1],
                             @{$dst}[$i],
                             @src_new[$i .. $len_src_new - 1]
-                );
-                Trace(
-                    "@{$diff}",
-                    "@src_new" 
                 );
             }
             $i += 1;
@@ -127,10 +99,6 @@ sub compareArrays {
                 @src_new = (@src_new[0 .. $i - 1],
                             $left, 
                             @src_new[$i .. $len_src_new-1]
-                );
-                Trace(
-                    "@{$diff}",
-                    "@src_new"
                 );
 
                 $i += 1;
@@ -150,7 +118,6 @@ sub compareArrays {
                         "path" => $ptr
         };
         
-        Trace("@{$diff}");
     }
 }
 
@@ -158,16 +125,7 @@ sub compareHashes {
     my ($path, $src, $dst, $diff) = @_;
     my @path;
 
-    Trace(
-        "Comparing hashes",
-        "path: $path",
-        "diff: $diff",
-        "src: $src",
-        "dst: $dst"
-    );
-
     foreach my $key (keys %{$src}) {
-        Trace("Key: $key");
         # remove src key if not in dst
         if (! exists $$dst{$key}) {
             @path = (@{$path}, $key);
@@ -175,19 +133,13 @@ sub compareHashes {
             push @{$diff}, {"op" => "remove",
                             "path" => $ptr
             };
-            Trace("Diff updated: @{$diff}");
             next
         }
         # else go deeper
-        Trace("GOING DEEPER $key");
-        
         @path = (@{$path}, $key);
         compareValues(\@path, $$src{$key}, $$dst{$key}, $diff);
-        
-        Trace("EXIT DEEPER $key");
     }
     
-    Trace('FOR KEY IN DST');
     foreach my $key (keys %{$dst}) {
         if (! exists $$src{$key}) {
             @path = (@{$path}, $key);
@@ -198,7 +150,6 @@ sub compareHashes {
                     "path" => $ptr, 
                     "value" => $value
             };
-            Trace("Diff updated: @{$diff}");
         }
     }
 }
@@ -225,17 +176,15 @@ sub getJsonPtr {
 }
 
 sub isNum ($) {
-    # add comment
+    # Input: Perl Scalar
+    # Returns: 1 if perl scalar is a number, 0 otherwise
+    # Source: PerlMonks
+    # Question: How to check if scalar value is numeric or string
+    # Answer: XORing a string gives a string of nulls while XORring
+    # a number gives zero
+    # URL: https://tinyurl.com/ycnltx55
     return 0 if $_[0] eq '';
     $_[0] ^ $_[0] ? 0 : 1
-}
-
-sub Trace {
-    if ($DEBUG) {
-        foreach (@_) {
-            say $_;
-        }
-    }
 }
 
 1;

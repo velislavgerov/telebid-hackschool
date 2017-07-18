@@ -6,6 +6,7 @@ use JSON::Diff;
 use strict;
 use warnings;
 use JSON;
+use Data::Dumper;
 use Getopt::Long qw(GetOptions);
 
 use feature 'say';
@@ -75,27 +76,34 @@ my $dst_text = <FILE>;
 close FILE;
 
 ## Open JSON OO interface and decode FILES
-my $json = JSON->new->allow_nonref;
+my $json = JSON->new->allow_nonref->convert_blessed;
 my $src = $json->decode($src_text);
 my $dst = $json->decode($dst_text);
 
 ## Calculate JSON Patch difference
-my $diff = diff($src, $dst);
+my $diff = JSON::Diff::diff($src, $dst);
+print Dumper $diff;
 
+${@{$diff}[0]}{value} += 0;
+say ${@{$diff}[0]}{value}, " is a number: ", JSON::Diff::isNum(${@{$diff}[0]}{value}); 
+=pod
 ## Output
-if ($DEBUG) {
-    say "From JSON:";
-    print $json->pretty->encode($src);
-
-    say "\nTo JSON:";
-    print $json->pretty->encode($dst);
-    
-    my $number_of_ops = @{$diff};
-    say "\nResulting diff ($number_of_ops " . ($number_of_ops == 1 ? "operation" : "operations") . "):";
-}
-
+#if ($DEBUG) {
+#    say "From JSON:";
+#    print $json->pretty->encode($src);
+#
+#    say "\nTo JSON:";
+#    print $json->pretty->encode($dst);
+#    
+#    my $number_of_ops = @{$diff};
+#    say "\nResulting diff ($number_of_ops " . ($number_of_ops == 1 ? "operation" : "operations") . "):";
+#}
+=cut
 if ($is_pretty) {
+print Dumper $diff;
+
     print $json->pretty->encode($diff);
+    print Dumper $diff;
 }
 else {
     print $json->encode($diff);
