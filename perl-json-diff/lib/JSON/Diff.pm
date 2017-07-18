@@ -4,84 +4,114 @@ use strict;
 use warnings;
 
 use JSON;
+use Data::Dumper;
 use Test::Deep::NoTest qw(eq_deeply);
 use Scalar::Util qw(looks_like_number);
-use feature 'say';
-use parent 'Exporter';
 
 our $DEBUG = 0;
-our @EXPORT = qw($DEBUG diff); 
 
 my $json = JSON->new->allow_nonref;
 
-sub diff {
-    # XXX: needs more elaborate input checking
+sub GetPatch($$;$)
+{
+    # XXX: needs more elaboratdde input checking
     my ($src, $dst, $options ) = @_;
     
     my $diff = [];
     my $path = [];
-
-    compareValues($path, $src, $dst, $diff);
+    
+    TRACE(
+        "JSON::Diff:GetPatch with:\n",
+        "SOURCE: ", Dumper($src), "\n",
+        "DEST:   ", Dumper($dst), "\n"
+    );
+        
+    CompareValues($path, $src, $dst, $diff);
 
     return $diff;
 }
 
-sub compareValues {
+sub CompareValues($$$$)
+{
     my ($path, $src, $dst, $diff) = @_;
+    
+    TRACE("Comparing VALUES");
+    TRACE("PATH:   ", $path);
+    TRACE("SOURCE: ", $src);
+    TRACE("DEST:   ", $dst);
 
-   
     $json = $json->canonical([1]);
+
     my $src_text = $json->encode($src);
     my $dst_text = $json->encode($dst);
     
-    if (eq_deeply($src_text, $dst_text)) {     
+    if (eq_deeply($src_text, $dst_text)) 
+    {   
         # return only if the case is not like "1" == 1
-        if (isNum($src) == isNum($dst)) {
+        if (isNum($src) == isNum($dst)) 
+        {
+            TRACE("SOURCE is equal DEST");
             return;
         }
     }
         
-    if (ref ($src) eq 'HASH' && ref ($dst) eq 'HASH') {
+    if (ref($src) eq 'HASH' && ref($dst) eq 'HASH') 
+    {
         compareHashes($path, $src, $dst, $diff);
     }
-    elsif (ref ($src) eq 'ARRAY' && ref ($dst) eq 'ARRAY') {
+    elsif (ref($src) eq 'ARRAY' && ref($dst) eq 'ARRAY') 
+    {
         compareArrays($path, $src, $dst, $diff);
     }
-    else { 
+    else 
+    {
         my $ptr = getJsonPtr($path);
-        push @{$diff}, {
-                "op"=>"replace", 
-                "path"=>$ptr,
-                "value"=>$dst
-        }; 
+        push @$diff, {
+            "op"    => "replace", 
+            "path"  => $ptr,
+            "value" => $dst
+        };
+        TRACE("DIFF updated: ", Dumper($diff));
     }
 }
 
-sub compareArrays {
+sub compareArrays($$$$)
+{
     my ($path, $src, $dst, $diff) = @_;
-    my @path;
+    my @curr_path;
+   
+    TRACE("Comparing ARRAYS");
+    TRACE("PATH:   ", $path);
+    TRACE("SOURCE: ", $src);
+    TRACE("DEST:   ", $dst);
 
     my @src_new = @{$src};
     my $len_dst = @{$dst};
     my $i = 0;
     my $j = 0;
     while ($i < $len_dst)
-    {   
+    {
         my $left = @{$dst}[$i];
         my $right = $src_new[$j];
-
-        if (eq_deeply($left, $right)) {
+        if (eq_deeply($left, $right)) 
+        {
             if ($i != $j) {
-                @path = (@{$path}, $i);
-                my $ptr = getJsonPtr(\@path);
+                @curr_path = (@{$path}, $i);
+                my $ptr = getJsonPtr(\@curr_path);
                 push @{$diff}, {"op" => "add",
                                 "path" => $ptr, 
                                 "value" => @{$dst}[$i]
                 };
+                TRACE(
+                    "DIFF updated: ",
+                    Dumper($diff)
+                );
+
                 my $len_src_new = @src_new;
-                @src_new = (@src_new[0 .. $i - 1],
-                            @{$dst}[$i],
-                            @src_new[$i .. $len_src_new - 1]
+                @src_new = (
+                    @src_new[0 .. ($i - 1)],
+                    @{$dst}[$i],
+                    @src_new[$i .. ($len_src_new - 1)]
                 );
             }
             $i += 1;
@@ -89,16 +119,21 @@ sub compareArrays {
         }
         else {
             if ($j == $len_dst - 1) {
-                @path = (@{$path}, $i);
-                my $ptr = getJsonPtr(\@path);
-                push @{$diff}, {"op" => "add",
-                                "path" => $ptr,
-                                "value" => $left
+                @curr_path = (@{$path}, $i);
+                my $ptr = getJsonPtr(\@curr_path);
+                push @{$diff}, {
+                    "op" => "add",
+                    "path" => $ptr,
+                    "value" => $left
                 };
+                TRACE(
+                    "DIFF updated: ",
+                    Dumper($diff)
+                );
                 my $len_src_new = @src_new;
-                @src_new = (@src_new[0 .. $i - 1],
+                @src_new = (@src_new[0 .. ($i - 1)],
                             $left, 
-                            @src_new[$i .. $len_src_new-1]
+                            @src_new[$i .. ($len_src_new-1)]
                 );
 
                 $i += 1;
@@ -111,71 +146,94 @@ sub compareArrays {
     }
     
     my $len_src_new = @src_new;
-    for (my $i=$len_src_new - 1; $i >= $len_dst; $i--) {
-        @path = (@{$path}, $i);
-        my $ptr = getJsonPtr(\@path);
-        push @{$diff}, {"op" => "remove", 
-                        "path" => $ptr
-        };
-        
+    for (my $i = $len_src_new - 1; $i >= $len_dst; $i--) 
+    {
+        @curr_path = (@{$path}, $i);
+        my $ptr = getJsonPtr(\@curr_path);
+        push @{$diff}, {
+            "op" => "remove", 
+            "path" => $ptr
+        }; 
+        TRACE(
+            "DIFF updated: ",
+            Dumper($diff)
+        );
     }
 }
 
-sub compareHashes {
+sub compareHashes($$$$) {
     my ($path, $src, $dst, $diff) = @_;
-    my @path;
+    my @curr_path;
 
-    foreach my $key (keys %{$src}) {
+    TRACE("Comparing HASHES:");
+    TRACE("PATH:   ", $path);
+    TRACE("SOURCE: ", $src);
+    TRACE("DEST:   ", $dst);
+
+    foreach my $key (keys %$src) 
+    {
         # remove src key if not in dst
-        if (! exists $$dst{$key}) {
-            @path = (@{$path}, $key);
-            my $ptr = getJsonPtr(\@path);
-            push @{$diff}, {"op" => "remove",
-                            "path" => $ptr
+        if (! exists $$dst{$key}) 
+        {
+            @curr_path = (@$path, $key);
+            my $ptr = getJsonPtr(\@curr_path);
+            push @$diff, {
+                "op" => "remove",
+                "path" => $ptr
             };
-            next
+            TRACE(
+                "DIFF updated: ",
+                Dumper($diff)
+            );
+            next;
         }
         # else go deeper
-        @path = (@{$path}, $key);
-        compareValues(\@path, $$src{$key}, $$dst{$key}, $diff);
+        @curr_path = (@$path, $key);
+        CompareValues(\@curr_path, $$src{$key}, $$dst{$key}, $diff);
     }
     
-    foreach my $key (keys %{$dst}) {
-        if (! exists $$src{$key}) {
-            @path = (@{$path}, $key);
-            my $ptr = getJsonPtr(\@path);
+    foreach my $key (keys %{$dst}) 
+    {
+        if (! exists $$src{$key}) 
+        {
+            @curr_path = (@{$path}, $key);
+            my $ptr = getJsonPtr(\@curr_path);
             my $value = ${$dst}{$key};
             push @{$diff}, {
                     "op" => "add", 
                     "path" => $ptr, 
                     "value" => $value
             };
+            TRACE(
+                "DIFF updated: ",
+                Dumper($diff)
+            );
         }
     }
 }
 
-sub getJsonPtr {
+sub getJsonPtr($) {
     # Returns JSON Pointer string
     # Input
     #  :path - reference to array specifying JSON path elements
     
-    my @path = @{$_[0]};
+    my @curr_path = @{$_[0]};
     my $ptr;
     
-    if (!@path) {
+    if (!@curr_path) {
         return '';        # path to whole document
     }
 
-    foreach (@path){
-        $_ =~ s/~/~0/g;   # replace ~ with ~0
-        $_ =~ s/\//~1/g;  # replace / with ~1
-        $ptr .= '/' . $_; # prefix result with /
+    foreach my $point (@curr_path){
+        $point =~ s/~/~0/g;   # replace ~ with ~0
+        $point =~ s/\//~1/g;  # replace / with ~1
+        $ptr .= '/' . $point; # prefix result with /
     }
 
     return $ptr;
 }
 
-sub isNum ($) {
+sub isNum($) {
     # Input: Perl Scalar
     # Returns: 1 if perl scalar is a number, 0 otherwise
     # Source: PerlMonks
@@ -184,7 +242,41 @@ sub isNum ($) {
     # a number gives zero
     # URL: https://tinyurl.com/ycnltx55
     return 0 if $_[0] eq '';
-    $_[0] ^ $_[0] ? 0 : 1
+    return $_[0] ^ $_[0] ? 0 : 1
+}
+
+sub TRACE(@) 
+{
+    if (!$DEBUG) 
+    {
+        return;
+    }
+    foreach my $message (@_) 
+    {
+        if (ref($message)) 
+        {
+            print Dumper $message;
+        }
+        else
+        {
+            print $message;
+        }
+    }
+    print "\n";
+}
+
+sub ASSERT($$$;$) 
+{ 
+    my ($condition, $message, $code, $args) = @_;
+
+    if (!$DEBUG) 
+    {
+        return;
+    }
+    if (!$condition) 
+    {
+        die "JSON::Diff: error: $message; code: $code";
+    }
 }
 
 1;

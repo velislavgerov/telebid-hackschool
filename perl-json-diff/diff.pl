@@ -14,13 +14,19 @@ my $is_verbose;
 my $output;
 
 GetOptions(
-        'help|h' => \$is_help,
-        'pretty|p' => \$is_pretty,
-        'verbose|v' => \$is_verbose,
+        'help|h'     => \$is_help,
+        'pretty|p'   => \$is_pretty,
+        'verbose|v'  => \$is_verbose,
         'output|o=s' => \$output
 ) or die "$0: missing operand after '$0'\n$0: Try '$0 --help' for more information.";
 
-if ($is_help) {
+if ($is_verbose)
+{
+    $JSON::Diff::DEBUG = 1;
+}
+
+if ($is_help) 
+{
     print "Usage: $0 [OPTION]... [-o FILE] FILES\n";
     print "Calculate JSON Patch difference from source to destination JSON FILES.\n\n";
     print "Mandatory arguments to long options are mandatory for short options too.\n";
@@ -35,16 +41,19 @@ if ($is_help) {
 ## Handle FILES
 my $ARGC = @ARGV;
 
-if ($ARGC == 0) {
+if ($ARGC == 0) 
+{
     print "$0: missing operand after '$0'\n";
     print "$0: Try '$0 --help' for more information.\n";
     exit;
 }
-if ($ARGC == 1) {
+if ($ARGC == 1) 
+{
     print "$0: missing destination file operand.\n";
     exit;
 }
-elsif ($ARGC > 2) {
+elsif ($ARGC > 2) 
+{
     print "$0: extra operand '$ARGV[2]'\n";
     exit;
 }
@@ -68,15 +77,16 @@ my $dst_text = <FILE>;
 close FILE;
 
 ## Open JSON OO interface and decode FILES
-my $json = JSON->new->allow_nonref->convert_blessed;
+my $json = JSON->new->allow_nonref;
 my $src = $json->decode($src_text);
 my $dst = $json->decode($dst_text);
 
 ## Calculate JSON Patch difference
-my $diff = JSON::Diff::diff($src, $dst);
+my $diff = JSON::Diff::GetPatch($src, $dst);
 
 ## Output
-if ($is_verbose) {
+if ($is_verbose) 
+{
     print "Source JSON:\n";
     print $json->pretty->encode($src), "\n";
 
@@ -87,22 +97,26 @@ if ($is_verbose) {
     print "JSON Patch diff ($number_of_ops " . ($number_of_ops == 1 ? "operation" : "operations") . "):\n";
 }
 
-if ($is_pretty) {
+if ($is_pretty) 
+{
     print $json->pretty->encode($diff);
 }
-else {
+else 
+{
     print $json->encode($diff);
     print "\n";
 }
 
 ## Save JSON Pointer
-if ($output) {
-    if ($is_verbose) { 
+if ($output) 
+{
+    if ($is_verbose) 
+    { 
         print "Saving JSON Pointer to: $output.\n"; 
     }
     open ( FILE, '>:encoding(UTF-8)', $output) 
         or die "Could not open file $output $!";
-    print FILE to_json($diff, {"utf8"=>1});
+    print FILE to_json($diff, {"utf8"=>1, "pretty"=>($is_pretty ? 1 : 0)});
     close FILE;
 }
 
