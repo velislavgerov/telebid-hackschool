@@ -1,15 +1,11 @@
 #!/usr/bin/perl -w
-
 use lib "lib";
 use JSON::Diff;
 
 use strict;
 use warnings;
 use JSON;
-use Data::Dumper;
 use Getopt::Long qw(GetOptions);
-
-use feature 'say';
 
 ## Handle OPTIONS
 my $is_help;
@@ -53,10 +49,6 @@ elsif ($ARGC > 2) {
     exit;
 }
 
-if ($is_verbose) {
-    $DEBUG = 1;
-}
-
 my $srcfile = $ARGV[0];
 my $dstfile = $ARGV[1];
 
@@ -82,28 +74,21 @@ my $dst = $json->decode($dst_text);
 
 ## Calculate JSON Patch difference
 my $diff = JSON::Diff::diff($src, $dst);
-print Dumper $diff;
 
-${@{$diff}[0]}{value} += 0;
-say ${@{$diff}[0]}{value}, " is a number: ", JSON::Diff::isNum(${@{$diff}[0]}{value}); 
-=pod
 ## Output
-#if ($DEBUG) {
-#    say "From JSON:";
-#    print $json->pretty->encode($src);
-#
-#    say "\nTo JSON:";
-#    print $json->pretty->encode($dst);
-#    
-#    my $number_of_ops = @{$diff};
-#    say "\nResulting diff ($number_of_ops " . ($number_of_ops == 1 ? "operation" : "operations") . "):";
-#}
-=cut
-if ($is_pretty) {
-print Dumper $diff;
+if ($is_verbose) {
+    print "Source JSON:\n";
+    print $json->pretty->encode($src), "\n";
 
+    print "Destination JSON:\n";
+    print $json->pretty->encode($dst), "\n";
+    
+    my $number_of_ops = @{$diff};
+    print "JSON Patch diff ($number_of_ops " . ($number_of_ops == 1 ? "operation" : "operations") . "):\n";
+}
+
+if ($is_pretty) {
     print $json->pretty->encode($diff);
-    print Dumper $diff;
 }
 else {
     print $json->encode($diff);
@@ -112,7 +97,7 @@ else {
 
 ## Save JSON Pointer
 if ($output) {
-    if ($DEBUG) { 
+    if ($is_verbose) { 
         print "Saving JSON Pointer to: $output.\n"; 
     }
     open ( FILE, '>:encoding(UTF-8)', $output) 
