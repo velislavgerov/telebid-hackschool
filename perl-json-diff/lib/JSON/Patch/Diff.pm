@@ -68,14 +68,14 @@ sub CompareValues($$$$;$)
     else 
     {
         # get values
-        my $ptr = GetJSONPointer($path);
+        my $pointer = GetJSONPointer($path);
         
         # add operation
         if (defined $options)
         {
              push @$diff, {
                 "op"    => "replace", 
-                "path"  => $ptr,
+                "path"  => $pointer,
                 "value" => $dst,
                 "old"   => $src
             };
@@ -84,7 +84,7 @@ sub CompareValues($$$$;$)
         {
             push @$diff, {
                 "op"    => "replace", 
-                "path"  => $ptr,
+                "path"  => $pointer,
                 "value" => $dst
             };
         }
@@ -94,9 +94,9 @@ sub CompareValues($$$$;$)
     }
 }
 
-sub CompareArrays($$$$)
+sub CompareArrays($$$$;$)
 {
-    my ($path, $src, $dst, $diff) = @_;
+    my ($path, $src, $dst, $diff, $options) = @_;
     my @curr_path;
    
     TRACE("Comparing ARRAYS");
@@ -115,42 +115,14 @@ sub CompareArrays($$$$)
         if (eq_deeply($left, $right)) 
         {
             if ($i != $j) {
-                @curr_path = (@{$path}, $i);
-                my $ptr = GetJSONPointer(\@curr_path);
-                push @{$diff}, {
-                    "op" => "add",
-                    "path" => $ptr, 
-                    "value" => @{$dst}[$i]
-                };
-
-                TRACE("DIFF updated: ",$diff);
-
-                my $len_src_new = @src_new;
-                @src_new = (
-                    @src_new[0 .. ($i - 1)],
-                    @{$dst}[$i],
-                    @src_new[$i .. ($len_src_new - 1)]
-                );
+                ListOperationAdd($path, $i, $left, $right, \@src_new, $diff, $options);
             }
             $i += 1;
             $j = $i;
         }
         else {
             if ($j == $len_dst - 1) {
-                @curr_path = (@{$path}, $i);
-                my $ptr = GetJSONPointer(\@curr_path);
-                push @{$diff}, {
-                    "op" => "add",
-                    "path" => $ptr,
-                    "value" => $left
-                };
-                TRACE("DIFF updated: ", $diff);
-                my $len_src_new = @src_new;
-                @src_new = (@src_new[0 .. ($i - 1)],
-                            $left, 
-                            @src_new[$i .. ($len_src_new-1)]
-                );
-
+                ListOperationAdd($path, $i, $left, $right, \@src_new, $diff, $options);
                 $i += 1;
                 $j = 0;
             }
@@ -164,34 +136,62 @@ sub CompareArrays($$$$)
     for (my $i = $len_src_new - 1; $i >= $len_dst; $i--) 
     {
         @curr_path = (@{$path}, $i);
-        my $ptr = GetJSONPointer(\@curr_path);
-        push @{$diff}, {
-            "op" => "remove", 
-            "path" => $ptr
-        }; 
-        TRACE("DIFF updated: ", $diff);
+        PushOperation("remove", \@curr_path, undef, @src_new[$i], $diff, $options); 
     }
 }
-=pod
-sub AddOperation
+
+sub ListOperationAdd($$$$$;$)
 {
-    @curr_path = (@{$path}, $i);
-    my $ptr = GetJSONPointer(\@curr_path);
-    push @{$diff}, {
-            "op" => "add",
-            "path" => $ptr,
-            "value" => $left
-    };
+    my ($path, $i, $value, $old_value, $src_new, $diff, $options) = @_;
+    my @curr_path = (@{$path}, $i);
+
+    PushOperation("add", \@curr_path, $value, $old_value, $diff, $options);
 
     TRACE("DIFF updated: ", $diff);
     
-    my $len_src_new = @src_new;
-    @src_new = (@src_new[0 .. ($i - 1)],
-                $left, 
-                @src_new[$i .. ($len_src_new-1)]
+    my $len_src_new = @{$src_new};
+    @{$src_new} = (@{$src_new}[0 .. ($i - 1)],
+                $value, 
+                @{$src_new}[$i .. ($len_src_new-1)]
     );
 }
-=cut
+
+sub PushOperation($$$$$;$)
+{
+    ## Add operation to $diff
+    my ($operation_name, $path, $value, $old_value, $diff, $options) = @_;
+    
+    my $operation;
+    my $pointer = GetJSONPointer($path); 
+    
+    if ($operation_name eq 'add' || $operation_name eq 'replace')
+    {
+        $operation = {
+            "op"    => $operation_name,
+            "path"  => $pointer,
+            "value" => $value
+        };
+    }
+    elsif ($operation_name eq 'remove')
+    {
+        $operation = {
+            "op"    => $operation_name,
+            "path"  => $pointer
+        };
+    }
+    else 
+    {
+        die "$0: error: invalid or unsupported operation $operation_name";
+    }
+
+    if (defined $options)
+    {
+        $$operation{old} = $old_value; 
+    }
+
+    push @{$diff}, $operation;
+}
+
 sub CompareHashes($$$$;$) {
     my ($path, $src, $dst, $diff, $options) = @_;
     my @curr_path;
@@ -207,15 +207,15 @@ sub CompareHashes($$$$;$) {
         if (! exists $$dst{$key}) 
         {
             @curr_path = (@$path, $key);
-            my $ptr = GetJSONPointer(\@curr_path);
+            my $pointer = GetJSONPointer(\@curr_path);
 
             # add operation
             if (defined $options)
             {
                 push @$diff, {
-                    "op"    => "replace", 
-                    "path"  => $ptr,
-                    "value" => $dst,
+                    "op"    => "remove", 
+                    "path"  => $pointer,
+                    #"value" => $dst,
                     "old"   => $src
                 };
             }
@@ -223,7 +223,7 @@ sub CompareHashes($$$$;$) {
             {
                 push @$diff, {
                     "op" => "remove",
-                    "path" => $ptr
+                    "path" => $pointer
                 };
             }
             
@@ -243,13 +243,13 @@ sub CompareHashes($$$$;$) {
         {
             # get values
             @curr_path = (@{$path}, $key);
-            my $ptr    = GetJSONPointer(\@curr_path);
+            my $pointer    = GetJSONPointer(\@curr_path);
             my $value  = ${$dst}{$key};
 
             # add opeteraion
             push @{$diff}, {
                 "op"    => "add", 
-                "path"  => $ptr, 
+                "path"  => $pointer, 
                 "value" => $value
             };
 
@@ -266,7 +266,7 @@ sub GetJSONPointer($)
     #  :path - reference to array specifying JSON path elements
     
     my @curr_path = @{$_[0]};
-    my $ptr;
+    my $pointer;
     
     if (!@curr_path) 
     {
@@ -277,10 +277,10 @@ sub GetJSONPointer($)
     {
         $point =~ s/~/~0/g;   # replace ~ with ~0
         $point =~ s/\//~1/g;  # replace / with ~1
-        $ptr .= '/' . $point; # prefix result with /
+        $pointer  .= '/' . $point; # prefix result with /
     }
 
-    return $ptr;
+    return $pointer;
 }
 
 sub isNum($) 
