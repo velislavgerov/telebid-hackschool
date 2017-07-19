@@ -12,10 +12,6 @@ our $DEBUG = 0;
 
 my $json = JSON->new->allow_nonref;
 
-sub HumanReadable($)
-{
-}
-
 sub GetPatch($$;$)
 {
     my ($src, $dst, $options ) = @_;
@@ -184,7 +180,7 @@ sub PushOperation($$$$$;$)
         die "$0: error: invalid or unsupported operation $operation_name";
     }
 
-    if (defined $options)
+    if (defined $options && $operation_name ne 'add')
     {
         $$operation{old} = $old_value; 
     }
