@@ -5,7 +5,7 @@
 use lib "lib";
 
 use JSON;
-use JSON::Diff;
+use JSON::Patch::Diff;
 
 use strict;
 use warnings;
@@ -62,19 +62,19 @@ foreach my $test_file (@test_files) {
 
         foreach my $test (@{${$test_file}{text}}){
             if (exists ${$test}{disabled}) { 
-                if ($JSON::Diff::DEBUG) {
+                if ($JSON::Patch::Diff::DEBUG) {
                     print "(disabled) skipping...\n";
                 }
                 next; 
             }
             elsif (exists ${$test}{error}) {
-                if ($JSON::Diff::DEBUG) {
+                if ($JSON::Patch::Diff::DEBUG) {
                     print "(error) skipping...\n";
                 }
                 next; 
             }
             elsif (! exists ${$test}{expected}) {
-                if ($JSON::Diff::DEBUG) {
+                if ($JSON::Patch::Diff::DEBUG) {
                     print "(no expected) skipping...\n";
                 }
                 next; 
@@ -87,7 +87,7 @@ foreach my $test_file (@test_files) {
             my $patch = @{$test}{patch};
             my $patch_text = $json->pretty->encode($patch);
             my $comment_text = $json->encode(@{$test}{comment});
-            my $diff = JSON::Diff::GetPatch($src, $dst);
+            my $diff = JSON::Patch::Diff::GetPatch($src, $dst);
             my $result_patch = $json->pretty->encode($diff);
 
             # I am calling $json->decode below to avoid a strange bug, where numbers
@@ -113,9 +113,9 @@ foreach my $test_file (@test_files) {
                 #print "Got:\n";
                 #print "$result_patch\n";
 
-                #$JSON::Diff::DEBUG = 1;
-                #my $diff = JSON::Diff->json_diff($src, $dst);
-                #$JSON::Diff::DEBUG = 0;
+                #$JSON::Patch::Diff::DEBUG = 1;
+                #my $diff = JSON::Patch::Diff->json_diff($src, $dst);
+                #$JSON::Patch::Diff::DEBUG = 0;
                 $count_fail += 1;
             }
         }

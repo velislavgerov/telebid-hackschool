@@ -1,4 +1,4 @@
-package JSON::Diff;
+package JSON::Patch::Diff;
 
 use strict;
 use warnings;
@@ -12,28 +12,30 @@ our $DEBUG = 0;
 
 my $json = JSON->new->allow_nonref;
 
+sub HumanReadable($)
+{
+}
+
 sub GetPatch($$;$)
 {
-    # XXX: needs more elaboratdde input checking
     my ($src, $dst, $options ) = @_;
-    
+    # TODO: elaborate input checking
+
     my $diff = [];
     my $path = [];
     
-    TRACE(
-        "JSON::Diff:GetPatch with:\n",
-        "SOURCE: ", Dumper($src), "\n",
-        "DEST:   ", Dumper($dst), "\n"
-    );
+    TRACE("JSON::Diff:GetPatch with:");
+    TRACE("SOURCE: ", $src);
+    TRACE("DEST:   ", $dst);
         
-    CompareValues($path, $src, $dst, $diff);
+    CompareValues($path, $src, $dst, $diff, $options);
 
     return $diff;
 }
 
-sub CompareValues($$$$)
+sub CompareValues($$$$;$)
 {
-    my ($path, $src, $dst, $diff) = @_;
+    my ($path, $src, $dst, $diff, $options) = @_;
     
     TRACE("Comparing VALUES");
     TRACE("PATH:   ", $path);
@@ -57,20 +59,37 @@ sub CompareValues($$$$)
         
     if (ref($src) eq 'HASH' && ref($dst) eq 'HASH') 
     {
-        CompareHashes($path, $src, $dst, $diff);
+        CompareHashes($path, $src, $dst, $diff, $options);
     }
     elsif (ref($src) eq 'ARRAY' && ref($dst) eq 'ARRAY') 
     {
-        CompareArrays($path, $src, $dst, $diff);
+        CompareArrays($path, $src, $dst, $diff, $options);
     }
     else 
     {
+        # get values
         my $ptr = getJsonPtr($path);
-        push @$diff, {
-            "op"    => "replace", 
-            "path"  => $ptr,
-            "value" => $dst
-        };
+        
+        # add operation
+        if (defined $options)
+        {
+             push @$diff, {
+                "op"    => "replace", 
+                "path"  => $ptr,
+                "value" => $dst,
+                "old"   => $src
+            };
+        }
+        else
+        {
+            push @$diff, {
+                "op"    => "replace", 
+                "path"  => $ptr,
+                "value" => $dst
+            };
+        }
+        
+        # debug
         TRACE("DIFF updated: ", $diff);
     }
 }
@@ -91,7 +110,7 @@ sub CompareArrays($$$$)
     my $j = 0;
     while ($i < $len_dst)
     {
-        my $left = @{$dst}[$i];
+        my $left  = @{$dst}[$i];
         my $right = $src_new[$j];
         if (eq_deeply($left, $right)) 
         {
@@ -173,8 +192,8 @@ sub AddOperation
     );
 }
 =cut
-sub CompareHashes($$$$) {
-    my ($path, $src, $dst, $diff) = @_;
+sub CompareHashes($$$$;$) {
+    my ($path, $src, $dst, $diff, $options) = @_;
     my @curr_path;
 
     TRACE("Comparing HASHES:");
@@ -189,37 +208,53 @@ sub CompareHashes($$$$) {
         {
             @curr_path = (@$path, $key);
             my $ptr = getJsonPtr(\@curr_path);
-            push @$diff, {
-                "op" => "remove",
-                "path" => $ptr
-            };
-            TRACE(
-                "DIFF updated: ",
-                Dumper($diff)
-            );
+
+            # add operation
+            if (defined $options)
+            {
+                push @$diff, {
+                    "op"    => "replace", 
+                    "path"  => $ptr,
+                    "value" => $dst,
+                    "old"   => $src
+                };
+            }
+            else
+            {
+                push @$diff, {
+                    "op" => "remove",
+                    "path" => $ptr
+                };
+            }
+            
+            # debug
+            TRACE("DIFF updated: ", $diff);
+            
             next;
         }
         # else go deeper
         @curr_path = (@$path, $key);
-        CompareValues(\@curr_path, $$src{$key}, $$dst{$key}, $diff);
+        CompareValues(\@curr_path, $$src{$key}, $$dst{$key}, $diff, $options);
     }
     
     foreach my $key (keys %{$dst}) 
     {
         if (! exists $$src{$key}) 
         {
+            # get values
             @curr_path = (@{$path}, $key);
-            my $ptr = getJsonPtr(\@curr_path);
-            my $value = ${$dst}{$key};
+            my $ptr    = getJsonPtr(\@curr_path);
+            my $value  = ${$dst}{$key};
+
+            # add opeteraion
             push @{$diff}, {
-                    "op" => "add", 
-                    "path" => $ptr, 
-                    "value" => $value
+                "op"    => "add", 
+                "path"  => $ptr, 
+                "value" => $value
             };
-            TRACE(
-                "DIFF updated: ",
-                Dumper($diff)
-            );
+
+            # debug
+            TRACE("DIFF updated: ", $diff);
         }
     }
 }
@@ -303,12 +338,12 @@ __END__
 
 =head1 NAME
 
-JSON::Diff
+JSON::Patch::Diff
 
 =head1 SYNOPSIS
 
  use JSON;
- use JSON::Diff;
+ use JSON::Patch::Diff;
 
  my $src_ref = from_json($src_json_text);
  my $dst_ref = from_json($dst_json_text);
@@ -318,17 +353,17 @@ JSON::Diff
 
 =head1 DESCRIPTION
 
-A minimalistic module to calculate JSON Patch difference between two perlrefs.
+A minimalistic module compare two JSON perlrefs and calculate the resulting JSON Patch L<RFC6902|https://tools.ietf.org/html/rfc6902> difference.
 
 =head1 FUNCTIONAL INTERFACE 
 
 =over 4
 
-=item diff($src, $dst, $options)
+=item GetPatch($src, $dst, $options)
 
  Inputs:   $src:      perlref: decoded JSON object (Source JSON)
            $dst:      perlref: decoded JSON object (Destination JSON)
-           $options:  unused
+           $options:  defined: enable saving old values for JSON patch
  
  Returns:  perlref:   [ { JSON Patch operation }, ... ]
  

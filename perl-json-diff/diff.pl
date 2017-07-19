@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 use lib "lib";
-use JSON::Diff;
+use JSON::Patch::Diff;
 
 use strict;
 use warnings;
@@ -11,18 +11,20 @@ use Getopt::Long qw(GetOptions);
 my $is_help;
 my $is_pretty;
 my $is_verbose;
+my $is_keep_old;
 my $output;
 
 GetOptions(
         'help|h'     => \$is_help,
         'pretty|p'   => \$is_pretty,
         'verbose|v'  => \$is_verbose,
+        'keep-old|k' => \$is_keep_old,
         'output|o=s' => \$output
 ) or die "$0: missing operand after '$0'\n$0: Try '$0 --help' for more information.";
 
 if ($is_verbose)
 {
-    $JSON::Diff::DEBUG = 1;
+    $JSON::Patch::Diff::DEBUG = 1;
 }
 
 if ($is_help) 
@@ -31,6 +33,7 @@ if ($is_help)
     print "Calculate JSON Patch difference from source to destination JSON FILES.\n\n";
     print "Mandatory arguments to long options are mandatory for short options too.\n";
     print "  -o, --output=FILE  save output to FILE\n";
+    print "  -k, --keep-old     keep old values in patch (\"old\" key)\n\n";
     print "  -p, --pretty       display pretty formatted JSON Patch\n";
     print "  -v, --verbose      display extra text\n";
     print "  -h, --help         dispaly this help and exit\n\n";
@@ -82,7 +85,17 @@ my $src = $json->decode($src_text);
 my $dst = $json->decode($dst_text);
 
 ## Calculate JSON Patch difference
-my $diff = JSON::Diff::GetPatch($src, $dst);
+my $option = 1;
+
+my $diff;
+if ($is_keep_old)
+{
+    $diff = JSON::Patch::Diff::GetPatch($src, $dst, 1);
+}
+else
+{
+    $diff = JSON::Patch::Diff::GetPatch($src, $dst);
+}
 
 ## Output
 if ($is_verbose) 
@@ -128,7 +141,7 @@ __END__
 
 =head1 NAME
 
-diff.pl - perl script utilizing JSON::Diff
+diff.pl - perl script utilizing JSON::Patch::Diff
 
 =head1 SYNOPSIS
 
@@ -142,6 +155,9 @@ diff.pl [OPTION]... [-o FILE] FILES
 
 Used to specify the output FILE for the resulting JSON Patch.
 
+=item B<-k, --keep-old>
+
+Keep old values for 'replace' and 'remove' operations ("old" key).
 
 =item B<-p, --pretty>
 
@@ -159,7 +175,7 @@ Displays help text and exits.
 
 =head1 DESCRIPTION
 
-Using JSON::Diff to calculate JSON Patch difference between two FILES.
+Using JSON::Patch::Diff to calculate JSON Patch difference between two FILES.
 
 =head1 AUTHOR
 
