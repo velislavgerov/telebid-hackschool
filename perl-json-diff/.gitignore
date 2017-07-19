@@ -1,3 +1,4 @@
 json-files/*
 trash/
+*.swp
 *.swo

@@ -1,0 +1,275 @@
+[
+   {
+      "src" : {
+         "foo" : "bar"
+      },
+      "comment" : "\"A.1.  Adding an Object Member\"\n",
+      "patch" : [
+         {
+            "value" : "qux",
+            "op" : "add",
+            "path" : "/baz"
+         }
+      ],
+      "dst" : {
+         "foo" : "bar",
+         "baz" : "qux"
+      }
+   },
+   {
+      "src" : {
+         "foo" : [
+            "bar",
+            "baz"
+         ]
+      },
+      "dst" : {
+         "foo" : [
+            "bar",
+            "qux",
+            "baz"
+         ]
+      },
+      "patch" : [
+         {
+            "path" : "/foo/1",
+            "value" : "qux",
+            "op" : "add"
+         }
+      ],
+      "comment" : "\"A.2.  Adding an Array Element\"\n"
+   },
+   {
+      "src" : {
+         "foo" : "bar",
+         "baz" : "qux"
+      },
+      "comment" : "\"A.3.  Removing an Object Member\"\n",
+      "patch" : [
+         {
+            "path" : "/baz",
+            "op" : "remove"
+         }
+      ],
+      "dst" : {
+         "foo" : "bar"
+      }
+   },
+   {
+      "src" : {
+         "foo" : [
+            "bar",
+            "qux",
+            "baz"
+         ]
+      },
+      "dst" : {
+         "foo" : [
+            "bar",
+            "baz"
+         ]
+      },
+      "patch" : [
+         {
+            "op" : "add",
+            "value" : "baz",
+            "path" : "/foo/1"
+         },
+         {
+            "op" : "remove",
+            "path" : "/foo/3"
+         },
+         {
+            "path" : "/foo/2",
+            "op" : "remove"
+         }
+      ],
+      "comment" : "\"A.4.  Removing an Array Element\"\n"
+   },
+   {
+      "dst" : {
+         "baz" : "boo",
+         "foo" : "bar"
+      },
+      "patch" : [
+         {
+            "path" : "/baz",
+            "op" : "replace",
+            "value" : "boo"
+         }
+      ],
+      "comment" : "\"A.5.  Replacing a Value\"\n",
+      "src" : {
+         "foo" : "bar",
+         "baz" : "qux"
+      }
+   },
+   {
+      "patch" : [
+         {
+            "path" : "/qux/thud",
+            "op" : "add",
+            "value" : "fred"
+         },
+         {
+            "path" : "/foo/waldo",
+            "op" : "remove"
+         }
+      ],
+      "comment" : "\"A.6.  Moving a Value\"\n",
+      "dst" : {
+         "qux" : {
+            "corge" : "grault",
+            "thud" : "fred"
+         },
+         "foo" : {
+            "bar" : "baz"
+         }
+      },
+      "src" : {
+         "foo" : {
+            "waldo" : "fred",
+            "bar" : "baz"
+         },
+         "qux" : {
+            "corge" : "grault"
+         }
+      }
+   },
+   {
+      "patch" : [
+         {
+            "op" : "add",
+            "value" : "cows",
+            "path" : "/foo/1"
+         },
+         {
+            "path" : "/foo/2",
+            "op" : "add",
+            "value" : "eat"
+         },
+         {
+            "path" : "/foo/5",
+            "op" : "remove"
+         },
+         {
+            "op" : "remove",
+            "path" : "/foo/4"
+         }
+      ],
+      "dst" : {
+         "foo" : [
+            "all",
+            "cows",
+            "eat",
+            "grass"
+         ]
+      },
+      "comment" : "\"A.7.  Moving an Array Element\"\n",
+      "src" : {
+         "foo" : [
+            "all",
+            "grass",
+            "cows",
+            "eat"
+         ]
+      }
+   },
+   {
+      "comment" : "\"A.8.  Testing a Value: Success\"\n",
+      "patch" : [],
+      "dst" : {
+         "foo" : [
+            "a",
+            2,
+            "c"
+         ],
+         "baz" : "qux"
+      },
+      "src" : {
+         "baz" : "qux",
+         "foo" : [
+            "a",
+            2,
+            "c"
+         ]
+      }
+   },
+   {
+      "patch" : [
+         {
+            "op" : "add",
+            "value" : {
+               "grandchild" : {}
+            },
+            "path" : "/child"
+         }
+      ],
+      "comment" : "\"A.10.  Adding a nested Member Object\"\n",
+      "dst" : {
+         "child" : {
+            "grandchild" : {}
+         },
+         "foo" : "bar"
+      },
+      "src" : {
+         "foo" : "bar"
+      }
+   },
+   {
+      "patch" : [
+         {
+            "op" : "add",
+            "value" : "qux",
+            "path" : "/baz"
+         }
+      ],
+      "dst" : {
+         "foo" : "bar",
+         "baz" : "qux"
+      },
+      "comment" : "\"A.11.  Ignoring Unrecognized Elements\"\n",
+      "src" : {
+         "foo" : "bar"
+      }
+   },
+   {
+      "src" : {
+         "~1" : 10,
+         "/" : 9
+      },
+      "comment" : "\"A.14. ~ Escape Ordering\"\n",
+      "patch" : [],
+      "dst" : {
+         "/" : 9,
+         "~1" : 10
+      }
+   },
+   {
+      "src" : {
+         "foo" : [
+            "bar"
+         ]
+      },
+      "patch" : [
+         {
+            "path" : "/foo/1",
+            "op" : "add",
+            "value" : [
+               "abc",
+               "def"
+            ]
+         }
+      ],
+      "comment" : "\"A.16. Adding an Array Value\"\n",
+      "dst" : {
+         "foo" : [
+            "bar",
+            [
+               "abc",
+               "def"
+            ]
+         ]
+      }
+   }
+]

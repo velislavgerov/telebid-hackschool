@@ -1,0 +1,1105 @@
+[
+   {
+      "src" : {},
+      "patch" : [],
+      "dst" : {},
+      "comment" : "\"empty list, empty docs\"\n"
+   },
+   {
+      "patch" : [],
+      "dst" : {
+         "foo" : 1
+      },
+      "comment" : "\"empty patch list\"\n",
+      "src" : {
+         "foo" : 1
+      }
+   },
+   {
+      "comment" : "\"rearrangements OK?\"\n",
+      "patch" : [],
+      "dst" : {
+         "foo" : 1,
+         "bar" : 2
+      },
+      "src" : {
+         "foo" : 1,
+         "bar" : 2
+      }
+   },
+   {
+      "src" : [
+         {
+            "bar" : 2,
+            "foo" : 1
+         }
+      ],
+      "comment" : "\"rearrangements OK?  How about one level down ... array\"\n",
+      "patch" : [],
+      "dst" : [
+         {
+            "bar" : 2,
+            "foo" : 1
+         }
+      ]
+   },
+   {
+      "src" : {
+         "foo" : {
+            "bar" : 2,
+            "foo" : 1
+         }
+      },
+      "patch" : [],
+      "comment" : "\"rearrangements OK?  How about one level down...\"\n",
+      "dst" : {
+         "foo" : {
+            "foo" : 1,
+            "bar" : 2
+         }
+      }
+   },
+   {
+      "src" : {
+         "foo" : null
+      },
+      "patch" : [
+         {
+            "path" : "/foo",
+            "op" : "replace",
+            "value" : 1
+         }
+      ],
+      "comment" : "\"add replaces any existing field\"\n",
+      "dst" : {
+         "foo" : 1
+      }
+   },
+   {
+      "dst" : [
+         "foo"
+      ],
+      "patch" : [
+         {
+            "path" : "/0",
+            "value" : "foo",
+            "op" : "add"
+         }
+      ],
+      "comment" : "\"toplevel array\"\n",
+      "src" : []
+   },
+   {
+      "patch" : [],
+      "dst" : [
+         "foo"
+      ],
+      "comment" : "\"toplevel array, no change\"\n",
+      "src" : [
+         "foo"
+      ]
+   },
+   {
+      "patch" : [
+         {
+            "path" : "/foo",
+            "value" : "1",
+            "op" : "add"
+         }
+      ],
+      "dst" : {
+         "foo" : "1"
+      },
+      "comment" : "\"toplevel object, numeric string\"\n",
+      "src" : {}
+   },
+   {
+      "src" : {},
+      "patch" : [
+         {
+            "path" : "/foo",
+            "op" : "add",
+            "value" : 1
+         }
+      ],
+      "comment" : "\"toplevel object, integer\"\n",
+      "dst" : {
+         "foo" : 1
+      }
+   },
+   {
+      "src" : {},
+      "patch" : [
+         {
+            "value" : [],
+            "op" : "replace",
+            "path" : ""
+         }
+      ],
+      "dst" : [],
+      "comment" : "\"replace object document with array document?\"\n"
+   },
+   {
+      "src" : [],
+      "patch" : [
+         {
+            "path" : "",
+            "op" : "replace",
+            "value" : {}
+         }
+      ],
+      "comment" : "\"replace array document with object document?\"\n",
+      "dst" : {}
+   },
+   {
+      "dst" : [
+         "hi"
+      ],
+      "patch" : [
+         {
+            "path" : "/0",
+            "value" : "hi",
+            "op" : "add"
+         }
+      ],
+      "comment" : "\"append to root array document?\"\n",
+      "src" : []
+   },
+   {
+      "src" : {},
+      "comment" : "\"Add, / target\"\n",
+      "patch" : [
+         {
+            "value" : 1,
+            "op" : "add",
+            "path" : "/"
+         }
+      ],
+      "dst" : {
+         "" : 1
+      }
+   },
+   {
+      "src" : {
+         "foo" : {}
+      },
+      "patch" : [
+         {
+            "value" : 1,
+            "op" : "add",
+            "path" : "/foo/"
+         }
+      ],
+      "dst" : {
+         "foo" : {
+            "" : 1
+         }
+      },
+      "comment" : "\"Add, /foo/ deep target (trailing slash)\"\n"
+   },
+   {
+      "src" : {
+         "foo" : 1
+      },
+      "dst" : {
+         "foo" : 1,
+         "bar" : [
+            1,
+            2
+         ]
+      },
+      "patch" : [
+         {
+            "path" : "/bar",
+            "op" : "add",
+            "value" : [
+               1,
+               2
+            ]
+         }
+      ],
+      "comment" : "\"Add composite value at top level\"\n"
+   },
+   {
+      "src" : {
+         "foo" : 1,
+         "baz" : [
+            {
+               "qux" : "hello"
+            }
+         ]
+      },
+      "patch" : [
+         {
+            "op" : "add",
+            "value" : {
+               "foo" : "world",
+               "qux" : "hello"
+            },
+            "path" : "/baz/0"
+         },
+         {
+            "op" : "remove",
+            "path" : "/baz/1"
+         }
+      ],
+      "comment" : "\"Add into composite value\"\n",
+      "dst" : {
+         "baz" : [
+            {
+               "foo" : "world",
+               "qux" : "hello"
+            }
+         ],
+         "foo" : 1
+      }
+   },
+   {
+      "src" : {
+         "foo" : 1
+      },
+      "patch" : [
+         {
+            "path" : "/bar",
+            "op" : "add",
+            "value" : true
+         }
+      ],
+      "dst" : {
+         "foo" : 1,
+         "bar" : true
+      },
+      "comment" : "null\n"
+   },
+   {
+      "src" : {
+         "foo" : 1
+      },
+      "patch" : [
+         {
+            "op" : "add",
+            "value" : false,
+            "path" : "/bar"
+         }
+      ],
+      "dst" : {
+         "bar" : false,
+         "foo" : 1
+      },
+      "comment" : "null\n"
+   },
+   {
+      "src" : {
+         "foo" : 1
+      },
+      "dst" : {
+         "bar" : null,
+         "foo" : 1
+      },
+      "patch" : [
+         {
+            "value" : null,
+            "op" : "add",
+            "path" : "/bar"
+         }
+      ],
+      "comment" : "null\n"
+   },
+   {
+      "comment" : "\"0 can be an array index or object element name\"\n",
+      "patch" : [
+         {
+            "path" : "/0",
+            "op" : "add",
+            "value" : "bar"
+         }
+      ],
+      "dst" : {
+         "foo" : 1,
+         "0" : "bar"
+      },
+      "src" : {
+         "foo" : 1
+      }
+   },
+   {
+      "src" : [
+         "foo"
+      ],
+      "comment" : "null\n",
+      "patch" : [
+         {
+            "path" : "/1",
+            "value" : "bar",
+            "op" : "add"
+         }
+      ],
+      "dst" : [
+         "foo",
+         "bar"
+      ]
+   },
+   {
+      "patch" : [
+         {
+            "path" : "/1",
+            "op" : "add",
+            "value" : "bar"
+         }
+      ],
+      "comment" : "null\n",
+      "dst" : [
+         "foo",
+         "bar",
+         "sil"
+      ],
+      "src" : [
+         "foo",
+         "sil"
+      ]
+   },
+   {
+      "src" : [
+         "foo",
+         "sil"
+      ],
+      "comment" : "null\n",
+      "patch" : [
+         {
+            "path" : "/0",
+            "op" : "add",
+            "value" : "bar"
+         }
+      ],
+      "dst" : [
+         "bar",
+         "foo",
+         "sil"
+      ]
+   },
+   {
+      "dst" : [
+         "foo",
+         "sil",
+         "bar"
+      ],
+      "patch" : [
+         {
+            "op" : "add",
+            "value" : "bar",
+            "path" : "/2"
+         }
+      ],
+      "comment" : "\"push item to array via last index + 1\"\n",
+      "src" : [
+         "foo",
+         "sil"
+      ]
+   },
+   {
+      "dst" : {
+         "1e0" : "foo"
+      },
+      "patch" : [],
+      "comment" : "\"test against implementation-specific numeric parsing\"\n",
+      "src" : {
+         "1e0" : "foo"
+      }
+   },
+   {
+      "dst" : [
+         "foo",
+         [
+            "bar",
+            "baz"
+         ],
+         "sil"
+      ],
+      "patch" : [
+         {
+            "value" : [
+               "bar",
+               "baz"
+            ],
+            "op" : "add",
+            "path" : "/1"
+         }
+      ],
+      "comment" : "\"value in array add not flattened\"\n",
+      "src" : [
+         "foo",
+         "sil"
+      ]
+   },
+   {
+      "comment" : "null\n",
+      "patch" : [
+         {
+            "path" : "/bar",
+            "op" : "remove"
+         }
+      ],
+      "dst" : {
+         "foo" : 1
+      },
+      "src" : {
+         "bar" : [
+            1,
+            2,
+            3,
+            4
+         ],
+         "foo" : 1
+      }
+   },
+   {
+      "src" : {
+         "baz" : [
+            {
+               "qux" : "hello"
+            }
+         ],
+         "foo" : 1
+      },
+      "patch" : [
+         {
+            "op" : "add",
+            "value" : {},
+            "path" : "/baz/0"
+         },
+         {
+            "path" : "/baz/1",
+            "op" : "remove"
+         }
+      ],
+      "comment" : "null\n",
+      "dst" : {
+         "baz" : [
+            {}
+         ],
+         "foo" : 1
+      }
+   },
+   {
+      "comment" : "null\n",
+      "patch" : [
+         {
+            "path" : "/foo",
+            "value" : [
+               1,
+               2,
+               3,
+               4
+            ],
+            "op" : "replace"
+         }
+      ],
+      "dst" : {
+         "foo" : [
+            1,
+            2,
+            3,
+            4
+         ],
+         "baz" : [
+            {
+               "qux" : "hello"
+            }
+         ]
+      },
+      "src" : {
+         "baz" : [
+            {
+               "qux" : "hello"
+            }
+         ],
+         "foo" : 1
+      }
+   },
+   {
+      "comment" : "null\n",
+      "patch" : [
+         {
+            "path" : "/baz/0",
+            "op" : "add",
+            "value" : {
+               "qux" : "world"
+            }
+         },
+         {
+            "path" : "/baz/1",
+            "op" : "remove"
+         }
+      ],
+      "dst" : {
+         "baz" : [
+            {
+               "qux" : "world"
+            }
+         ],
+         "foo" : [
+            1,
+            2,
+            3,
+            4
+         ]
+      },
+      "src" : {
+         "foo" : [
+            1,
+            2,
+            3,
+            4
+         ],
+         "baz" : [
+            {
+               "qux" : "hello"
+            }
+         ]
+      }
+   },
+   {
+      "dst" : [
+         "bar"
+      ],
+      "patch" : [
+         {
+            "value" : "bar",
+            "op" : "add",
+            "path" : "/0"
+         },
+         {
+            "path" : "/1",
+            "op" : "remove"
+         }
+      ],
+      "comment" : "null\n",
+      "src" : [
+         "foo"
+      ]
+   },
+   {
+      "dst" : [
+         0
+      ],
+      "patch" : [
+         {
+            "path" : "/0",
+            "op" : "add",
+            "value" : 0
+         },
+         {
+            "op" : "remove",
+            "path" : "/1"
+         }
+      ],
+      "comment" : "null\n",
+      "src" : [
+         ""
+      ]
+   },
+   {
+      "src" : [
+         ""
+      ],
+      "dst" : [
+         true
+      ],
+      "patch" : [
+         {
+            "op" : "add",
+            "value" : true,
+            "path" : "/0"
+         },
+         {
+            "op" : "remove",
+            "path" : "/1"
+         }
+      ],
+      "comment" : "null\n"
+   },
+   {
+      "patch" : [
+         {
+            "path" : "/0",
+            "value" : false,
+            "op" : "add"
+         },
+         {
+            "op" : "remove",
+            "path" : "/1"
+         }
+      ],
+      "dst" : [
+         false
+      ],
+      "comment" : "null\n",
+      "src" : [
+         ""
+      ]
+   },
+   {
+      "src" : [
+         ""
+      ],
+      "patch" : [
+         {
+            "path" : "/0",
+            "op" : "add",
+            "value" : null
+         },
+         {
+            "op" : "remove",
+            "path" : "/1"
+         }
+      ],
+      "comment" : "null\n",
+      "dst" : [
+         null
+      ]
+   },
+   {
+      "src" : [
+         "foo",
+         "sil"
+      ],
+      "dst" : [
+         "foo",
+         [
+            "bar",
+            "baz"
+         ]
+      ],
+      "patch" : [
+         {
+            "path" : "/1",
+            "value" : [
+               "bar",
+               "baz"
+            ],
+            "op" : "add"
+         },
+         {
+            "op" : "remove",
+            "path" : "/2"
+         }
+      ],
+      "comment" : "\"value in array replace not flattened\"\n"
+   },
+   {
+      "src" : {
+         "foo" : "bar"
+      },
+      "patch" : [
+         {
+            "op" : "remove",
+            "path" : "/foo"
+         },
+         {
+            "path" : "/baz",
+            "value" : "qux",
+            "op" : "add"
+         }
+      ],
+      "dst" : {
+         "baz" : "qux"
+      },
+      "comment" : "\"replace whole document\"\n"
+   },
+   {
+      "comment" : "\"spurious patch properties\"\n",
+      "patch" : [],
+      "dst" : {
+         "foo" : 1
+      },
+      "src" : {
+         "foo" : 1
+      }
+   },
+   {
+      "dst" : {
+         "foo" : "truthy"
+      },
+      "patch" : [
+         {
+            "path" : "/foo",
+            "op" : "replace",
+            "value" : "truthy"
+         }
+      ],
+      "comment" : "\"null value should be valid obj property to be replaced with something truthy\"\n",
+      "src" : {
+         "foo" : null
+      }
+   },
+   {
+      "src" : {
+         "foo" : null
+      },
+      "dst" : {
+         "bar" : null
+      },
+      "patch" : [
+         {
+            "path" : "/foo",
+            "op" : "remove"
+         },
+         {
+            "op" : "add",
+            "value" : null,
+            "path" : "/bar"
+         }
+      ],
+      "comment" : "\"null value should be valid obj property to be moved\"\n"
+   },
+   {
+      "src" : {
+         "foo" : null
+      },
+      "patch" : [
+         {
+            "path" : "/bar",
+            "op" : "add",
+            "value" : null
+         }
+      ],
+      "comment" : "\"null value should be valid obj property to be copied\"\n",
+      "dst" : {
+         "foo" : null,
+         "bar" : null
+      }
+   },
+   {
+      "patch" : [
+         {
+            "op" : "remove",
+            "path" : "/foo"
+         }
+      ],
+      "dst" : {},
+      "comment" : "\"null value should be valid obj property to be removed\"\n",
+      "src" : {
+         "foo" : null
+      }
+   },
+   {
+      "patch" : [
+         {
+            "value" : null,
+            "op" : "replace",
+            "path" : "/foo"
+         }
+      ],
+      "comment" : "\"null value should still be valid obj property replace other value\"\n",
+      "dst" : {
+         "foo" : null
+      },
+      "src" : {
+         "foo" : "bar"
+      }
+   },
+   {
+      "comment" : "\"Move to same location has no effect\"\n",
+      "patch" : [],
+      "dst" : {
+         "foo" : 1
+      },
+      "src" : {
+         "foo" : 1
+      }
+   },
+   {
+      "dst" : {
+         "baz" : [
+            {
+               "qux" : "hello"
+            }
+         ],
+         "bar" : 1
+      },
+      "patch" : [
+         {
+            "op" : "remove",
+            "path" : "/foo"
+         },
+         {
+            "value" : 1,
+            "op" : "add",
+            "path" : "/bar"
+         }
+      ],
+      "comment" : "null\n",
+      "src" : {
+         "foo" : 1,
+         "baz" : [
+            {
+               "qux" : "hello"
+            }
+         ]
+      }
+   },
+   {
+      "dst" : {
+         "baz" : [
+            {},
+            "hello"
+         ],
+         "bar" : 1
+      },
+      "patch" : [
+         {
+            "path" : "/baz/0",
+            "op" : "add",
+            "value" : {}
+         },
+         {
+            "value" : "hello",
+            "op" : "add",
+            "path" : "/baz/1"
+         },
+         {
+            "path" : "/baz/2",
+            "op" : "remove"
+         }
+      ],
+      "comment" : "null\n",
+      "src" : {
+         "bar" : 1,
+         "baz" : [
+            {
+               "qux" : "hello"
+            }
+         ]
+      }
+   },
+   {
+      "comment" : "null\n",
+      "patch" : [
+         {
+            "op" : "add",
+            "value" : {
+               "qux" : "hello"
+            },
+            "path" : "/boo"
+         }
+      ],
+      "dst" : {
+         "bar" : 1,
+         "boo" : {
+            "qux" : "hello"
+         },
+         "baz" : [
+            {
+               "qux" : "hello"
+            }
+         ]
+      },
+      "src" : {
+         "baz" : [
+            {
+               "qux" : "hello"
+            }
+         ],
+         "bar" : 1
+      }
+   },
+   {
+      "patch" : [
+         {
+            "path" : "/foo",
+            "op" : "remove"
+         },
+         {
+            "op" : "add",
+            "value" : "qux",
+            "path" : "/baz"
+         }
+      ],
+      "comment" : "\"replacing the root of the document is possible with add\"\n",
+      "dst" : {
+         "baz" : "qux"
+      },
+      "src" : {
+         "foo" : "bar"
+      }
+   },
+   {
+      "patch" : [
+         {
+            "path" : "/2",
+            "value" : {
+               "foo" : [
+                  "bar",
+                  "baz"
+               ]
+            },
+            "op" : "add"
+         }
+      ],
+      "dst" : [
+         1,
+         2,
+         {
+            "foo" : [
+               "bar",
+               "baz"
+            ]
+         }
+      ],
+      "comment" : "\"Adding to \\\"/-\\\" adds to the end of the array\"\n",
+      "src" : [
+         1,
+         2
+      ]
+   },
+   {
+      "dst" : [
+         1,
+         2,
+         [
+            3,
+            [
+               4,
+               5,
+               {
+                  "foo" : [
+                     "bar",
+                     "baz"
+                  ]
+               }
+            ]
+         ]
+      ],
+      "patch" : [
+         {
+            "path" : "/2",
+            "value" : [
+               3,
+               [
+                  4,
+                  5,
+                  {
+                     "foo" : [
+                        "bar",
+                        "baz"
+                     ]
+                  }
+               ]
+            ],
+            "op" : "add"
+         },
+         {
+            "op" : "remove",
+            "path" : "/3"
+         }
+      ],
+      "comment" : "\"Adding to \\\"/-\\\" adds to the end of the array, even n levels down\"\n",
+      "src" : [
+         1,
+         2,
+         [
+            3,
+            [
+               4,
+               5
+            ]
+         ]
+      ]
+   },
+   {
+      "src" : [
+         1,
+         2,
+         3,
+         4
+      ],
+      "comment" : "\"test remove on array\"\n",
+      "patch" : [
+         {
+            "path" : "/0",
+            "op" : "add",
+            "value" : 2
+         },
+         {
+            "path" : "/1",
+            "value" : 3,
+            "op" : "add"
+         },
+         {
+            "op" : "add",
+            "value" : 4,
+            "path" : "/2"
+         },
+         {
+            "op" : "remove",
+            "path" : "/6"
+         },
+         {
+            "path" : "/5",
+            "op" : "remove"
+         },
+         {
+            "op" : "remove",
+            "path" : "/4"
+         },
+         {
+            "path" : "/3",
+            "op" : "remove"
+         }
+      ],
+      "dst" : [
+         2,
+         3,
+         4
+      ]
+   },
+   {
+      "src" : [
+         1,
+         2,
+         3,
+         4
+      ],
+      "dst" : [
+         1,
+         3
+      ],
+      "patch" : [
+         {
+            "value" : 3,
+            "op" : "add",
+            "path" : "/1"
+         },
+         {
+            "path" : "/4",
+            "op" : "remove"
+         },
+         {
+            "op" : "remove",
+            "path" : "/3"
+         },
+         {
+            "path" : "/2",
+            "op" : "remove"
+         }
+      ],
+      "comment" : "\"test repeated removes\"\n"
+   },
+   {
+      "comment" : "\"Patch with different capitalisation than doc\"\n",
+      "patch" : [
+         {
+            "value" : "BAR",
+            "op" : "add",
+            "path" : "/FOO"
+         }
+      ],
+      "dst" : {
+         "FOO" : "BAR",
+         "foo" : "bar"
+      },
+      "src" : {
+         "foo" : "bar"
+      }
+   }
+]
