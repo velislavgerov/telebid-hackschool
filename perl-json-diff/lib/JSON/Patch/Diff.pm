@@ -68,7 +68,7 @@ sub CompareValues($$$$;$)
     else 
     {
         # get values
-        my $ptr = getJsonPtr($path);
+        my $ptr = GetJSONPtr($path);
         
         # add operation
         if (defined $options)
@@ -116,7 +116,7 @@ sub CompareArrays($$$$)
         {
             if ($i != $j) {
                 @curr_path = (@{$path}, $i);
-                my $ptr = getJsonPtr(\@curr_path);
+                my $ptr = GetJSONPtr(\@curr_path);
                 push @{$diff}, {
                     "op" => "add",
                     "path" => $ptr, 
@@ -138,7 +138,7 @@ sub CompareArrays($$$$)
         else {
             if ($j == $len_dst - 1) {
                 @curr_path = (@{$path}, $i);
-                my $ptr = getJsonPtr(\@curr_path);
+                my $ptr = GetJSONPtr(\@curr_path);
                 push @{$diff}, {
                     "op" => "add",
                     "path" => $ptr,
@@ -164,7 +164,7 @@ sub CompareArrays($$$$)
     for (my $i = $len_src_new - 1; $i >= $len_dst; $i--) 
     {
         @curr_path = (@{$path}, $i);
-        my $ptr = getJsonPtr(\@curr_path);
+        my $ptr = GetJSONPtr(\@curr_path);
         push @{$diff}, {
             "op" => "remove", 
             "path" => $ptr
@@ -176,7 +176,7 @@ sub CompareArrays($$$$)
 sub AddOperation
 {
     @curr_path = (@{$path}, $i);
-    my $ptr = getJsonPtr(\@curr_path);
+    my $ptr = GetJSONPtr(\@curr_path);
     push @{$diff}, {
             "op" => "add",
             "path" => $ptr,
@@ -207,7 +207,7 @@ sub CompareHashes($$$$;$) {
         if (! exists $$dst{$key}) 
         {
             @curr_path = (@$path, $key);
-            my $ptr = getJsonPtr(\@curr_path);
+            my $ptr = GetJSONPtr(\@curr_path);
 
             # add operation
             if (defined $options)
@@ -243,7 +243,7 @@ sub CompareHashes($$$$;$) {
         {
             # get values
             @curr_path = (@{$path}, $key);
-            my $ptr    = getJsonPtr(\@curr_path);
+            my $ptr    = GetJSONPtr(\@curr_path);
             my $value  = ${$dst}{$key};
 
             # add opeteraion
@@ -259,7 +259,7 @@ sub CompareHashes($$$$;$) {
     }
 }
 
-sub getJsonPtr($) 
+sub GetJSONPtr($) 
 {
     # Returns JSON Pointer string
     # Input
