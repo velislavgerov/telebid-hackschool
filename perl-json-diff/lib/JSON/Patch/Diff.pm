@@ -114,8 +114,8 @@ sub CompareArraysSimpl($$$$;$)
     TRACE("SOURCE: ", $src);
     TRACE("DEST:   ", $dst);
     
-    my @updated_src = @{$src};
-
+    ## Goes through each element of the DST array and replaces each value from the SRC
+    ## array accordingly. When the end of the SRC is reached we add to it's end.
     for (my $dst_i = 0; $dst_i < scalar @{$dst}; $dst_i++)
     {
         my $target_value = $${dst}[$dst_i];;
@@ -127,13 +127,19 @@ sub CompareArraysSimpl($$$$;$)
         else
         {
             my $updated_value = $${src}[$dst_i];
-            if (!eq_deeply($target_value, $updated_value))
+            @curr_path = (@{$path}, $dst_i);
+            if (ref($target_value) ne 'SCALAR')
             {
-                @curr_path = (@{$path}, $dst_i);
+                CompareValues(\@curr_path, $updated_value, $target_value, $diff);
+            }
+            elsif (!eq_deeply($target_value, $updated_value))
+            {
                 PushOperation("replace", \@curr_path, undef, $target_value, $updated_value, $diff, $options);
             }
         }
     }
+    
+    ## Remove all extra values if the SRC array was longer than our desired DST
     if (scalar @{$src} > scalar @{$dst})
     {
         for (my $i = scalar(@{$src}) - 1; $i >= scalar @{$dst}; $i--)
@@ -180,11 +186,18 @@ sub CompareArraysExp($$$$;$)
                             }
 
                         }
-                        elsif (!eq_deeply($target_value, $updated_value))
+                        else
                         {
                             @curr_path = (@{$path}, $dst_i);
-                            PushOperation("replace", \@curr_path, undef, $target_value, $updated_value, $diff, $options);
-                            @updated_src[$dst_i] = $target_value;
+                            if (ref($target_value) ne 'SCALAR')
+                            {
+                                CompareValues(\@curr_path, $updated_value, $target_value, $diff);
+                            }
+                            elsif (!eq_deeply($target_value, $updated_value))
+                            {
+                                PushOperation("replace", \@curr_path, undef, $target_value, $updated_value, $diff, $options);
+                                @updated_src[$dst_i] = $target_value;
+                            }
                         }
                 }
                 else
@@ -198,11 +211,18 @@ sub CompareArraysExp($$$$;$)
                             PushOperation("add", \@curr_path, undef, $target_value, undef, $diff, $options);
                         }
                     }
-                    elsif (!eq_deeply($target_value, $updated_value))
+                    else
                     {
-                        @curr_path = (@{$path}, ($dst_i));
-                        PushOperation("replace", \@curr_path, undef, $target_value, $updated_value, $diff, $options);
-                        @updated_src[$dst_i] = $target_value;
+                        @curr_path = (@{$path}, $dst_i);
+                        if (ref($target_value) ne 'SCALAR')
+                        {
+                            CompareValues(\@curr_path, $updated_value, $target_value, $diff);
+                        }
+                        elsif (!eq_deeply($target_value, $updated_value))
+                        {
+                            PushOperation("replace", \@curr_path, undef, $target_value, $updated_value, $diff, $options);
+                            @updated_src[$dst_i] = $target_value;
+                        }
                     }
                 }
                 last;
