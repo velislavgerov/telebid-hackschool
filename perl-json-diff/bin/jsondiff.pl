@@ -7,6 +7,7 @@ use strict;
 use warnings;
 use JSON;
 use Getopt::Long qw(GetOptions);
+Getopt::Long::Configure ("bundling");
 
 ## Handle OPTIONS
 my $is_help;
