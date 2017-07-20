@@ -59,7 +59,7 @@ sub CompareValues($$$$;$)
     }
     elsif (ref($src) eq 'ARRAY' && ref($dst) eq 'ARRAY') 
     {
-        CompareArraysSimpl($path, $src, $dst, $diff, $options);
+        CompareArraysExp($path, $src, $dst, $diff, $options);
     }
     else 
     {
@@ -202,7 +202,7 @@ sub CompareArraysExp($$$$;$)
                 }
                 else
                 {
-                    if ($dst_i == (scalar(@{$dst} - 1)))
+                    if ($dst_i == (scalar(@{$dst}) - 1))
                     {
                         for (my $i = scalar(@updated_src); $i <= (scalar(@{$dst}) - 1); $i++)
                         {
@@ -235,7 +235,6 @@ sub CompareArraysExp($$$$;$)
                 TRACE("FROM PATH: ", \@from_path);
                 TRACE("TV:        ", $target_value);
                 TRACE("UP:        ", $updated_value);
-
                 PushOperation("move", \@curr_path, \@from_path, $target_value, $updated_value, $diff, $options);
                 @updated_src[$dst_i] = $target_value;
                 @updated_src[$src_i] = $updated_value;
@@ -295,7 +294,7 @@ sub CompareArrays($$$$;$)
 sub ListOperationAdd($$$$$;$)
 {
     my ($path, $i, $value, $old_value, $src_new, $diff, $options) = @_;
-    my @curr_path = (@{$path}, $i);
+    my @curr_path = (@{$path}, $i); 
 
     PushOperation("add", \@curr_path, undef, $value, $old_value, $diff, $options);
 
@@ -351,6 +350,8 @@ sub PushOperation($$$$$$;$)
     }
 
     push @{$diff}, $operation;
+
+    TRACE("DIFF updated: ", $diff);
 }
 
 sub GetJSONPointer($) 

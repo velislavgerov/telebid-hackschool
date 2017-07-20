@@ -1,5 +1,6 @@
 #!/usr/bin/perl -w
-use lib "lib";
+use FindBin;
+use lib "$FindBin::Bin/../lib";
 use JSON::Patch::Diff;
 
 use strict;
