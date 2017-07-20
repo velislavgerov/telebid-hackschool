@@ -3,8 +3,8 @@ import json
 
 if __name__ == '__main__':
     print("Well hello there!")
-    file_name1 = 'json-files/tests_out.json'
-    file_name2 = 'json-files/spec_tests_out.json'
+    file_name1 = 'files/tests_out.json'
+    file_name2 = 'files/spec_tests_out.json'
     files = [file_name1, file_name2]
     print("Evaluating results..")
     for name in files: 

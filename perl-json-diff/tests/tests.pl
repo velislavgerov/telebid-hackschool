@@ -21,8 +21,8 @@ my $json = JSON->new->allow_nonref;
 
 my $test_file1 = "json-patch-tests/tests.json";
 my $test_file2 = "json-patch-tests/spec_tests.json";
-my $out_test_file1 = "json-files/tests_out.json";
-my $out_test_file2 = "json-files/spec_tests_out.json";
+my $out_test_file1 = "files/tests_out.json";
+my $out_test_file2 = "files/spec_tests_out.json";
 
 ## get tests JSON text
 local $/=undef;

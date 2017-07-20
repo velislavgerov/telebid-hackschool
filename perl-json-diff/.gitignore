@@ -1,4 +1,4 @@
-json-files/*
+tests/files/*
 trash/
 *.swp
 *.swo

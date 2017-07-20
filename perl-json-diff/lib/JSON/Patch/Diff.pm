@@ -76,7 +76,7 @@ sub CompareHashes($$$$;$) {
     TRACE("SOURCE: ", $src);
     TRACE("DEST:   ", $dst);
 
-    foreach my $key (keys %$src) 
+    foreach my $key (keys %{$src}) 
     {
         # remove src key if not in dst
         if (! exists $$dst{$key}) 
@@ -103,8 +103,6 @@ sub CompareHashes($$$$;$) {
         }
     }
 }
-
-
 
 sub CompareArrays($$$$;$)
 {
@@ -298,7 +296,7 @@ JSON::Patch::Diff
 
 =head1 DESCRIPTION
 
-A minimalistic module compare two JSON perlrefs and calculate the resulting JSON Patch L<RFC6902|https://tools.ietf.org/html/rfc6902> difference.
+A minimalistic module to compare two JSON perlrefs and calculate the resulting JSON Patch L<RFC6902|https://tools.ietf.org/html/rfc6902> difference.
 
 =head1 FUNCTIONAL INTERFACE 
 
@@ -306,17 +304,92 @@ A minimalistic module compare two JSON perlrefs and calculate the resulting JSON
 
 =item GetPatch($src, $dst, $options)
 
- Inputs:   $src:      perlref: decoded JSON object (Source JSON)
-           $dst:      perlref: decoded JSON object (Destination JSON)
-           $options:  defined: enable saving old values for JSON patch
+ Inputs:   $src:            perlref: decoded JSON object (Source JSON)
+           $dst:            perlref: decoded JSON object (Destination JSON)
+           $options:        defined: enable saving old values for JSON patch
  
- Returns:  perlref:   [ { JSON Patch operation }, ... ]
+ Returns:  perlref:         [ { JSON Patch operation }, ... ]
  
  Throws:   no
 
 Calculates and returns a JSON Patch difference between source and destination JSON objects.
 
 =back
+
+=head1 INTERNAL FUNCTIONS
+
+=over 4
+
+=item PushOperation($operation_name, $path, $value, $old_value, $diff, $options)
+
+ Inputs:   $operation_name  scalar:   either 'add', 'replace' or 'remove'
+           $path            arrayref: each element represents a key in the JSON object
+           $value:          perlref:  the value to be 'added' or 'replaced'
+           $old_value:      perlref:  the old value to be used for 'replace' or 'remove'
+           $diff:           arrayref: holds all of the operations
+           $options:        defined:  specifies whether to use the old value
+ 
+ Returns:  void
+ 
+ Throws:   if '$operation_name' is invalid or unsupported
+
+Prepareas and pushes a new operation to our '$diff' array.
+
+=item GetJSONPointer($path)
+
+ Inputs:   $path            arrayref: each element represents a key in the JSON object
+ 
+ Returns:  $pointer         scalar:   JSON Pointer string
+ 
+ Throws:   no 
+
+Returns a JSON Pointer string created from $path.
+
+
+=item CompareValues($path, $src, $dst, $diff, $options)
+
+ Inputs:   $path            arrayref: each element represents a key in the JSON object
+           $src:            perlref:  decoded JSON object (Source JSON)
+           $dst:            perlref:  decoded JSON object (Destination JSON)
+           $diff:           arrayref: holds all of the operations
+           $options:        defined:  specifies whether to use the old value
+ 
+ Returns:  void
+ 
+ Throws:   no
+
+Compares $src and $dst perlrefs and chooses the appropriate action depending on their type.
+
+=item CompareHashes($path, $src, $dst, $diff, $options)
+
+ Inputs:   $path            arrayref: each element represents a key in the JSON object
+           $src:            hashref:  decoded JSON object (Source JSON)
+           $dst:            hashref:  decoded JSON object (Destination JSON)
+           $diff:           arrayref: holds all of the operations
+           $options:        defined:  specifies whether to use the old value
+ 
+ Returns:  void
+ 
+ Throws:   no
+
+Used when hashrefs need to be compared. Goes in depth recursively calling the CompareValues() subroutine.
+
+=item CompareArrays($path, $src, $dst, $diff, $options)
+
+ Inputs:   $path            arrayref: each element represents a key in the JSON object
+           $src:            arrayref: decoded JSON object (Source JSON)
+           $dst:            arrayref: decoded JSON object (Destination JSON)
+           $diff:           arrayref: holds all of the operations
+           $options:        defined:  specifies whether to use the old value
+ 
+ Returns:  void
+ 
+ Throws:   no
+
+Used when arrayrefs need to be compared. Goes in depth recursively calling the CompareValues() subroutine.
+
+=back
+
 
 =head1 AUTHOR
 
