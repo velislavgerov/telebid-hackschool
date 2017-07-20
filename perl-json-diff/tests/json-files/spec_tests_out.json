@@ -1,153 +1,151 @@
 [
    {
-      "dst" : {
-         "baz" : "qux",
-         "foo" : "bar"
-      },
       "src" : {
          "foo" : "bar"
       },
       "comment" : "\"A.1.  Adding an Object Member\"\n",
       "patch" : [
          {
-            "path" : "/baz",
             "op" : "add",
-            "value" : "qux"
+            "value" : "qux",
+            "path" : "/baz"
          }
-      ]
+      ],
+      "dst" : {
+         "foo" : "bar",
+         "baz" : "qux"
+      }
    },
    {
+      "patch" : [
+         {
+            "value" : "qux",
+            "op" : "add",
+            "path" : "/foo/1"
+         }
+      ],
+      "dst" : {
+         "foo" : [
+            "bar",
+            "qux",
+            "baz"
+         ]
+      },
       "comment" : "\"A.2.  Adding an Array Element\"\n",
       "src" : {
          "foo" : [
             "bar",
             "baz"
          ]
-      },
-      "patch" : [
-         {
-            "op" : "add",
-            "old" : null,
-            "value" : "qux",
-            "path" : "/foo/1"
-         }
-      ],
-      "dst" : {
-         "foo" : [
-            "bar",
-            "qux",
-            "baz"
-         ]
       }
    },
    {
-      "patch" : [
-         {
-            "op" : "remove",
-            "old" : {
-               "baz" : "qux",
-               "foo" : "bar"
-            },
-            "path" : "/baz"
-         }
-      ],
       "src" : {
          "baz" : "qux",
          "foo" : "bar"
       },
+      "patch" : [
+         {
+            "path" : "/baz",
+            "old" : {
+               "foo" : "bar",
+               "baz" : "qux"
+            },
+            "op" : "remove"
+         }
+      ],
       "comment" : "\"A.3.  Removing an Object Member\"\n",
       "dst" : {
          "foo" : "bar"
       }
    },
    {
+      "patch" : [
+         {
+            "path" : "/foo/1",
+            "value" : "baz",
+            "op" : "add"
+         },
+         {
+            "old" : null,
+            "path" : "/foo/3",
+            "op" : "remove"
+         },
+         {
+            "path" : "/foo/2",
+            "old" : null,
+            "op" : "remove"
+         }
+      ],
       "comment" : "\"A.4.  Removing an Array Element\"\n",
+      "dst" : {
+         "foo" : [
+            "bar",
+            "baz"
+         ]
+      },
       "src" : {
          "foo" : [
             "bar",
             "qux",
             "baz"
          ]
-      },
-      "patch" : [
-         {
-            "old" : "qux",
-            "value" : "baz",
-            "op" : "add",
-            "path" : "/foo/1"
-         },
-         {
-            "old" : "baz",
-            "op" : "remove",
-            "path" : "/foo/3"
-         },
-         {
-            "op" : "remove",
-            "old" : "qux",
-            "path" : "/foo/2"
-         }
-      ],
-      "dst" : {
-         "foo" : [
-            "bar",
-            "baz"
-         ]
       }
    },
    {
+      "patch" : [
+         {
+            "path" : "/baz",
+            "old" : "qux",
+            "op" : "replace",
+            "value" : "boo"
+         }
+      ],
+      "comment" : "\"A.5.  Replacing a Value\"\n",
       "dst" : {
          "foo" : "bar",
          "baz" : "boo"
       },
-      "patch" : [
-         {
-            "path" : "/baz",
-            "op" : "replace",
-            "old" : "qux",
-            "value" : "boo"
-         }
-      ],
       "src" : {
-         "foo" : "bar",
-         "baz" : "qux"
-      },
-      "comment" : "\"A.5.  Replacing a Value\"\n"
+         "baz" : "qux",
+         "foo" : "bar"
+      }
    },
    {
-      "patch" : [
-         {
-            "path" : "/foo/waldo",
-            "op" : "remove",
-            "old" : {
-               "bar" : "baz",
-               "waldo" : "fred"
-            }
-         },
-         {
-            "path" : "/qux/thud",
-            "op" : "add",
-            "value" : "fred"
-         }
-      ],
       "src" : {
+         "foo" : {
+            "bar" : "baz",
+            "waldo" : "fred"
+         },
          "qux" : {
             "corge" : "grault"
-         },
-         "foo" : {
-            "waldo" : "fred",
-            "bar" : "baz"
          }
       },
-      "comment" : "\"A.6.  Moving a Value\"\n",
       "dst" : {
+         "foo" : {
+            "bar" : "baz"
+         },
          "qux" : {
             "thud" : "fred",
             "corge" : "grault"
-         },
-         "foo" : {
-            "bar" : "baz"
          }
-      }
+      },
+      "patch" : [
+         {
+            "value" : "fred",
+            "op" : "add",
+            "path" : "/qux/thud"
+         },
+         {
+            "path" : "/foo/waldo",
+            "old" : {
+               "waldo" : "fred",
+               "bar" : "baz"
+            },
+            "op" : "remove"
+         }
+      ],
+      "comment" : "\"A.6.  Moving a Value\"\n"
    },
    {
       "dst" : {
@@ -158,6 +156,29 @@
             "grass"
          ]
       },
+      "patch" : [
+         {
+            "path" : "/foo/1",
+            "value" : "cows",
+            "op" : "add"
+         },
+         {
+            "op" : "add",
+            "value" : "eat",
+            "path" : "/foo/2"
+         },
+         {
+            "op" : "remove",
+            "old" : null,
+            "path" : "/foo/5"
+         },
+         {
+            "op" : "remove",
+            "path" : "/foo/4",
+            "old" : null
+         }
+      ],
+      "comment" : "\"A.7.  Moving an Array Element\"\n",
       "src" : {
          "foo" : [
             "all",
@@ -165,104 +186,95 @@
             "cows",
             "eat"
          ]
+      }
+   },
+   {
+      "src" : {
+         "foo" : [
+            "a",
+            2,
+            "c"
+         ],
+         "baz" : "qux"
       },
-      "comment" : "\"A.7.  Moving an Array Element\"\n",
+      "dst" : {
+         "foo" : [
+            "a",
+            2,
+            "c"
+         ],
+         "baz" : "qux"
+      },
+      "patch" : [],
+      "comment" : "\"A.8.  Testing a Value: Success\"\n"
+   },
+   {
+      "src" : {
+         "foo" : "bar"
+      },
       "patch" : [
          {
-            "path" : "/foo/1",
-            "old" : "cows",
-            "value" : "cows",
-            "op" : "add"
-         },
-         {
-            "value" : "eat",
-            "old" : "cows",
+            "value" : {
+               "grandchild" : {}
+            },
             "op" : "add",
-            "path" : "/foo/2"
-         },
-         {
-            "path" : "/foo/5",
-            "old" : "eat",
-            "op" : "remove"
-         },
-         {
-            "path" : "/foo/4",
-            "old" : "cows",
-            "op" : "remove"
+            "path" : "/child"
          }
-      ]
-   },
-   {
-      "dst" : {
-         "baz" : "qux",
-         "foo" : [
-            "a",
-            2,
-            "c"
-         ]
-      },
-      "src" : {
-         "baz" : "qux",
-         "foo" : [
-            "a",
-            2,
-            "c"
-         ]
-      },
-      "comment" : "\"A.8.  Testing a Value: Success\"\n",
-      "patch" : []
-   },
-   {
+      ],
       "dst" : {
          "foo" : "bar",
          "child" : {
             "grandchild" : {}
          }
       },
-      "patch" : [
-         {
-            "path" : "/child",
-            "op" : "add",
-            "value" : {
-               "grandchild" : {}
-            }
-         }
-      ],
-      "comment" : "\"A.10.  Adding a nested Member Object\"\n",
-      "src" : {
-         "foo" : "bar"
-      }
+      "comment" : "\"A.10.  Adding a nested Member Object\"\n"
    },
    {
-      "src" : {
-         "foo" : "bar"
-      },
-      "comment" : "\"A.11.  Ignoring Unrecognized Elements\"\n",
       "patch" : [
          {
-            "op" : "add",
+            "path" : "/baz",
             "value" : "qux",
-            "path" : "/baz"
+            "op" : "add"
          }
       ],
       "dst" : {
          "foo" : "bar",
          "baz" : "qux"
+      },
+      "comment" : "\"A.11.  Ignoring Unrecognized Elements\"\n",
+      "src" : {
+         "foo" : "bar"
       }
    },
    {
-      "dst" : {
-         "~1" : 10,
-         "/" : 9
-      },
       "comment" : "\"A.14. ~ Escape Ordering\"\n",
+      "patch" : [],
+      "dst" : {
+         "/" : 9,
+         "~1" : 10
+      },
       "src" : {
          "~1" : 10,
          "/" : 9
-      },
-      "patch" : []
+      }
    },
    {
+      "src" : {
+         "foo" : [
+            "bar"
+         ]
+      },
+      "comment" : "\"A.16. Adding an Array Value\"\n",
+      "patch" : [
+         {
+            "op" : "add",
+            "value" : [
+               "abc",
+               "def"
+            ],
+            "path" : "/foo/1"
+         }
+      ],
       "dst" : {
          "foo" : [
             "bar",
@@ -270,23 +282,6 @@
                "abc",
                "def"
             ]
-         ]
-      },
-      "patch" : [
-         {
-            "path" : "/foo/1",
-            "old" : null,
-            "value" : [
-               "abc",
-               "def"
-            ],
-            "op" : "add"
-         }
-      ],
-      "comment" : "\"A.16. Adding an Array Value\"\n",
-      "src" : {
-         "foo" : [
-            "bar"
          ]
       }
    }
