@@ -59,7 +59,7 @@ sub CompareValues($$$$;$)
     }
     elsif (ref($src) eq 'ARRAY' && ref($dst) eq 'ARRAY') 
     {
-        CompareArraysExp($path, $src, $dst, $diff, $options);
+        CompareArraysSimpl($path, $src, $dst, $diff, $options);
     }
     else 
     {
@@ -104,12 +104,54 @@ sub CompareHashes($$$$;$) {
     }
 }
 
+sub CompareArraysSimpl($$$$;$)
+{
+    my ($path, $src, $dst, $diff, $options) = @_;
+    my @curr_path;
+
+    TRACE("Comparing ARRAYS Exp");
+    TRACE("PATH:   ", $path);
+    TRACE("SOURCE: ", $src);
+    TRACE("DEST:   ", $dst);
+    
+    my @updated_src = @{$src};
+
+    for (my $dst_i = 0; $dst_i < scalar @{$dst}; $dst_i++)
+    {
+        my $target_value = $${dst}[$dst_i];;
+        if($dst_i >= scalar @{$src})
+        {
+            @curr_path = (@{$path}, '-');
+            PushOperation("add", \@curr_path, undef, $target_value, undef, $diff, $options);
+        }
+        else
+        {
+            my $updated_value = $${src}[$dst_i];
+            if (!eq_deeply($target_value, $updated_value))
+            {
+                @curr_path = (@{$path}, $dst_i);
+                PushOperation("replace", \@curr_path, undef, $target_value, $updated_value, $diff, $options);
+            }
+        }
+    }
+    if (scalar @{$src} > scalar @{$dst})
+    {
+        for (my $i = scalar(@{$src}) - 1; $i >= scalar @{$dst}; $i--)
+        {
+            my $old_value = $$src[$i];
+            @curr_path = (@{$path}, $i);
+            PushOperation("remove", \@curr_path, undef, undef, $old_value, $diff, $options);
+        }
+    }
+}
+
+
 sub CompareArraysExp($$$$;$)
 {
     my ($path, $src, $dst, $diff, $options) = @_;
     my @curr_path;
 
-    TRACE("Comparing ARRAYS");
+    TRACE("Comparing ARRAYS Exp");
     TRACE("PATH:   ", $path);
     TRACE("SOURCE: ", $src);
     TRACE("DEST:   ", $dst);
@@ -142,6 +184,7 @@ sub CompareArraysExp($$$$;$)
                         {
                             @curr_path = (@{$path}, $dst_i);
                             PushOperation("replace", \@curr_path, undef, $target_value, $updated_value, $diff, $options);
+                            @updated_src[$dst_i] = $target_value;
                         }
                 }
                 else
@@ -159,6 +202,7 @@ sub CompareArraysExp($$$$;$)
                     {
                         @curr_path = (@{$path}, ($dst_i));
                         PushOperation("replace", \@curr_path, undef, $target_value, $updated_value, $diff, $options);
+                        @updated_src[$dst_i] = $target_value;
                     }
                 }
                 last;
@@ -281,7 +325,7 @@ sub PushOperation($$$$$$;$)
         die "$0: error: invalid or unsupported operation $operation_name";
     }
 
-    if (defined $options && ($operation_name ne 'add' || $operation ne 'move'))
+    if (defined $options && $operation_name ne 'add' && $operation ne 'move')
     {
         $$operation{old} = $old_value; 
     }
