@@ -59,11 +59,11 @@ sub CompareValues($$$$;$)
     }
     elsif (ref($src) eq 'ARRAY' && ref($dst) eq 'ARRAY') 
     {
-        CompareArraysExp($path, $src, $dst, $diff, $options);
+        CompareArrays($path, $src, $dst, $diff, $options);
     }
     else 
     {
-        PushOperation("replace", $path, undef, $dst, $src, $diff, $options); 
+        PushOperation("replace", $path, $dst, $src, $diff, $options); 
     }
 }
 
@@ -82,7 +82,7 @@ sub CompareHashes($$$$;$) {
         if (! exists $$dst{$key}) 
         {
             @curr_path = (@$path, $key);
-            PushOperation("remove", \@curr_path, undef, undef, $src, $diff, $options);
+            PushOperation("remove", \@curr_path, undef, $src, $diff, $options);
 
             next;
         }
@@ -99,7 +99,7 @@ sub CompareHashes($$$$;$) {
             @curr_path = (@{$path}, $key);
             my $value  = ${$dst}{$key};
 
-            PushOperation("add", \@curr_path, undef, $value, undef, $diff, $options);
+            PushOperation("add", \@curr_path, $value, undef, $diff, $options);
         }
     }
 }
@@ -116,70 +116,30 @@ sub CompareArraysExp($$$$;$)
     
     my @updated_src = @{$src};
 
-    for (my $dst_i = 0; $dst_i <= scalar @{$dst}; $dst_i++)
+    for (my $dst_i; $dst_i <= scalar @{$dst}; $dst_i++)
     {
         my $target_value = $$dst[$dst_i];
         # XXX: updated or original?
         my $updated_value = $updated_src[$dst_i];
         for (my $src_i = $dst_i; $src_i <= scalar @updated_src; $src_i++)
         {
-            TRACE("UPDATED SRC", \@updated_src);
             if ($src_i == scalar @updated_src)
             {
-                if (scalar @updated_src >= scalar @{$dst})
-                { 
-                        if($dst_i == scalar(@{$dst}))
-                        {
-                            for (my $i = scalar(@updated_src) - 1; $i >= scalar @{$dst}; $i--)
-                            {
-                                my $old_value = $updated_src[$i];
-                                @curr_path = (@{$path}, $i);
-                                PushOperation("remove", \@curr_path, undef, undef, $old_value, $diff, $options);
-                            }
-
-                        }
-                        elsif (!eq_deeply($target_value, $updated_value))
-                        {
-                            @curr_path = (@{$path}, $dst_i);
-                            PushOperation("replace", \@curr_path, undef, $target_value, $updated_value, $diff, $options);
-                        }
-                }
-                else
-                {
-                    if ($dst_i == (scalar(@{$dst} - 1)))
-                    {
-                        for (my $i = scalar(@updated_src); $i <= (scalar(@{$dst}) - 1); $i++)
-                        {
-                            $target_value = $$dst[$i];
-                            @curr_path = (@{$path}, '-');
-                            PushOperation("add", \@curr_path, undef, $target_value, undef, $diff, $options);
-                        }
-                    }
-                    elsif (!eq_deeply($target_value, $updated_value))
-                    {
-                        @curr_path = (@{$path}, ($dst_i));
-                        PushOperation("replace", \@curr_path, undef, $target_value, $updated_value, $diff, $options);
-                    }
-                }
+                @curr_path = (@{$path}, $dst_i);
+                PushOperation("replace", \@curr_path, $target_value, $updated_value, $diff, $options);
                 last;
             }
             my $curr_value = $updated_src[$src_i];
-            if (eq_deeply($curr_value, $target_value) && $src_i != $dst_i)
+            if ($curr_value == $target_value)
             {
                 @curr_path = (@{$path}, $dst_i);
-                my @from_path = (@{$path}, $src_i);
-                TRACE("FROM PATH: ", \@from_path);
-                TRACE("TV:        ", $target_value);
-                TRACE("UP:        ", $updated_value);
-
-                PushOperation("move", \@curr_path, \@from_path, $target_value, $updated_value, $diff, $options);
-                @updated_src[$dst_i] = $target_value;
-                @updated_src[$src_i] = $updated_value;
+                @from_path = (@{$path}, $src_i);
+                PushOperation("move", \@curr_path, \@from_path, $target_value, $curr_value, $diff, $options);
                 last;
             }
         }
     }
-    
+
 }
 
 sub CompareArrays($$$$;$)
@@ -224,7 +184,7 @@ sub CompareArrays($$$$;$)
     for (my $i = $len_src_new - 1; $i >= $len_dst; $i--) 
     {
         @curr_path = (@{$path}, $i);
-        PushOperation("remove", \@curr_path, undef, undef, undef, $diff, $options); 
+        PushOperation("remove", \@curr_path, undef, undef, $diff, $options); 
     }
 }
 
@@ -233,7 +193,7 @@ sub ListOperationAdd($$$$$;$)
     my ($path, $i, $value, $old_value, $src_new, $diff, $options) = @_;
     my @curr_path = (@{$path}, $i);
 
-    PushOperation("add", \@curr_path, undef, $value, $old_value, $diff, $options);
+    PushOperation("add", \@curr_path, $value, $old_value, $diff, $options);
 
     TRACE("DIFF updated: ", $diff);
     
@@ -244,10 +204,10 @@ sub ListOperationAdd($$$$$;$)
     );
 }
 
-sub PushOperation($$$$$$;$)
+sub PushOperation($$$$$;$)
 {
     ## Add operation to $diff
-    my ($operation_name, $path, $from, $value, $old_value, $diff, $options) = @_;
+    my ($operation_name, $path, $value, $old_value, $diff, $options) = @_;
     
     my $operation;
     my $pointer = GetJSONPointer($path); 
@@ -267,21 +227,12 @@ sub PushOperation($$$$$$;$)
             "path"  => $pointer
         };
     }
-    elsif ($operation_name eq 'move')
-    {
-        my $from_pointer = GetJSONPointer($from);
-        $operation = {
-            "op"    => $operation_name,
-            "path"  => $pointer,
-            "from"  => $from_pointer
-        };
-    }
     else 
     {
         die "$0: error: invalid or unsupported operation $operation_name";
     }
 
-    if (defined $options && ($operation_name ne 'add' || $operation ne 'move'))
+    if (defined $options && $operation_name ne 'add')
     {
         $$operation{old} = $old_value; 
     }
