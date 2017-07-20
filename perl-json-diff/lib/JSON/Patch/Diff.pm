@@ -191,10 +191,11 @@ sub CompareArraysExp($$$$;$)
                             @curr_path = (@{$path}, $dst_i);
                             if (ref($target_value) ne 'SCALAR')
                             {
-                                CompareValues(\@curr_path, $updated_value, $target_value, $diff);
+                                CompareValues(\@curr_path, $updated_value, $target_value, $diff, $options);
                             }
                             elsif (!eq_deeply($target_value, $updated_value))
                             {
+                                TRACE("Updated value 1: ", $updated_value);
                                 PushOperation("replace", \@curr_path, undef, $target_value, $updated_value, $diff, $options);
                                 @updated_src[$dst_i] = $target_value;
                             }
@@ -216,10 +217,11 @@ sub CompareArraysExp($$$$;$)
                         @curr_path = (@{$path}, $dst_i);
                         if (ref($target_value) ne 'SCALAR')
                         {
-                            CompareValues(\@curr_path, $updated_value, $target_value, $diff);
+                            CompareValues(\@curr_path, $updated_value, $target_value, $diff, $options);
                         }
                         elsif (!eq_deeply($target_value, $updated_value))
                         {
+                            TRACE("Updated value 2: ", $updated_value);
                             PushOperation("replace", \@curr_path, undef, $target_value, $updated_value, $diff, $options);
                             @updated_src[$dst_i] = $target_value;
                         }
@@ -315,6 +317,13 @@ sub PushOperation($$$$$$;$)
     my $operation;
     my $pointer = GetJSONPointer($path); 
     
+    TRACE("PUSH OPERATION");
+    TRACE("OP:      ", $operation_name);
+    TRACE("POINTER: ", $pointer);
+    TRACE("VALUE:   ", $value);
+    TRACE("OLD:     ", $old_value);
+    TRACE("OPTION:  ", $options);
+
     if ($operation_name eq 'add' || $operation_name eq 'replace')
     {
         $operation = {
