@@ -63,32 +63,48 @@ sub CompareValues($$$$;$)
     }
     else 
     {
-        # get values
-        my $pointer = GetJSONPointer($path);
-        
-        # add operation
-        if (defined $options)
-        {
-             push @$diff, {
-                "op"    => "replace", 
-                "path"  => $pointer,
-                "value" => $dst,
-                "old"   => $src
-            };
-        }
-        else
-        {
-            push @$diff, {
-                "op"    => "replace", 
-                "path"  => $pointer,
-                "value" => $dst
-            };
-        }
-        
-        # debug
-        TRACE("DIFF updated: ", $diff);
+        PushOperation("replace", $path, $dst, $src, $diff, $options); 
     }
 }
+
+sub CompareHashes($$$$;$) {
+    my ($path, $src, $dst, $diff, $options) = @_;
+    my @curr_path;
+
+    TRACE("Comparing HASHES:");
+    TRACE("PATH:   ", $path);
+    TRACE("SOURCE: ", $src);
+    TRACE("DEST:   ", $dst);
+
+    foreach my $key (keys %$src) 
+    {
+        # remove src key if not in dst
+        if (! exists $$dst{$key}) 
+        {
+            @curr_path = (@$path, $key);
+            PushOperation("remove", \@curr_path, undef, $src, $diff, $options);
+
+            next;
+        }
+        # else go deeper
+        @curr_path = (@$path, $key);
+        CompareValues(\@curr_path, $$src{$key}, $$dst{$key}, $diff, $options);
+    }
+    
+    foreach my $key (keys %{$dst}) 
+    {
+        if (! exists $$src{$key}) 
+        {
+            # get values
+            @curr_path = (@{$path}, $key);
+            my $value  = ${$dst}{$key};
+
+            PushOperation("add", \@curr_path, $value, undef, $diff, $options);
+        }
+    }
+}
+
+
 
 sub CompareArrays($$$$;$)
 {
@@ -132,7 +148,7 @@ sub CompareArrays($$$$;$)
     for (my $i = $len_src_new - 1; $i >= $len_dst; $i--) 
     {
         @curr_path = (@{$path}, $i);
-        PushOperation("remove", \@curr_path, undef, @src_new[$i], $diff, $options); 
+        PushOperation("remove", \@curr_path, undef, undef, $diff, $options); 
     }
 }
 
@@ -186,73 +202,6 @@ sub PushOperation($$$$$;$)
     }
 
     push @{$diff}, $operation;
-}
-
-sub CompareHashes($$$$;$) {
-    my ($path, $src, $dst, $diff, $options) = @_;
-    my @curr_path;
-
-    TRACE("Comparing HASHES:");
-    TRACE("PATH:   ", $path);
-    TRACE("SOURCE: ", $src);
-    TRACE("DEST:   ", $dst);
-
-    foreach my $key (keys %$src) 
-    {
-        # remove src key if not in dst
-        if (! exists $$dst{$key}) 
-        {
-            @curr_path = (@$path, $key);
-            my $pointer = GetJSONPointer(\@curr_path);
-
-            # add operation
-            if (defined $options)
-            {
-                push @$diff, {
-                    "op"    => "remove", 
-                    "path"  => $pointer,
-                    #"value" => $dst,
-                    "old"   => $src
-                };
-            }
-            else
-            {
-                push @$diff, {
-                    "op" => "remove",
-                    "path" => $pointer
-                };
-            }
-            
-            # debug
-            TRACE("DIFF updated: ", $diff);
-            
-            next;
-        }
-        # else go deeper
-        @curr_path = (@$path, $key);
-        CompareValues(\@curr_path, $$src{$key}, $$dst{$key}, $diff, $options);
-    }
-    
-    foreach my $key (keys %{$dst}) 
-    {
-        if (! exists $$src{$key}) 
-        {
-            # get values
-            @curr_path = (@{$path}, $key);
-            my $pointer    = GetJSONPointer(\@curr_path);
-            my $value  = ${$dst}{$key};
-
-            # add opeteraion
-            push @{$diff}, {
-                "op"    => "add", 
-                "path"  => $pointer, 
-                "value" => $value
-            };
-
-            # debug
-            TRACE("DIFF updated: ", $diff);
-        }
-    }
 }
 
 sub GetJSONPointer($) 
