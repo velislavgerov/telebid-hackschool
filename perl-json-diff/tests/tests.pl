@@ -1,15 +1,15 @@
+#!/usr/bin/perl -w
 # ---------------------------------------------------------------------------- #
 # -------------------------------   TESTING   -------------------------------- #
 # ---------------------------------------------------------------------------- #
-
-use lib "../lib";
-
-use JSON;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
 use JSON::Patch::Diff;
 
 use strict;
 use warnings;
 
+use JSON;
 use Data::Compare;
 use Data::Dumper;
 use feature 'say';
@@ -19,10 +19,10 @@ my $json = JSON->new->allow_nonref;
 
 ## set JSON tests in filenames and out filenames
 
-my $test_file1 = "json-patch-tests/tests.json";
-my $test_file2 = "json-patch-tests/spec_tests.json";
-my $out_test_file1 = "files/tests_out.json";
-my $out_test_file2 = "files/spec_tests_out.json";
+my $test_file1 = "$FindBin::Bin/json-patch-tests/tests.json";
+my $test_file2 = "$FindBin::Bin/json-patch-tests/spec_tests.json";
+my $out_test_file1 = "$FindBin::Bin/files/tests_out.json";
+my $out_test_file2 = "$FindBin::Bin/files/spec_tests_out.json";
 
 ## get tests JSON text
 local $/=undef;
