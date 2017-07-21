@@ -181,6 +181,7 @@ sub CompareArraysExp($$$$;$)
                                 @curr_path = (@{$path}, $i);
                                 PushOperation("remove", \@curr_path, undef, undef, $old_value, $diff, $options);
                             }
+                            last;
 
                         }
                         else
@@ -200,6 +201,7 @@ sub CompareArraysExp($$$$;$)
                             @curr_path = (@{$path}, '-');
                             PushOperation("add", \@curr_path, undef, $target_value, undef, $diff, $options);
                         }
+                        last
                     }
                     else
                     {
@@ -208,19 +210,24 @@ sub CompareArraysExp($$$$;$)
                         #@updated_src[$dst_i] = $target_value; #XXX: Not updated
                     }
                 }
-                last;
             }
+
             my $curr_value = $updated_src[$src_i];
+            
             if (eq_deeply($curr_value, $target_value) && $src_i != $dst_i)
             {
                 @curr_path = (@{$path}, $dst_i);
                 my @from_path = (@{$path}, $src_i);
+                
                 TRACE("FROM PATH: ", \@from_path);
                 TRACE("TV:        ", $target_value);
                 TRACE("UP:        ", $updated_value);
+
                 PushOperation("move", \@curr_path, \@from_path, $target_value, $updated_value, $diff, $options);
+                
                 @updated_src[$dst_i] = $target_value;
                 @updated_src[$src_i] = $updated_value;
+                
                 last;
             }
         }
