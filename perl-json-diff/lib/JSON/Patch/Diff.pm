@@ -15,7 +15,7 @@ my $json = JSON->new->allow_nonref;
 sub GetPatch($$;$)
 {
     my ($src, $dst, $options ) = @_;
-    # TODO: elaborate input checking
+    # TODO: better input handling
 
     my $diff = [];
     my $path = [];
@@ -116,27 +116,24 @@ sub CompareArraysSimpl($$$$;$)
     
     ## Goes through each element of the DST array and replaces each value from the SRC
     ## array accordingly. When the end of the SRC is reached we add to it's end.
+    ## TODO: $dst_i => $i || $dst_idx
     for (my $dst_i = 0; $dst_i < scalar @{$dst}; $dst_i++)
     {
         my $target_value = $${dst}[$dst_i];;
+        
         if($dst_i >= scalar @{$src})
         {
             @curr_path = (@{$path}, '-');
             PushOperation("add", \@curr_path, undef, $target_value, undef, $diff, $options);
+            last;
         }
-        else
-        {
-            my $updated_value = $${src}[$dst_i];
-            @curr_path = (@{$path}, $dst_i);
-            if (ref($target_value) ne 'SCALAR')
-            {
-                CompareValues(\@curr_path, $updated_value, $target_value, $diff);
-            }
-            elsif (!eq_deeply($target_value, $updated_value))
-            {
-                PushOperation("replace", \@curr_path, undef, $target_value, $updated_value, $diff, $options);
-            }
-        }
+        
+        my $updated_value = $${src}[$dst_i];
+        
+        @curr_path = (@{$path}, $dst_i);
+        
+        CompareValues(\@curr_path, $updated_value, $target_value, $diff);
+
     }
     
     ## Remove all extra values if the SRC array was longer than our desired DST
