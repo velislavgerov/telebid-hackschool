@@ -186,16 +186,8 @@ sub CompareArraysExp($$$$;$)
                         else
                         {
                             @curr_path = (@{$path}, $dst_i);
-                            if (ref($target_value) ne 'SCALAR')
-                            {
-                                CompareValues(\@curr_path, $updated_value, $target_value, $diff, $options);
-                            }
-                            elsif (!eq_deeply($target_value, $updated_value))
-                            {
-                                TRACE("Updated value 1: ", $updated_value);
-                                PushOperation("replace", \@curr_path, undef, $target_value, $updated_value, $diff, $options);
-                                @updated_src[$dst_i] = $target_value;
-                            }
+                            CompareValues(\@curr_path, $updated_value, $target_value, $diff, $options);
+                            #@updated_src[$dst_i] = $target_value; #XXX: Not updated
                         }
                 }
                 else
@@ -212,16 +204,8 @@ sub CompareArraysExp($$$$;$)
                     else
                     {
                         @curr_path = (@{$path}, $dst_i);
-                        if (ref($target_value) ne 'SCALAR')
-                        {
-                            CompareValues(\@curr_path, $updated_value, $target_value, $diff, $options);
-                        }
-                        elsif (!eq_deeply($target_value, $updated_value))
-                        {
-                            TRACE("Updated value 2: ", $updated_value);
-                            PushOperation("replace", \@curr_path, undef, $target_value, $updated_value, $diff, $options);
-                            @updated_src[$dst_i] = $target_value;
-                        }
+                        CompareValues(\@curr_path, $updated_value, $target_value, $diff, $options);
+                        #@updated_src[$dst_i] = $target_value; #XXX: Not updated
                     }
                 }
                 last;
