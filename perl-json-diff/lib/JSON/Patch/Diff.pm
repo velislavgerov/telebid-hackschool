@@ -116,21 +116,21 @@ sub CompareArraysSimpl($$$$;$)
     
     ## Goes through each element of the DST array and replaces each value from the SRC
     ## array accordingly. When the end of the SRC is reached we add to it's end.
-    ## TODO: $dst_i => $i || $dst_idx
-    for (my $dst_i = 0; $dst_i < scalar @{$dst}; $dst_i++)
+    ## TODO: $dst_idx => $i || $dst_idx
+    for (my $dst_idx = 0; $dst_idx < scalar @{$dst}; $dst_idx++)
     {
-        my $target_value = $${dst}[$dst_i];;
+        my $target_value = $${dst}[$dst_idx];;
         
-        if($dst_i >= scalar @{$src})
+        if($dst_idx >= scalar @{$src})
         {
             @curr_path = (@{$path}, '-');
             PushOperation("add", \@curr_path, undef, $target_value, undef, $diff, $options);
             last;
         }
         
-        my $updated_value = $${src}[$dst_i];
+        my $updated_value = $${src}[$dst_idx];
         
-        @curr_path = (@{$path}, $dst_i);
+        @curr_path = (@{$path}, $dst_idx);
         
         CompareValues(\@curr_path, $updated_value, $target_value, $diff);
 
@@ -161,29 +161,23 @@ sub CompareArraysExp($$$$;$)
     
     my @updated_src = @{$src};
 
-    for (my $dst_i = 0; $dst_i <= scalar @{$dst}; $dst_i++)
+    ## For each index in DST
+    for (my $dst_idx = 0; $dst_idx <= scalar @{$dst}; $dst_idx++)
     {
-        my $target_value = $$dst[$dst_i];
-        # XXX: updated or original?
-        my $updated_value = $updated_src[$dst_i];
-        for (my $src_i = $dst_i; $src_i <= scalar @updated_src; $src_i++)
+        ## Hold both SRC and DST values at the current DST index
+        my $target_value = $$dst[$dst_idx];
+        my $updated_value = $updated_src[$dst_idx];
+
+        ## Loop through the src array to see if we can find a match for our target value.
+        ## Note: If no match was found, we loop an extra time to replace the SRC value at
+        ## our current DST index 
+        for (my $src_idx = $dst_idx; $src_idx <= scalar @updated_src; $src_idx++)
         {
             TRACE("UPDATED SRC", \@updated_src);
-
-            if ($src_i == scalar @updated_src)
-            {
-                if (scalar @updated_src >= scalar @{$dst} && $dst_i == scalar(@{$dst}))
-                { 
-                    for (my $i = scalar(@updated_src) - 1; $i >= scalar @{$dst}; $i--)
-                    {
-                        my $old_value = $updated_src[$i];
-                        @curr_path = (@{$path}, $i);
-                        PushOperation("remove", \@curr_path, undef, undef, $old_value, $diff, $options);
-                    }
-                    last;
-                }
-                
-                if(scalar @updated_src < scalar @{$dst} && $dst_i == (scalar(@{$dst}) - 1))
+            
+            if ($src_idx == scalar @updated_src)
+            {                
+                if(scalar @updated_src < scalar @{$dst} && $dst_idx == (scalar(@{$dst}) - 1))
                 {
                     for (my $i = scalar(@updated_src); $i <= (scalar(@{$dst}) - 1); $i++)
                     {
@@ -191,23 +185,22 @@ sub CompareArraysExp($$$$;$)
                         @curr_path = (@{$path}, '-');
                         PushOperation("add", \@curr_path, undef, $target_value, undef, $diff, $options);
                     }
-                    
-                    next;
+ 
                 }
                 
-                @curr_path = (@{$path}, $dst_i);
+                @curr_path = (@{$path}, $dst_idx);
                 CompareValues(\@curr_path, $updated_value, $target_value, $diff, $options);
-                #@updated_src[$dst_i] = $target_value; #XXX: Not sure if updated, needs checking
+                #@updated_src[$dst_idx] = $target_value; #XXX: Not sure if updated, needs checking
 
                 last;
             }
 
-            my $curr_value = $updated_src[$src_i];
+            my $curr_value = $updated_src[$src_idx];
             
-            if (eq_deeply($curr_value, $target_value) && $src_i != $dst_i)
+            if (eq_deeply($curr_value, $target_value) && $src_idx != $dst_idx)
             {
-                @curr_path = (@{$path}, $dst_i);
-                my @from_path = (@{$path}, $src_i);
+                @curr_path = (@{$path}, $dst_idx);
+                my @from_path = (@{$path}, $src_idx);
                 
                 TRACE("FROM PATH: ", \@from_path);
                 TRACE("TV:        ", $target_value);
@@ -215,11 +208,22 @@ sub CompareArraysExp($$$$;$)
 
                 PushOperation("move", \@curr_path, \@from_path, $target_value, $updated_value, $diff, $options);
                 
-                @updated_src[$dst_i] = $target_value;
-                @updated_src[$src_i] = $updated_value;
+                @updated_src[$dst_idx] = $target_value;
+                @updated_src[$src_idx] = $updated_value;
                 
                 last;
             }
+        }
+
+        if (scalar @updated_src >= scalar @{$dst} && $dst_idx == scalar(@{$dst}))
+        { 
+            for (my $i = scalar(@updated_src) - 1; $i >= scalar @{$dst}; $i--)
+            {
+                my $old_value = $updated_src[$i];
+                @curr_path = (@{$path}, $i);
+                PushOperation("remove", \@curr_path, undef, undef, $old_value, $diff, $options);
+            }
+            last;
         }
     }
     
@@ -245,14 +249,16 @@ sub CompareArrays($$$$;$)
         my $right = $src_new[$j];
         if (eq_deeply($left, $right)) 
         {
-            if ($i != $j) {
+            if ($i != $j) 
+            {
                 ListOperationAdd($path, $i, $left, $right, \@src_new, $diff, $options);
             }
             $i += 1;
             $j = $i;
         }
         else {
-            if ($j == $len_dst - 1) {
+            if ($j == $len_dst - 1) 
+            {
                 ListOperationAdd($path, $i, $left, $right, \@src_new, $diff, $options);
                 $i += 1;
                 $j = 0;
