@@ -169,47 +169,37 @@ sub CompareArraysExp($$$$;$)
         for (my $src_i = $dst_i; $src_i <= scalar @updated_src; $src_i++)
         {
             TRACE("UPDATED SRC", \@updated_src);
+
             if ($src_i == scalar @updated_src)
             {
-                if (scalar @updated_src >= scalar @{$dst})
+                if (scalar @updated_src >= scalar @{$dst} && $dst_i == scalar(@{$dst}))
                 { 
-                        if($dst_i == scalar(@{$dst}))
-                        {
-                            for (my $i = scalar(@updated_src) - 1; $i >= scalar @{$dst}; $i--)
-                            {
-                                my $old_value = $updated_src[$i];
-                                @curr_path = (@{$path}, $i);
-                                PushOperation("remove", \@curr_path, undef, undef, $old_value, $diff, $options);
-                            }
-                            last;
-
-                        }
-                        else
-                        {
-                            @curr_path = (@{$path}, $dst_i);
-                            CompareValues(\@curr_path, $updated_value, $target_value, $diff, $options);
-                            #@updated_src[$dst_i] = $target_value; #XXX: Not updated
-                        }
+                    for (my $i = scalar(@updated_src) - 1; $i >= scalar @{$dst}; $i--)
+                    {
+                        my $old_value = $updated_src[$i];
+                        @curr_path = (@{$path}, $i);
+                        PushOperation("remove", \@curr_path, undef, undef, $old_value, $diff, $options);
+                    }
+                    last;
                 }
-                else
+                
+                if(scalar @updated_src < scalar @{$dst} && $dst_i == (scalar(@{$dst}) - 1))
                 {
-                    if ($dst_i == (scalar(@{$dst}) - 1))
+                    for (my $i = scalar(@updated_src); $i <= (scalar(@{$dst}) - 1); $i++)
                     {
-                        for (my $i = scalar(@updated_src); $i <= (scalar(@{$dst}) - 1); $i++)
-                        {
-                            $target_value = $$dst[$i];
-                            @curr_path = (@{$path}, '-');
-                            PushOperation("add", \@curr_path, undef, $target_value, undef, $diff, $options);
-                        }
-                        last
+                        $target_value = $$dst[$i];
+                        @curr_path = (@{$path}, '-');
+                        PushOperation("add", \@curr_path, undef, $target_value, undef, $diff, $options);
                     }
-                    else
-                    {
-                        @curr_path = (@{$path}, $dst_i);
-                        CompareValues(\@curr_path, $updated_value, $target_value, $diff, $options);
-                        #@updated_src[$dst_i] = $target_value; #XXX: Not updated
-                    }
+                    
+                    next;
                 }
+                
+                @curr_path = (@{$path}, $dst_i);
+                CompareValues(\@curr_path, $updated_value, $target_value, $diff, $options);
+                #@updated_src[$dst_i] = $target_value; #XXX: Not sure if updated, needs checking
+
+                last;
             }
 
             my $curr_value = $updated_src[$src_i];
