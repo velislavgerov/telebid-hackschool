@@ -293,8 +293,18 @@ sub ListOperationAdd($$$$$;$)
     );
 }
 
+sub _compareLists($$$);
+sub _compareWithShift($$$$$$);
 sub _splitByCommonSequence($$$$);
 sub _longestCommonSubSequence($$);
+
+sub _compareLists($$$);
+{
+
+    my ($path, $src, $dst) = @_;
+    my ($left, $right) =  _splitByCommonSequence($src, $dst, [0,-1], [0,-1]);
+    return _compareWithShift($path, $src, $dst, $left, $right, 0);
+}
 
 sub _splitByCommonSequence($$$$)
 {
@@ -392,6 +402,11 @@ sub _longestCommonSubSequence($$)
         }
     }
     return ($range_src, $range_dst);
+}
+
+sub _compareWithShift($$$$$$)
+{
+    my ($path, $src, $dst, $left, $right, $shift) = @_;
 }
 
 sub PushOperation($$$$$$;$)
