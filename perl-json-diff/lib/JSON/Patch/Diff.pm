@@ -304,8 +304,8 @@ sub _splitByCommonSequence($$$$)
     print "RS1 ", Dumper $range_src;
     print "RD1 ", Dumper $range_dst;
     # Prevent useless comparisons in future
-    $range_src = ($$range_src[0] cmp $$range_src[1]) ? $range_src : undef;
-    $range_dst = ($$range_dst[0] cmp $$range_dst[1])  ? $range_dst : undef;
+    $range_src = ($$range_src[0] != $$range_src[1]) ? $range_src : undef;
+    $range_dst = ($$range_dst[0] != $$range_dst[1])  ? $range_dst : undef;
     
     if (!defined $src)
     {
@@ -325,19 +325,19 @@ sub _splitByCommonSequence($$$$)
     }
     print "RS ", Dumper $range_src;
     print "RD ", Dumper $range_dst;
-    sleep(1);
+    #sleep(1);
 
-    my $l_src = $$x[0] == -1 ? [@$src[0 .. (scalar(@{$src}) - 1)]] : [@$src[0 .. $$x[0]]];
-    my $l_dst = $$y[0] == -1 ? [@$dst[0 .. (scalar(@{$dst}) - 1)]] : [@$dst[0 .. $$y[0]]];
+    my $l_src = $$x[0] == -1 ? [@$src[0 .. (scalar(@{$src}) - 2)]] : [@$src[0 .. $$x[0] - 1]];
+    my $l_dst = $$y[0] == -1 ? [@$dst[0 .. (scalar(@{$dst}) - 2)]] : [@$dst[0 .. $$y[0] - 1]];
     my $l_range_src = [$$range_src[0], $$range_src[0] + $$x[0]];
     my $l_range_dst = [$$range_dst[0], $$range_dst[0] + $$y[0]];
     
-    my $r_src = [@$src[$$x[1] .. (scalar(@{$src}) - 2)]];
-    my $r_dst = [@$dst[$$y[1] .. (scalar(@{$dst}) - 2)]];
+    my $r_src = $$x[1] == -1 ? [@$src[scalar @{$src} - 1]] : [@$src[$$x[1] .. (scalar(@{$src}) - 1)]];
+    my $r_dst = $$y[1] == -1 ? [@$dst[scalar @{$dst} - 1]] : [@$dst[$$y[1] .. (scalar(@{$dst}) - 1)]];
     my $r_range_src = [$$range_src[0] + $$x[1], ($$range_src[0] + scalar @{$src})];
     my $r_range_dst = [$$range_dst[0] + $$y[1], ($$range_dst[0] + scalar @{$dst})];
 
-    sleep(1); 
+    #sleep(1); 
     return [_splitByCommonSequence($l_src, $l_dst, $l_range_src, $l_range_dst),
             _splitByCommonSequence($r_src, $r_dst, $r_range_src, $r_range_dst)];
                             
