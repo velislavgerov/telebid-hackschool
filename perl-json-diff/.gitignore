@@ -1,4 +1,5 @@
 tests/files/*
 trash/
+t.pl
 *.swp
 *.swo

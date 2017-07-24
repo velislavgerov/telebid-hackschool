@@ -293,6 +293,107 @@ sub ListOperationAdd($$$$$;$)
     );
 }
 
+sub _splitByCommonSequence($$$$);
+sub _longestCommonSubSequence($$);
+
+sub _splitByCommonSequence($$$$)
+{
+    my ($src, $dst, $range_src, $range_dst) = @_;
+    print "SRC: ", Dumper $src;
+    print "DST: ", Dumper $dst;
+    print "RS1 ", Dumper $range_src;
+    print "RD1 ", Dumper $range_dst;
+    # Prevent useless comparisons in future
+    $range_src = ($$range_src[0] cmp $$range_src[1]) ? $range_src : undef;
+    $range_dst = ($$range_dst[0] cmp $$range_dst[1])  ? $range_dst : undef;
+    
+    if (!defined $src)
+    {
+        return [undef, $range_dst];
+    }
+    elsif (!defined $dst)
+    {
+        return [$range_src, undef];
+    }
+
+    my ($x, $y) = _longestCommonSubSequence($src, $dst);
+    print "X :", Dumper $x;
+    print "Y :", Dumper $y;
+    if (!defined $x || !defined $y)
+    {
+        return [$range_src, $range_dst];
+    }
+    print "RS ", Dumper $range_src;
+    print "RD ", Dumper $range_dst;
+    sleep(1);
+
+    my $l_src = $$x[0] == -1 ? [@$src[0 .. (scalar(@{$src}) - 1)]] : [@$src[0 .. $$x[0]]];
+    my $l_dst = $$y[0] == -1 ? [@$dst[0 .. (scalar(@{$dst}) - 1)]] : [@$dst[0 .. $$y[0]]];
+    my $l_range_src = [$$range_src[0], $$range_src[0] + $$x[0]];
+    my $l_range_dst = [$$range_dst[0], $$range_dst[0] + $$y[0]];
+    
+    my $r_src = [@$src[$$x[1] .. (scalar(@{$src}) - 2)]];
+    my $r_dst = [@$dst[$$y[1] .. (scalar(@{$dst}) - 2)]];
+    my $r_range_src = [$$range_src[0] + $$x[1], ($$range_src[0] + scalar @{$src})];
+    my $r_range_dst = [$$range_dst[0] + $$y[1], ($$range_dst[0] + scalar @{$dst})];
+
+    sleep(1); 
+    return [_splitByCommonSequence($l_src, $l_dst, $l_range_src, $l_range_dst),
+            _splitByCommonSequence($r_src, $r_dst, $r_range_src, $r_range_dst)];
+                            
+}   
+
+sub _longestCommonSubSequence($$)
+{
+    my ($src, $dst) = @_;
+    my $len_src = scalar @{$src};
+    my $len_dst = scalar @{$dst};
+
+    my @matrix;
+    for (my $i = 0; $i < $len_src; $i++)
+    {
+        $matrix[$i] = [(0) x $len_dst];
+    }
+    
+    # length of the longest subsequence
+    my $z = 0;
+
+    my $range_src;
+    my $range_dst;
+
+    for (my $i = 0; $i < $len_src; $i++)
+    {
+        for (my $j = 0; $j < $len_dst; $j++)
+        {
+            if ($$src[$i] == $$dst[$j])
+            {
+                    if ($i == 0 || $j == 0)
+                    {
+                        $matrix[$i][$j] = 1;
+                    }
+                    else
+                    {
+                        $matrix[$i][$j] = $matrix[$i - 1][$j - 1] + 1;
+                    }
+                    if ($matrix[$i][$j] > $z)
+                    {
+                        $z = $matrix[$i][$j];
+                    }
+                    if ($matrix[$i][$j] == $z)
+                    {
+                        $range_src = [$i - $z + 1, $i + 1];
+                        $range_dst = [$j - $z + 1, $j + 1];
+                    }
+            }
+            else
+            {
+                $matrix[$i][$j] = 0;
+            }
+        }
+    }
+    return ($range_src, $range_dst);
+}
+
 sub PushOperation($$$$$$;$)
 {
     ## Add operation to $diff
