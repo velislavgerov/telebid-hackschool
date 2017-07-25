@@ -59,7 +59,7 @@ sub CompareValues($$$$;$)
     }
     elsif (ref($src) eq 'ARRAY' && ref($dst) eq 'ARRAY') 
     {
-        CompareArraysExp($path, $src, $dst, $diff, $options);
+        _compareLists($path, $src, $dst, $diff, $options);
     }
     else 
     {
@@ -293,17 +293,19 @@ sub ListOperationAdd($$$$$;$)
     );
 }
 
-sub _compareLists($$$);
-sub _compareWithShift($$$$$$);
+sub _compareLists($$$$;$);
+sub _compareWithShift($$$$$$$;$);
 sub _splitByCommonSequence($$$$);
 sub _longestCommonSubSequence($$);
 
-sub _compareLists($$$);
+sub _compareLists($$$$;$)
 {
-
-    my ($path, $src, $dst) = @_;
-    my ($left, $right) =  _splitByCommonSequence($src, $dst, [0,-1], [0,-1]);
-    return _compareWithShift($path, $src, $dst, $left, $right, 0);
+    print "Calling me?\n";
+    my ($path, $src, $dst, $diff, $options) = @_;
+    my $sequence =  _splitByCommonSequence($src, $dst, [0,-1], [0,-1]);
+    my $left = $$sequence[0];
+    my $right = $$sequence[1];
+    return _compareWithShift($path, $src, $dst, $left, $right, 0, $diff, $options);
 }
 
 sub _splitByCommonSequence($$$$)
@@ -375,7 +377,7 @@ sub _longestCommonSubSequence($$)
     {
         for (my $j = 0; $j < $len_dst; $j++)
         {
-            if ($$src[$i] == $$dst[$j])
+            if (eq_deeply($$src[$i], $$dst[$j]))
             {
                     if ($i == 0 || $j == 0)
                     {
@@ -401,13 +403,93 @@ sub _longestCommonSubSequence($$)
             }
         }
     }
+    
+    if (defined $range_src)
+    {
+        # Test source range
+        ASSERT(ref($range_src) eq 'ARRAY', "Source range must be an arrayref");
+        ASSERT(scalar(@{$range_src}) == 2, "Source range must be of size 2");
+        ASSERT(isNum($$range_src[0]) && isNum($$range_src[1]),
+                    "Both values in source range must be numbers");
+    }
+
+    if (defined $range_dst)
+    {
+        # Test destination range
+        ASSERT(ref($range_dst) eq 'ARRAY',"Destination range must be an arrayref");
+        ASSERT(scalar(@{$range_dst}) == 2, "Destination range must be of size 2");
+        ASSERT(isNum($$range_dst[0]) && isNum($$range_dst[1]),
+            "Both values in destination range must be numbers");
+    }
+    
     return ($range_src, $range_dst);
 }
 
-sub _compareWithShift($$$$$$)
+sub _compareWithShift($$$$$$$;$)
 {
-    my ($path, $src, $dst, $left, $right, $shift) = @_;
+    my ($path, $src, $dst, $left, $right, $shift, $diff, $options) = @_;
+    
+    print "MY LEFT IS: ", Dumper $left;
+    print "MY RIGHT IS: ", Dumper $right;
+    
+    if (defined $left && scalar @$left == 2 && (ref($$left[0]) eq 'ARRAY' || ref($$left[1]) eq 'ARRAY'))
+    {
+        _compareWithShift($path, $src, $dst, $$left[0], $$left[1], $shift, $diff, $options);
+    }
+    elsif(defined $$left[0] && defined $$left[1])
+    {
+        _compareLeft($path, $src, $left, $shift, $diff, $options);
+    }
+    if (defined $right && scalar @$right == 2 && (ref($$right[0]) eq 'ARRAY' || ref($$right[1]) eq 'ARRAY'))
+    {
+        _compareWithShift($path, $src, $dst, $$right[0], $$right[1], $shift, $diff, $options);
+
+    }
+    elsif(defined $$right[0] && defined $$right[1])
+    {
+        _compareRight($path, $dst, $right, $shift, $diff, $options);
+    }
+
 }
+
+sub _compareLeft($$$$$;$) 
+{
+    my ($path, $src, $left, $shift, $diff, $options) = @_;
+    my ($start, $end) = @{$left};
+    
+    if ($end == -1)
+    {   
+        #XXX: Does this happen in my impl?
+        $end = scalar @{$src};
+    }
+    # we need to `remove` elements from list tail to not deal with index shift
+    foreach my $idx (reverse ($start + $shift .. $end + $shift - 1))
+    {
+        my @curr_path = (@$path, $idx);
+        PushOperation('remove', \@curr_path, undef, $$src[$idx + $shift], $$src[$idx + $shift], $diff, $options);
+        $shift -= 1;
+    }
+}
+
+sub _compareRight($$$$$;$) 
+{
+    my ($path, $dst, $right, $shift, $diff, $options) = @_;
+    my ($start, $end) = @{$right};
+    
+    if ($end == -1)
+    {
+        #XXX: Does this happen in my impl?
+        $end = scalar @{$dst};
+    } 
+    # we need to `remove` elements from list tail to not deal with index shift
+    foreach my $idx (($start .. $end - 1))
+    {
+        my @curr_path = (@$path, $idx);
+        PushOperation('add', \@curr_path, undef, $$dst[$idx], undef, $diff, $options);
+        $shift -= 1;
+    }
+}
+
 
 sub PushOperation($$$$$$;$)
 {
