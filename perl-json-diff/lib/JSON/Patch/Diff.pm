@@ -305,7 +305,8 @@ sub _compareLists($$$$;$)
     my $sequence =  _splitByCommonSequence($src, $dst, [0,-1], [0,-1]);
     my $left = $$sequence[0];
     my $right = $$sequence[1];
-    return _compareWithShift($path, $src, $dst, $left, $right, 0, $diff, $options);
+    my $shift = 0;
+    return _compareWithShift($path, $src, $dst, $left, $right, \$shift, $diff, $options);
 }
 
 sub _splitByCommonSequence($$$$)
@@ -431,7 +432,7 @@ sub _compareWithShift($$$$$$$;$)
     
     print "MY LEFT IS: ", Dumper $left;
     print "MY RIGHT IS: ", Dumper $right;
-    
+    print "SHIFT IS: ", Dumper $$shift; 
     if (defined $left && scalar @$left == 2 && (ref($$left[0]) eq 'ARRAY' || ref($$left[1]) eq 'ARRAY'))
     {
         _compareWithShift($path, $src, $dst, $$left[0], $$left[1], $shift, $diff, $options);
@@ -456,18 +457,19 @@ sub _compareLeft($$$$$;$)
 {
     my ($path, $src, $left, $shift, $diff, $options) = @_;
     my ($start, $end) = @{$left};
-    
+    print "START: ", Dumper $start;
+    print "END  : ", Dumper $end;
     if ($end == -1)
     {   
         #XXX: Does this happen in my impl?
         $end = scalar @{$src};
     }
     # we need to `remove` elements from list tail to not deal with index shift
-    foreach my $idx (reverse ($start + $shift .. $end + $shift - 1))
+    foreach my $idx (reverse ($start + $$shift .. $end + $$shift - 1))
     {
         my @curr_path = (@$path, $idx);
-        PushOperation('remove', \@curr_path, undef, $$src[$idx + $shift], $$src[$idx + $shift], $diff, $options);
-        $shift -= 1;
+        PushOperation('remove', \@curr_path, undef, $$src[$idx - $$shift], $$src[$idx - $$shift], $diff, $options);
+        $$shift -= 1;
     }
 }
 
@@ -486,7 +488,7 @@ sub _compareRight($$$$$;$)
     {
         my @curr_path = (@$path, $idx);
         PushOperation('add', \@curr_path, undef, $$dst[$idx], undef, $diff, $options);
-        $shift -= 1;
+        $$shift += 1;
     }
 }
 
