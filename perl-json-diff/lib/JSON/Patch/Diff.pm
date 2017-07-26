@@ -300,7 +300,6 @@ sub _longestCommonSubSequence($$);
 
 sub _compareLists($$$$;$)
 {
-    print "Calling me?\n";
     my ($path, $src, $dst, $diff, $options) = @_;
     my $sequence = _splitByCommonSequence($src, $dst, [0,-1], [0,-1]);
     my $left = $$sequence[0];
@@ -317,6 +316,7 @@ sub _splitByCommonSequence($$$$)
     $range_src = ($$range_src[0] != $$range_src[1]) ? $range_src : undef;
     $range_dst = ($$range_dst[0] != $$range_dst[1])  ? $range_dst : undef;
     
+    TRACE("-------------SPLIT BY COMMON SEQUENCE----------\n\n\n"); 
     TRACE("SRC: ");
     TRACE($src);
     TRACE("Range SRC: ");
@@ -432,10 +432,15 @@ sub _longestCommonSubSequence($$)
             }
         }
     }
-
-    TRACE("Curr matrix:");
+    
+    TRACE("--------------- LONGEST COMMON SEQUENCE ---------------");
+    TRACE("Matrix:");
     TRACE(@matrix);
-    TRACE("END\n\n");
+    TRACE("Range src:");
+    TRACE($range_src);
+    TRACE("Range dst:");
+    TRACE($range_dst);
+    TRACE("------------ END OF LONGEST COMMON SEQUENCE -----------\n\n");
     
     if (defined $range_src)
     {
@@ -462,9 +467,14 @@ sub _compareWithShift($$$$$$$;$)
 {
     my ($path, $src, $dst, $left, $right, $shift, $diff, $options) = @_;
     
-    print "MY LEFT IS: ", Dumper $left;
-    print "MY RIGHT IS: ", Dumper $right;
-    print "SHIFT IS: ", Dumper $$shift; 
+    TRACE("--------------- COMPARE WITH SHIFT ---------------");
+    TRACE("LEFT:");
+    TRACE($left);
+    TRACE("RIGHT:");
+    TRACE($right);
+    TRACE("CURR SHIFT:");
+    TRACE($$shift);
+        
     if (defined $left && scalar @$left == 2 && (ref($$left[0]) eq 'ARRAY' || ref($$left[1]) eq 'ARRAY'))
     {
         _compareWithShift($path, $src, $dst, $$left[0], $$left[1], $shift, $diff, $options);
@@ -483,14 +493,14 @@ sub _compareWithShift($$$$$$$;$)
         _compareRight($path, $dst, $right, $shift, $diff, $options);
     }
 
+    TRACE("------------ END OF COMPARE WITH SHIFT -----------\n\n");
 }
 
 sub _compareLeft($$$$$;$) 
 {
     my ($path, $src, $left, $shift, $diff, $options) = @_;
     my ($start, $end) = @{$left};
-    print "START: ", Dumper $start;
-    print "END  : ", Dumper $end;
+
     if ($end == -1)
     {   
         #XXX: Does this happen in my impl?
