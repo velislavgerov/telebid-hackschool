@@ -19,11 +19,11 @@ if __name__ == '__main__':
             try:
                 result = patch.apply(data['src'])
             except (JsonPatchConflict, TypeError, JsonPointerException) as err:
-                print(data['comment'])
-                print(data['patch'])
-                print(data['src'])
-                print(data['dst'])
-                print(err)
+                print('Comment: ', data['comment'])
+                print('Patch:   ', data['patch'])
+                print('Source:  ', data['src'])
+                print('Dest:    ', data['dst'])
+                print('Error:   ', err)
                 print("FAIL")
                 print("")
                 fail += 1
@@ -32,11 +32,11 @@ if __name__ == '__main__':
                 ok += 1
             else:
                 fail +=1
-                print(data['comment'])
-                print(data['patch'])
-                print(data['src'])
-                print(data['dst'])
-                print(result)
+                print('Comment: ', data['comment'])
+                print('Patch:   ', data['patch'])
+                print('Source:  ', data['src'])
+                print('Dest:    ', data['dst'])
+                print('Result:  ', result)
                 print("")
 
         print("OK    {}".format(ok))

@@ -302,7 +302,7 @@ sub _compareLists($$$$;$)
 {
     print "Calling me?\n";
     my ($path, $src, $dst, $diff, $options) = @_;
-    my $sequence =  _splitByCommonSequence($src, $dst, [0,-1], [0,-1]);
+    my $sequence = _splitByCommonSequence($src, $dst, [0,-1], [0,-1]);
     my $left = $$sequence[0];
     my $right = $$sequence[1];
     my $shift = 0;
@@ -312,14 +312,20 @@ sub _compareLists($$$$;$)
 sub _splitByCommonSequence($$$$)
 {
     my ($src, $dst, $range_src, $range_dst) = @_;
-    print "SRC: ", Dumper $src;
-    print "DST: ", Dumper $dst;
-    print "RS1 ", Dumper $range_src;
-    print "RD1 ", Dumper $range_dst;
+    
     # Prevent useless comparisons in future
     $range_src = ($$range_src[0] != $$range_src[1]) ? $range_src : undef;
     $range_dst = ($$range_dst[0] != $$range_dst[1])  ? $range_dst : undef;
     
+    TRACE("SRC: ");
+    TRACE($src);
+    TRACE("Range SRC: ");
+    TRACE($range_src);
+    TRACE("DST: ");
+    TRACE($dst);
+    TRACE("Range DST: ");
+    TRACE($range_dst);
+
     if (!defined $src)
     {
         return [undef, $range_dst];
@@ -330,27 +336,48 @@ sub _splitByCommonSequence($$$$)
     }
 
     my ($x, $y) = _longestCommonSubSequence($src, $dst);
-    print "X :", Dumper $x;
-    print "Y :", Dumper $y;
+    
+    TRACE("X:");
+    TRACE($x);
+    TRACE("Y:");
+    TRACE($y);
+    
     if (!defined $x || !defined $y)
     {
         return [$range_src, $range_dst];
     }
-    print "RS ", Dumper $range_src;
-    print "RD ", Dumper $range_dst;
-    #sleep(1);
+
 
     my $l_src = $$x[0] == -1 ? [@$src[0 .. (scalar(@{$src}) - 2)]] : [@$src[0 .. $$x[0] - 1]];
     my $l_dst = $$y[0] == -1 ? [@$dst[0 .. (scalar(@{$dst}) - 2)]] : [@$dst[0 .. $$y[0] - 1]];
     my $l_range_src = [$$range_src[0], $$range_src[0] + $$x[0]];
     my $l_range_dst = [$$range_dst[0], $$range_dst[0] + $$y[0]];
+
+    TRACE("left src:");
+    TRACE($l_src);
+    TRACE("left range src:");
+    TRACE($l_range_src);
+    TRACE("left dst:");
+    TRACE($l_dst);
+    TRACE("left range dst:");
+    TRACE($l_range_dst);
     
     my $r_src = $$x[1] == -1 ? [@$src[scalar @{$src} - 1]] : [@$src[$$x[1] .. (scalar(@{$src}) - 1)]];
     my $r_dst = $$y[1] == -1 ? [@$dst[scalar @{$dst} - 1]] : [@$dst[$$y[1] .. (scalar(@{$dst}) - 1)]];
     my $r_range_src = [$$range_src[0] + $$x[1], ($$range_src[0] + scalar @{$src})];
     my $r_range_dst = [$$range_dst[0] + $$y[1], ($$range_dst[0] + scalar @{$dst})];
+    
+    TRACE("righ src:");
+    TRACE($r_src);
+    TRACE("right range src:");
+    TRACE($r_range_src);
+    TRACE("right dst:");
+    TRACE($r_dst);
+    TRACE("right range dst:");
+    TRACE($r_range_dst);
+ 
 
-    #sleep(1); 
+    TRACE("--------------END SPLIT-----------------\n\n\n"); 
     return [_splitByCommonSequence($l_src, $l_dst, $l_range_src, $l_range_dst),
             _splitByCommonSequence($r_src, $r_dst, $r_range_src, $r_range_dst)];
                             
@@ -380,6 +407,9 @@ sub _longestCommonSubSequence($$)
         {
             if (eq_deeply($$src[$i], $$dst[$j]))
             {
+                    TRACE("Found match:");
+                    TRACE("i:", $i);
+                    TRACE("j:", $j);
                     if ($i == 0 || $j == 0)
                     {
                         $matrix[$i][$j] = 1;
@@ -391,12 +421,10 @@ sub _longestCommonSubSequence($$)
                     if ($matrix[$i][$j] > $z)
                     {
                         $z = $matrix[$i][$j];
-                    }
-                    if ($matrix[$i][$j] == $z)
-                    {
                         $range_src = [$i - $z + 1, $i + 1];
                         $range_dst = [$j - $z + 1, $j + 1];
                     }
+
             }
             else
             {
@@ -404,6 +432,10 @@ sub _longestCommonSubSequence($$)
             }
         }
     }
+
+    TRACE("Curr matrix:");
+    TRACE(@matrix);
+    TRACE("END\n\n");
     
     if (defined $range_src)
     {
@@ -484,6 +516,8 @@ sub _compareRight($$$$$;$)
         $end = scalar @{$dst};
     } 
     # we need to `remove` elements from list tail to not deal with index shift
+    
+
     foreach my $idx (($start .. $end - 1))
     {
         my @curr_path = (@$path, $idx);
