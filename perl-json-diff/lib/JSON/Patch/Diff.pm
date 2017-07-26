@@ -553,8 +553,6 @@ sub _optimizeWithReplace($)
         my $this = $$diff[$i];
         my $next = $$diff[$i+1];
         
-        
-
         if ($$this{op} eq 'remove' && $$next{op} eq 'add' && $$this{path} eq $$next{path})
         {
             my $op = { 
@@ -566,6 +564,7 @@ sub _optimizeWithReplace($)
             $updated_diff = [@$updated_diff[0 .. $i + $shift - 1], $op, @$updated_diff[$i + $shift + 2 .. (scalar @$updated_diff) - 1]];
             $shift -= 1;
         }
+
         TRACE("THIS:");
         TRACE($this);
         TRACE("NEXT:");
@@ -579,6 +578,79 @@ sub _optimizeWithReplace($)
     }
 
     TRACE("------- END OF OPTIMIZE WITH REPLACE ---------");
+
+    @{$diff} = @{$updated_diff};
+}
+
+sub _optimizeWithMove($)
+{
+    my $diff = shift;
+    my $len_diff = scalar @{$diff};
+    my $updated_diff = [@{$diff}];
+
+    TRACE("------------ OPTIMIZE WITH MOVE ------------");
+
+    my $shift = 0;
+    my %unique_value_path;
+
+    for (my $i = 0; $i < $len_diff; $i++)
+    {
+        my $this = $$diff[$i];
+
+        if (defined $unique_value_path{$$this{value}} && $$this{op} eq 'add')
+        {
+            my $from_path = $unique_value_path{$$this{value}}{path};
+            my $from_id   = $unique_value_path{$$this{value}}{idx};
+            my $op = {
+                'op'    => 'move',
+                'from'  => $from_path,
+                'path'  => $$this{path},
+                'value' => $$this{value}
+            };
+
+            $$updated_diff[$from_id] = $op;
+
+            if ($i != (scalar(@$updated_diff) - 1))
+            {
+                $updated_diff = [@$updated_diff[0 .. $i], @$updated_diff[$i + 1 .. 0]];
+            }
+            else
+            {
+                $updated_diff = [@$updated_diff[0 .. $i - 1]];
+            }
+            
+            $shift -= 1;
+        }
+        elsif ($$this{op} eq 'remove')
+        {
+            $unique_value_path{$$this{value}} = { 'idx' => $i, 'path' => $$this{path} };
+        }
+        else
+        {
+            if ($$this{op} eq 'remove')
+            {
+                $shift -= 1;
+            }
+            elsif ($$this{op} eq 'add')
+            {
+                $shift += 1;
+
+            }
+        }
+
+        TRACE("THIS:");
+        TRACE($this);
+        TRACE("UVALUES HASH:");
+        TRACE(%unique_value_path);
+        TRACE("DIFF:");
+        TRACE($diff);
+        TRACE("UDIFF:");
+        TRACE($updated_diff);
+        TRACE("SHIFT:");
+        TRACE($shift);
+    }
+
+    TRACE("------- END OF OPTIMIZE WITH MOVE ---------");
 
     @{$diff} = @{$updated_diff};
 }
@@ -610,7 +682,8 @@ sub PushOperation($$$$$$;$)
     {
         $operation = {
             "op"    => $operation_name,
-            "path"  => $pointer
+            "path"  => $pointer,
+            "value" => $value # XXX: keeping it for optimization
         };
     }
     elsif ($operation_name eq 'move')
