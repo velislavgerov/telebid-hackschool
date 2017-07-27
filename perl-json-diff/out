@@ -1,0 +1,1226 @@
+JSON::Diff:GetPatch with:
+SOURCE: $VAR1 = [
+          [
+            2,
+            [
+              1,
+              1,
+              2
+            ]
+          ]
+        ];
+
+DEST:   $VAR1 = [
+          [
+            1,
+            [
+              1,
+              1,
+              3
+            ]
+          ]
+        ];
+
+Comparing VALUES
+PATH:   $VAR1 = [];
+
+SOURCE: $VAR1 = [
+          [
+            2,
+            [
+              1,
+              1,
+              2
+            ]
+          ]
+        ];
+
+DEST:   $VAR1 = [
+          [
+            1,
+            [
+              1,
+              1,
+              3
+            ]
+          ]
+        ];
+
+-------------SPLIT BY COMMON SEQUENCE----------
+
+
+
+SRC: 
+$VAR1 = [
+          [
+            2,
+            [
+              1,
+              1,
+              2
+            ]
+          ]
+        ];
+
+Range SRC: 
+$VAR1 = [
+          0,
+          -1
+        ];
+
+DST: 
+$VAR1 = [
+          [
+            1,
+            [
+              1,
+              1,
+              3
+            ]
+          ]
+        ];
+
+Range DST: 
+$VAR1 = [
+          0,
+          -1
+        ];
+
+--------------- LONGEST COMMON SEQUENCE ---------------
+Matrix:
+$VAR1 = [
+          0
+        ];
+
+Range src:
+
+Range dst:
+
+------------ END OF LONGEST COMMON SEQUENCE -----------
+
+
+X:
+
+Y:
+
+--------------- COMPARE WITH SHIFT ---------------
+LEFT:
+$VAR1 = [
+          0,
+          -1
+        ];
+
+RIGHT:
+$VAR1 = [
+          0,
+          -1
+        ];
+
+CURR SHIFT:
+0
+PUSH OPERATION
+OP:      remove
+POINTER: /0
+VALUE:   $VAR1 = [
+          2,
+          [
+            1,
+            1,
+            2
+          ]
+        ];
+
+OLD:     $VAR1 = [
+          2,
+          [
+            1,
+            1,
+            2
+          ]
+        ];
+
+OPTION:  1
+DIFF updated: $VAR1 = [
+          {
+            'old' => [
+                       2,
+                       [
+                         1,
+                         1,
+                         2
+                       ]
+                     ],
+            'value' => [
+                         2,
+                         [
+                           1,
+                           1,
+                           2
+                         ]
+                       ],
+            'path' => '/0',
+            'op' => 'remove'
+          }
+        ];
+
+PUSH OPERATION
+OP:      add
+POINTER: /0
+VALUE:   $VAR1 = [
+          1,
+          [
+            1,
+            1,
+            3
+          ]
+        ];
+
+OLD:     
+OPTION:  1
+DIFF updated: $VAR1 = [
+          {
+            'old' => [
+                       2,
+                       [
+                         1,
+                         1,
+                         2
+                       ]
+                     ],
+            'value' => [
+                         2,
+                         [
+                           1,
+                           1,
+                           2
+                         ]
+                       ],
+            'path' => '/0',
+            'op' => 'remove'
+          },
+          {
+            'path' => '/0',
+            'op' => 'add',
+            'value' => [
+                         1,
+                         [
+                           1,
+                           1,
+                           3
+                         ]
+                       ]
+          }
+        ];
+
+------------ END OF COMPARE WITH SHIFT -----------
+
+
+------------ OPTIMIZE WITH REPLACE ------------
+THIS:
+$VAR1 = {
+          'old' => [
+                     2,
+                     [
+                       1,
+                       1,
+                       2
+                     ]
+                   ],
+          'value' => [
+                       2,
+                       [
+                         1,
+                         1,
+                         2
+                       ]
+                     ],
+          'path' => '/0',
+          'op' => 'remove'
+        };
+
+NEXT:
+$VAR1 = {
+          'path' => '/0',
+          'op' => 'add',
+          'value' => [
+                       1,
+                       [
+                         1,
+                         1,
+                         3
+                       ]
+                     ]
+        };
+
+DIFF:
+$VAR1 = [
+          {
+            'old' => [
+                       2,
+                       [
+                         1,
+                         1,
+                         2
+                       ]
+                     ],
+            'value' => [
+                         2,
+                         [
+                           1,
+                           1,
+                           2
+                         ]
+                       ],
+            'path' => '/0',
+            'op' => 'remove'
+          },
+          {
+            'path' => '/0',
+            'op' => 'add',
+            'value' => [
+                         1,
+                         [
+                           1,
+                           1,
+                           3
+                         ]
+                       ]
+          }
+        ];
+
+UDIFF:
+$VAR1 = [
+          {
+            'old' => [
+                       2,
+                       [
+                         1,
+                         1,
+                         2
+                       ]
+                     ],
+            'value' => [
+                         1,
+                         [
+                           1,
+                           1,
+                           3
+                         ]
+                       ],
+            'path' => '/0',
+            'op' => 'replace'
+          }
+        ];
+
+SHIFT:
+-1
+------- END OF OPTIMIZE WITH REPLACE ---------
+------------ EXPAND IN DEPTH ------------
+Reverse pointer:
+POINTER BEFRORE REPLACE:
+/0
+PATH BEFORE REPLACE:
+$VAR1 = [
+          '0'
+        ];
+
+PATH AFTER REPLACE:
+$VAR1 = [
+          '0'
+        ];
+
+Comparing VALUES
+PATH:   $VAR1 = [
+          '0'
+        ];
+
+SOURCE: $VAR1 = [
+          2,
+          [
+            1,
+            1,
+            2
+          ]
+        ];
+
+DEST:   $VAR1 = [
+          1,
+          [
+            1,
+            1,
+            3
+          ]
+        ];
+
+-------------SPLIT BY COMMON SEQUENCE----------
+
+
+
+SRC: 
+$VAR1 = [
+          2,
+          [
+            1,
+            1,
+            2
+          ]
+        ];
+
+Range SRC: 
+$VAR1 = [
+          0,
+          -1
+        ];
+
+DST: 
+$VAR1 = [
+          1,
+          [
+            1,
+            1,
+            3
+          ]
+        ];
+
+Range DST: 
+$VAR1 = [
+          0,
+          -1
+        ];
+
+--------------- LONGEST COMMON SEQUENCE ---------------
+Matrix:
+$VAR1 = [
+          0,
+          0
+        ];
+$VAR1 = [
+          0,
+          0
+        ];
+
+Range src:
+
+Range dst:
+
+------------ END OF LONGEST COMMON SEQUENCE -----------
+
+
+X:
+
+Y:
+
+--------------- COMPARE WITH SHIFT ---------------
+LEFT:
+$VAR1 = [
+          0,
+          -1
+        ];
+
+RIGHT:
+$VAR1 = [
+          0,
+          -1
+        ];
+
+CURR SHIFT:
+0
+PUSH OPERATION
+OP:      remove
+POINTER: /0/1
+VALUE:   $VAR1 = [
+          1,
+          1,
+          2
+        ];
+
+OLD:     $VAR1 = [
+          1,
+          1,
+          2
+        ];
+
+OPTION:  1
+DIFF updated: $VAR1 = [
+          {
+            'op' => 'remove',
+            'path' => '/0/1',
+            'value' => [
+                         1,
+                         1,
+                         2
+                       ],
+            'old' => [
+                       1,
+                       1,
+                       2
+                     ]
+          }
+        ];
+
+PUSH OPERATION
+OP:      remove
+POINTER: /0/0
+VALUE:   $VAR1 = [
+          1,
+          1,
+          2
+        ];
+
+OLD:     $VAR1 = [
+          1,
+          1,
+          2
+        ];
+
+OPTION:  1
+DIFF updated: $VAR1 = [
+          {
+            'op' => 'remove',
+            'path' => '/0/1',
+            'value' => [
+                         1,
+                         1,
+                         2
+                       ],
+            'old' => [
+                       1,
+                       1,
+                       2
+                     ]
+          },
+          {
+            'old' => [
+                       1,
+                       1,
+                       2
+                     ],
+            'value' => [
+                         1,
+                         1,
+                         2
+                       ],
+            'path' => '/0/0',
+            'op' => 'remove'
+          }
+        ];
+
+PUSH OPERATION
+OP:      add
+POINTER: /0/0
+VALUE:   1
+OLD:     
+OPTION:  1
+DIFF updated: $VAR1 = [
+          {
+            'op' => 'remove',
+            'path' => '/0/1',
+            'value' => [
+                         1,
+                         1,
+                         2
+                       ],
+            'old' => [
+                       1,
+                       1,
+                       2
+                     ]
+          },
+          {
+            'old' => [
+                       1,
+                       1,
+                       2
+                     ],
+            'value' => [
+                         1,
+                         1,
+                         2
+                       ],
+            'path' => '/0/0',
+            'op' => 'remove'
+          },
+          {
+            'path' => '/0/0',
+            'op' => 'add',
+            'value' => 1
+          }
+        ];
+
+PUSH OPERATION
+OP:      add
+POINTER: /0/1
+VALUE:   $VAR1 = [
+          1,
+          1,
+          3
+        ];
+
+OLD:     
+OPTION:  1
+DIFF updated: $VAR1 = [
+          {
+            'op' => 'remove',
+            'path' => '/0/1',
+            'value' => [
+                         1,
+                         1,
+                         2
+                       ],
+            'old' => [
+                       1,
+                       1,
+                       2
+                     ]
+          },
+          {
+            'old' => [
+                       1,
+                       1,
+                       2
+                     ],
+            'value' => [
+                         1,
+                         1,
+                         2
+                       ],
+            'path' => '/0/0',
+            'op' => 'remove'
+          },
+          {
+            'path' => '/0/0',
+            'op' => 'add',
+            'value' => 1
+          },
+          {
+            'path' => '/0/1',
+            'op' => 'add',
+            'value' => [
+                         1,
+                         1,
+                         3
+                       ]
+          }
+        ];
+
+------------ END OF COMPARE WITH SHIFT -----------
+
+
+------------ OPTIMIZE WITH REPLACE ------------
+THIS:
+$VAR1 = {
+          'op' => 'remove',
+          'path' => '/0/1',
+          'value' => [
+                       1,
+                       1,
+                       2
+                     ],
+          'old' => [
+                     1,
+                     1,
+                     2
+                   ]
+        };
+
+NEXT:
+$VAR1 = {
+          'old' => [
+                     1,
+                     1,
+                     2
+                   ],
+          'value' => [
+                       1,
+                       1,
+                       2
+                     ],
+          'path' => '/0/0',
+          'op' => 'remove'
+        };
+
+DIFF:
+$VAR1 = [
+          {
+            'op' => 'remove',
+            'path' => '/0/1',
+            'value' => [
+                         1,
+                         1,
+                         2
+                       ],
+            'old' => [
+                       1,
+                       1,
+                       2
+                     ]
+          },
+          {
+            'old' => [
+                       1,
+                       1,
+                       2
+                     ],
+            'value' => [
+                         1,
+                         1,
+                         2
+                       ],
+            'path' => '/0/0',
+            'op' => 'remove'
+          },
+          {
+            'path' => '/0/0',
+            'op' => 'add',
+            'value' => 1
+          },
+          {
+            'path' => '/0/1',
+            'op' => 'add',
+            'value' => [
+                         1,
+                         1,
+                         3
+                       ]
+          }
+        ];
+
+UDIFF:
+$VAR1 = [
+          {
+            'op' => 'remove',
+            'path' => '/0/1',
+            'value' => [
+                         1,
+                         1,
+                         2
+                       ],
+            'old' => [
+                       1,
+                       1,
+                       2
+                     ]
+          },
+          {
+            'old' => [
+                       1,
+                       1,
+                       2
+                     ],
+            'value' => [
+                         1,
+                         1,
+                         2
+                       ],
+            'path' => '/0/0',
+            'op' => 'remove'
+          },
+          {
+            'path' => '/0/0',
+            'op' => 'add',
+            'value' => 1
+          },
+          {
+            'path' => '/0/1',
+            'op' => 'add',
+            'value' => [
+                         1,
+                         1,
+                         3
+                       ]
+          }
+        ];
+
+SHIFT:
+0
+THIS:
+$VAR1 = {
+          'old' => [
+                     1,
+                     1,
+                     2
+                   ],
+          'value' => [
+                       1,
+                       1,
+                       2
+                     ],
+          'path' => '/0/0',
+          'op' => 'remove'
+        };
+
+NEXT:
+$VAR1 = {
+          'path' => '/0/0',
+          'op' => 'add',
+          'value' => 1
+        };
+
+DIFF:
+$VAR1 = [
+          {
+            'op' => 'remove',
+            'path' => '/0/1',
+            'value' => [
+                         1,
+                         1,
+                         2
+                       ],
+            'old' => [
+                       1,
+                       1,
+                       2
+                     ]
+          },
+          {
+            'old' => [
+                       1,
+                       1,
+                       2
+                     ],
+            'value' => [
+                         1,
+                         1,
+                         2
+                       ],
+            'path' => '/0/0',
+            'op' => 'remove'
+          },
+          {
+            'path' => '/0/0',
+            'op' => 'add',
+            'value' => 1
+          },
+          {
+            'path' => '/0/1',
+            'op' => 'add',
+            'value' => [
+                         1,
+                         1,
+                         3
+                       ]
+          }
+        ];
+
+UDIFF:
+$VAR1 = [
+          {
+            'op' => 'remove',
+            'path' => '/0/1',
+            'value' => [
+                         1,
+                         1,
+                         2
+                       ],
+            'old' => [
+                       1,
+                       1,
+                       2
+                     ]
+          },
+          {
+            'path' => '/0/0',
+            'op' => 'replace',
+            'value' => 1,
+            'old' => [
+                       1,
+                       1,
+                       2
+                     ]
+          },
+          {
+            'path' => '/0/1',
+            'op' => 'add',
+            'value' => [
+                         1,
+                         1,
+                         3
+                       ]
+          }
+        ];
+
+SHIFT:
+-1
+THIS:
+$VAR1 = {
+          'path' => '/0/0',
+          'op' => 'add',
+          'value' => 1
+        };
+
+NEXT:
+$VAR1 = {
+          'path' => '/0/1',
+          'op' => 'add',
+          'value' => [
+                       1,
+                       1,
+                       3
+                     ]
+        };
+
+DIFF:
+$VAR1 = [
+          {
+            'op' => 'remove',
+            'path' => '/0/1',
+            'value' => [
+                         1,
+                         1,
+                         2
+                       ],
+            'old' => [
+                       1,
+                       1,
+                       2
+                     ]
+          },
+          {
+            'old' => [
+                       1,
+                       1,
+                       2
+                     ],
+            'value' => [
+                         1,
+                         1,
+                         2
+                       ],
+            'path' => '/0/0',
+            'op' => 'remove'
+          },
+          {
+            'path' => '/0/0',
+            'op' => 'add',
+            'value' => 1
+          },
+          {
+            'path' => '/0/1',
+            'op' => 'add',
+            'value' => [
+                         1,
+                         1,
+                         3
+                       ]
+          }
+        ];
+
+UDIFF:
+$VAR1 = [
+          {
+            'op' => 'remove',
+            'path' => '/0/1',
+            'value' => [
+                         1,
+                         1,
+                         2
+                       ],
+            'old' => [
+                       1,
+                       1,
+                       2
+                     ]
+          },
+          {
+            'path' => '/0/0',
+            'op' => 'replace',
+            'value' => 1,
+            'old' => [
+                       1,
+                       1,
+                       2
+                     ]
+          },
+          {
+            'path' => '/0/1',
+            'op' => 'add',
+            'value' => [
+                         1,
+                         1,
+                         3
+                       ]
+          }
+        ];
+
+SHIFT:
+-1
+------- END OF OPTIMIZE WITH REPLACE ---------
+------------ EXPAND IN DEPTH ------------
+Reverse pointer:
+POINTER BEFRORE REPLACE:
+/0/0
+PATH BEFORE REPLACE:
+$VAR1 = [
+          '0',
+          '0'
+        ];
+
+PATH AFTER REPLACE:
+$VAR1 = [
+          '0',
+          '0'
+        ];
+
+Comparing VALUES
+PATH:   $VAR1 = [
+          '0',
+          '0'
+        ];
+
+SOURCE: $VAR1 = [
+          1,
+          1,
+          2
+        ];
+
+DEST:   1
+PUSH OPERATION
+OP:      replace
+POINTER: /0/0
+VALUE:   1
+OLD:     $VAR1 = [
+          1,
+          1,
+          2
+        ];
+
+OPTION:  1
+DIFF updated: $VAR1 = [
+          {
+            'value' => 1,
+            'op' => 'replace',
+            'path' => '/0/0',
+            'old' => [
+                       1,
+                       1,
+                       2
+                     ]
+          }
+        ];
+
+ORIGINAL DIFF
+$VAR1 = [
+          {
+            'op' => 'remove',
+            'path' => '/0/1',
+            'value' => [
+                         1,
+                         1,
+                         2
+                       ],
+            'old' => [
+                       1,
+                       1,
+                       2
+                     ]
+          },
+          {
+            'path' => '/0/0',
+            'op' => 'replace',
+            'value' => 1,
+            'old' => [
+                       1,
+                       1,
+                       2
+                     ]
+          },
+          {
+            'path' => '/0/1',
+            'op' => 'add',
+            'value' => [
+                         1,
+                         1,
+                         3
+                       ]
+          }
+        ];
+
+IN DIFF:
+$VAR1 = [
+          {
+            'value' => 1,
+            'op' => 'replace',
+            'path' => '/0/0',
+            'old' => [
+                       1,
+                       1,
+                       2
+                     ]
+          }
+        ];
+
+HER
+THIS DIFF:
+$VAR1 = [
+          {
+            'op' => 'remove',
+            'path' => '/0/1',
+            'value' => [
+                         1,
+                         1,
+                         2
+                       ],
+            'old' => [
+                       1,
+                       1,
+                       2
+                     ]
+          },
+          {
+            'value' => 1,
+            'op' => 'replace',
+            'path' => '/0/0',
+            'old' => [
+                       1,
+                       1,
+                       2
+                     ]
+          },
+          {
+            'path' => '/0/1',
+            'op' => 'add',
+            'value' => [
+                         1,
+                         1,
+                         3
+                       ]
+          }
+        ];
+
+------------ END OF EXPAND ------------
+ORIGINAL DIFF
+$VAR1 = [
+          {
+            'old' => [
+                       2,
+                       [
+                         1,
+                         1,
+                         2
+                       ]
+                     ],
+            'value' => [
+                         1,
+                         [
+                           1,
+                           1,
+                           3
+                         ]
+                       ],
+            'path' => '/0',
+            'op' => 'replace'
+          }
+        ];
+
+IN DIFF:
+$VAR1 = [
+          {
+            'op' => 'remove',
+            'path' => '/0/1',
+            'value' => [
+                         1,
+                         1,
+                         2
+                       ],
+            'old' => [
+                       1,
+                       1,
+                       2
+                     ]
+          },
+          {
+            'value' => 1,
+            'op' => 'replace',
+            'path' => '/0/0',
+            'old' => [
+                       1,
+                       1,
+                       2
+                     ]
+          },
+          {
+            'path' => '/0/1',
+            'op' => 'add',
+            'value' => [
+                         1,
+                         1,
+                         3
+                       ]
+          }
+        ];
+
+3e
+THIS DIFF:
+$VAR1 = [
+          {
+            'op' => 'remove',
+            'path' => '/0/1',
+            'value' => [
+                         1,
+                         1,
+                         2
+                       ],
+            'old' => [
+                       1,
+                       1,
+                       2
+                     ]
+          },
+          {
+            'value' => 1,
+            'op' => 'replace',
+            'path' => '/0/0',
+            'old' => [
+                       1,
+                       1,
+                       2
+                     ]
+          },
+          {
+            'path' => '/0/1',
+            'op' => 'add',
+            'value' => [
+                         1,
+                         1,
+                         3
+                       ]
+          }
+        ];
+
+------------ END OF EXPAND ------------
+$VAR1 = [
+          {
+            'op' => 'remove',
+            'path' => '/0/1',
+            'value' => [
+                         1,
+                         1,
+                         2
+                       ],
+            'old' => [
+                       1,
+                       1,
+                       2
+                     ]
+          },
+          {
+            'value' => 1,
+            'op' => 'replace',
+            'path' => '/0/0',
+            'old' => [
+                       1,
+                       1,
+                       2
+                     ]
+          },
+          {
+            'path' => '/0/1',
+            'op' => 'add',
+            'value' => [
+                         1,
+                         1,
+                         3
+                       ]
+          }
+        ];
+$VAR1 = 2;

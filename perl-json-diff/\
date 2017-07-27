@@ -7,7 +7,6 @@ use JSON;
 use Data::Dumper;
 use Test::Deep::NoTest qw(eq_deeply);
 use Scalar::Util qw(looks_like_number);
-use Storable 'dclone';
 
 our $DEBUG = 0;
 our $CALLED = 0;
@@ -311,7 +310,7 @@ sub _compareLists($$$$;$)
     
     _compareWithShift($path, $src, $dst, $left, $right, \$shift, $diff, $options);
     _optimizeWithReplace($diff);
-    #_expandInDepth($diff, $options);
+    _expandInDepth($diff, $options);
 }
 
 sub _splitByCommonSequence($$$$)
@@ -506,9 +505,6 @@ sub _compareLeft($$$$$;$)
 {
     my ($path, $src, $left, $shift, $diff, $options) = @_;
     my ($start, $end) = @{$left};
-    
-    TRACE("------------ COMPARE LEFT -----------\n\n");
-    
 
     if ($end == -1)
     {   
@@ -518,19 +514,12 @@ sub _compareLeft($$$$$;$)
     # we need to `remove` elements from list tail to not deal with index shift
     foreach my $idx (reverse ($start + $$shift .. $end + $$shift - 1))
     {
-        TRACE("SRC:");
-        TRACE($src);
-        TRACE("IDX:");
-        TRACE($idx);
-        TRACE("SHIFT");
-        TRACE($$shift);
         my @curr_path = (@$path, $idx);
-        my $value =  $$src[$idx - $$shift];
+        my $value = $$src[$idx - $$shift];
         my $old = $$src[$idx - $$shift];
         PushOperation('remove', \@curr_path, undef, $value, $old, $diff, $options);
-        #$$shift -= 1;
+        $$shift -= 1;
     }
-    TRACE("------------ END OF COMPARE LEFT -----------\n\n");
 }
 
 sub _compareRight($$$$$;$) 
