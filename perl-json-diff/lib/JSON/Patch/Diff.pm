@@ -573,7 +573,7 @@ sub _optimizeWithReplace($)
         TRACE($diff);
         TRACE("UDIFF:");
         TRACE($updated_diff);
-        TRACE("NUM CHANGES:");
+        TRACE("SHIFT:");
         TRACE($shift);
     }
 
@@ -593,6 +593,7 @@ sub _optimizeWithMove($)
     TRACE("------------ OPTIMIZE WITH MOVE ------------");
 
     my $shift = 0;
+    my $path_shift = 0;
     my %unique_value_path;
 
     for (my $i = 0; $i < $len_diff; $i++)
@@ -605,19 +606,20 @@ sub _optimizeWithMove($)
             my $from_id   = $unique_value_path{$$this{value}}{idx};
             my $from_path;
             my $to_path;
-            my $curr_shift;
+
+            my ($before_index, $index) = $$this{path} =~ /(.*)\/([-]?|[0-9]*)\z/; 
+            $index += $path_shift - $shift;
+
 
             if ($unique_value_path{$$this{value}}{op} eq 'remove')
             {
-                $to_path    = $$this{path};
+                $to_path    = $before_index . '/' . $index;
                 $from_path  = $unique_value_path{$$this{value}}{path};
-                $curr_shift = $shift;
             }
             else
             {
                 $to_path    = $unique_value_path{$$this{value}}{path};
-                $from_path  = $$this{path};
-                $curr_shift = 0;
+                $from_path  = $before_index . '/' . $index;
             }
                 
             my $op = {
@@ -629,24 +631,24 @@ sub _optimizeWithMove($)
 
             $$updated_diff[$from_id] = $op;
 
+            $shift -= 1;
+
             if ($i != (scalar(@$updated_diff) - 1))
             {
-                $updated_diff = [@$updated_diff[0 .. $i + $curr_shift], @$updated_diff[$i + $curr_shift + 1 .. 0]];
+                TRACE("UDIFF[0..i]:");
+                TRACE(@$updated_diff[0 .. $i - 1]);
+                TRACE("UDIFF[i..0]:");
+                TRACE(@$updated_diff[$i + 1 .. scalar(@$updated_diff) + $shift]);
+                $updated_diff = [@$updated_diff[0 .. $i + $shift], @$updated_diff[$i + 1 .. scalar(@$updated_diff) + $shift]];
             }
             else
             {
-                $updated_diff = [@$updated_diff[0 .. $i + $curr_shift - 1]];
+                $updated_diff = [@$updated_diff[0 .. $i + $shift]];
             }
             
-            if ($$this{op} eq 'remove')
-            {
-                $shift -= 1;
-            }
-            elsif ($$this{op} eq 'add')
-            {
-                $shift += 1;
 
-            }        
+
+            delete $unique_value_path{$$this{value}};
         }
         else
         {
@@ -655,10 +657,14 @@ sub _optimizeWithMove($)
                 'path' => $$this{path},
                 'op'   => $$this{op}
             };
+
             if ($$this{op} eq 'add')
             {
-                $shift += 1;
-
+                $path_shift -= 1;
+            }
+            elsif ($$this{op} eq 'remove')
+            {
+                $path_shift += 1;
             }
         }
 
