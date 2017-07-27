@@ -685,6 +685,26 @@ sub _optimizeWithMove($)
     @{$diff} = @{$updated_diff};
 }
 
+sub _expandInDepth($)
+{
+    my $diff = shift;
+    my $updated_diff = [@{$diff}];
+    
+    foreach my $this (@{$diff})
+    {
+        my $in_diff = [];
+        if ($$this{op} eq 'replace')
+        {
+           TRACE("Reverse pointer:");
+           TRACE(ReverseJSONPointer($$this{path}));
+           CompareValues(ReverseJSONPointer($$this{path}), $$this{old}, $$this{value}, $in_diff);
+           TRACE("IN DIFF:");
+           TRACE($in_diff);
+        }
+    }
+
+}
+
 sub PushOperation($$$$$$;$)
 {
     ## Add operation to $diff
@@ -762,6 +782,17 @@ sub GetJSONPointer($)
     }
 
     return $pointer;
+}
+
+sub ReverseJSONPointer($)
+{
+    # Reverses JSON Pointer to path array
+    my @pointer = shift;
+    my $path    = [split(/\//, @pointer)];
+   
+    # TODO replace ~0 and ~1 
+
+    return $path;
 }
 
 sub isNum($) 
