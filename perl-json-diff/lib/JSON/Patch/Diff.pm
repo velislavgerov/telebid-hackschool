@@ -585,13 +585,14 @@ sub _optimize($)
                 $$updated_diff[$prev_id] = $op;
                 if ($i != $len_diff - 1)
                 {
-                    TRACE('@$updated_diff[0 .. $i - 1]');
-                    TRACE(@$updated_diff[0 .. $i - 1]);
-                    TRACE('@$updated_diff[$i + 1 .. scalar(@$updated_diff)]');
-                    TRACE(@$updated_diff[$i + 1 .. scalar(@$updated_diff)]);
                     $shift -= 1;
+                    TRACE("Left OF i=$i");
+                    TRACE(@$updated_diff[0 .. $i - 1]);
+                    TRACE("RIGHT OF i=$i");
+                    TRACE(@$updated_diff[$i + 1 .. scalar(@$updated_diff) - 1 - $shift]);
+                    
                     $updated_diff = [@$updated_diff[0 .. $i - 1], @$updated_diff[$i + 1 .. scalar(@$updated_diff) - 1 + $shift]];
-                
+                    
                 }
                 else
                 {
@@ -612,15 +613,15 @@ sub _optimize($)
             TRACE($i);
             TRACE("SHIFT:");
             TRACE($shift);
-            TRACE("PATHS:");
-            TRACE($paths);
             next;
         }
-        #$$this{id} = $i;
         $$paths{$$this{path}} = $this;
-        $$paths_ids{$$this{path}} = $i;
-        TRACE("PATHS2:");
+        $$paths_ids{$$this{path}} = $i + $shift;
+        
+        TRACE("PATHS UPDATED:");
         TRACE($paths);
+        TRACE("PATHS IDS UPDATED:");
+        TRACE($paths_ids);
     }
     
     TRACE("------------ END OF OPTIMIZE  ------------");
