@@ -560,6 +560,7 @@ sub _optimize($)
     my $updated_diff = [@{$diff}];
     my $shift = 0;
     my $paths = {};
+    my $paths_ids = {};
     
     TRACE("------------ OPTIMIZE  ------------");
     TRACE("DIFF");
@@ -572,6 +573,7 @@ sub _optimize($)
         if (exists $$paths{$$this{path}})
         {
             my $prev = $$paths{$$this{path}};
+            my $prev_id = $$paths_ids{$$this{path}};
             if ($$prev{op} eq 'remove' && $$this{op} eq 'add')
             {
                 my $op = { 
@@ -580,7 +582,7 @@ sub _optimize($)
                     'value' => $$this{value},
                     'old'   => $$prev{value} # XXX: should be optional
                 };
-                $$updated_diff[$$prev{id}] = $op;
+                $$updated_diff[$prev_id] = $op;
                 if ($i != $len_diff - 1)
                 {
                     TRACE('@$updated_diff[0 .. $i - 1]');
@@ -614,8 +616,9 @@ sub _optimize($)
             TRACE($paths);
             next;
         }
-        $$this{id} = $i;
+        #$$this{id} = $i;
         $$paths{$$this{path}} = $this;
+        $$paths_ids{$$this{path}} = $i;
         TRACE("PATHS2:");
         TRACE($paths);
     }
@@ -768,7 +771,7 @@ sub _optimizeWithMove($)
 
     TRACE("------- END OF OPTIMIZE WITH MOVE ---------");
 
-    $diff = $updated_diff;
+    @{$diff} = @{$updated_diff};
 }
 
 sub _expandInDepth($;$)
