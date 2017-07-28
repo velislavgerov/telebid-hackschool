@@ -10,8 +10,7 @@ use Scalar::Util qw(looks_like_number);
 use Storable 'dclone';
 
 our $DEBUG = 0;
-our $CALLED = 0;
-my $SHIFT = 0;
+our $CALLED = 0; #TODO REMOVE
 
 my $json = JSON->new->allow_nonref;
 
@@ -311,7 +310,7 @@ sub _compareLists($$$$;$)
     
     _compareWithShift($path, $src, $dst, $left, $right, \$shift, $diff, $options);
     _optimizeWithReplace($diff);
-    #_expandInDepth($diff, $options);
+    _expandInDepth($diff, $options);
 }
 
 sub _splitByCommonSequence($$$$)
@@ -525,10 +524,10 @@ sub _compareLeft($$$$$;$)
         TRACE("SHIFT");
         TRACE($$shift);
         my @curr_path = (@$path, $idx);
-        my $value =  $$src[$idx - $$shift];
-        my $old = $$src[$idx - $$shift];
+        my $value =  $$src[$idx];
+        my $old = $$src[$idx];
         PushOperation('remove', \@curr_path, undef, $value, $old, $diff, $options);
-        #$$shift -= 1;
+        $$shift -= 1;
     }
     TRACE("------------ END OF COMPARE LEFT -----------\n\n");
 }
