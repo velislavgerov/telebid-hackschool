@@ -524,8 +524,8 @@ sub _compareLeft($$$$$;$)
         TRACE("SHIFT");
         TRACE($$shift);
         my @curr_path = (@$path, $idx);
-        my $value =  $$src[$idx];
-        my $old = $$src[$idx];
+        my $value =  $$src[$idx - $$shift];
+        my $old = $$src[$idx - $$shift];
         PushOperation('remove', \@curr_path, undef, $value, $old, $diff, $options);
         $$shift -= 1;
     }
