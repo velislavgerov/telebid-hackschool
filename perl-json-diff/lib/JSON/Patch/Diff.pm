@@ -309,7 +309,7 @@ sub _compareLists($$$$;$)
     my $shift = 0;
     
     _compareWithShift($path, $src, $dst, $left, $right, \$shift, $diff, $options);
-    _optimizeWithReplace($diff);
+    _optimize($diff);
     _expandInDepth($diff, $options);
 }
 
@@ -553,6 +553,77 @@ sub _compareRight($$$$$;$)
     }
 }
 
+sub _optimize($)
+{
+    my $diff = shift;
+    my $len_diff = scalar @{$diff};
+    my $updated_diff = [@{$diff}];
+    my $shift = 0;
+    my $paths = {};
+    
+    TRACE("------------ OPTIMIZE  ------------");
+    TRACE("DIFF");
+    TRACE($diff);
+
+
+    for (my $i = 0; $i < $len_diff; $i++)
+    {
+        my $this = $$diff[$i];
+        if (exists $$paths{$$this{path}})
+        {
+            my $prev = $$paths{$$this{path}};
+            if ($$prev{op} eq 'remove' && $$this{op} eq 'add')
+            {
+                my $op = { 
+                    'op'    => 'replace',
+                    'path'  => $$prev{path},
+                    'value' => $$this{value},
+                    'old'   => $$prev{value} # XXX: should be optional
+                };
+                $$updated_diff[$$prev{id}] = $op;
+                if ($i != $len_diff - 1)
+                {
+                    TRACE('@$updated_diff[0 .. $i - 1]');
+                    TRACE(@$updated_diff[0 .. $i - 1]);
+                    TRACE('@$updated_diff[$i + 1 .. scalar(@$updated_diff)]');
+                    TRACE(@$updated_diff[$i + 1 .. scalar(@$updated_diff)]);
+                    $shift -= 1;
+                    $updated_diff = [@$updated_diff[0 .. $i - 1], @$updated_diff[$i + 1 .. scalar(@$updated_diff) - 1 + $shift]];
+                
+                }
+                else
+                {
+                    TRACE('[@$updated_diff[0 .. $i - 1]]');
+                    TRACE([@$updated_diff[0 .. $i - 1]]);
+                    $updated_diff = [@$updated_diff[0 .. $i - 1 + $shift]];
+                }
+            }
+            TRACE("THIS:");
+            TRACE($this);
+            TRACE("PREV:");
+            TRACE($prev);
+            TRACE("DIFF:");
+            TRACE($diff);
+            TRACE("UDIFF:");
+            TRACE($updated_diff);
+            TRACE("i:");
+            TRACE($i);
+            TRACE("SHIFT:");
+            TRACE($shift);
+            TRACE("PATHS:");
+            TRACE($paths);
+            next;
+        }
+        $$this{id} = $i;
+        $$paths{$$this{path}} = $this;
+        TRACE("PATHS2:");
+        TRACE($paths);
+    }
+    
+    TRACE("------------ END OF OPTIMIZE  ------------");
+    @{$diff} = @{$updated_diff};
+}
+
 sub _optimizeWithReplace($)
 {
     my $diff = shift;
@@ -576,7 +647,7 @@ sub _optimizeWithReplace($)
                 'value' => $$next{value},
                 'old'   => $$this{value} # XXX: should be optional
             };
-            $updated_diff = [@$updated_diff[0 .. $i + $shift - 1], $op, @$updated_diff[$i + $shift + 2 .. (scalar @$updated_diff) - 1]];
+            $updated_diff = [@$updated_diff[0 .. $i + $shift], $op, @$updated_diff[$i + $shift + 2 .. (scalar @$updated_diff) - 1]];
             $shift -= 1;
         }
 
@@ -716,13 +787,14 @@ sub _expandInDepth($;$)
     {
         my $this = $$diff[$i];
         my $in_diff = [];
-        if ($$this{op} eq 'replace')
+        if ($$this{op} eq 'replace' && ref($$this{value}) eq ref($$this{old}) && ref($$this{old}) ne '')
         {
 
             TRACE("Reverse pointer:");
             my $curr_path = ReverseJSONPointer($$this{path});
             
             #XXX: TRY WITH GetPatch
+            #DONT GO IN FOR SCALARS!
             CompareValues($curr_path, $$this{old}, $$this{value}, $in_diff, $options);
             TRACE("ORIGINAL DIFF");
             TRACE($diff);
