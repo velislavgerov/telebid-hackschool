@@ -87,7 +87,7 @@ foreach my $test_file (@test_files) {
             my $patch = @{$test}{patch};
             my $patch_text = $json->pretty->encode($patch);
             my $comment_text = $json->encode(@{$test}{comment});
-            my $diff = JSON::Patch::Diff::GetPatch($src, $dst);
+            my $diff = JSON::Patch::Diff::GetPatch($src, $dst, {'use_replace'=>1});
             my $result_patch = $json->pretty->encode($diff);
 
             # I am calling $json->decode below to avoid a strange bug, where numbers

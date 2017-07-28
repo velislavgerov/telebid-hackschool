@@ -602,23 +602,25 @@ sub _optimize($;$)
                 };
 
                 $$op{old} = $$prev{value} if ($$options{keep_old});
+
+                $shift -= 1;
                 $$updated_diff[$prev_id] = $op;
                 if ($i != $len_diff - 1)
                 {
-                    $shift -= 1;
+
                     TRACE("Left OF i=$i");
-                    TRACE(@$updated_diff[0 .. $i - 1]);
+                    #TRACE(@$updated_diff[0 .. $i - 1]);
                     TRACE("RIGHT OF i=$i");
-                    TRACE(@$updated_diff[$i + 1 .. scalar(@$updated_diff) - 1 - $shift]);
+                    #TRACE(@$updated_diff[$i + 1 .. scalar(@$updated_diff) - 1 - $shift]);
                     
-                    $updated_diff = [@$updated_diff[0 .. $i - 1], @$updated_diff[$i + 1 .. scalar(@$updated_diff) - 1 + $shift]];
+                    $updated_diff = [@$updated_diff[0 .. $i - 1], @$updated_diff[$i + 1  .. scalar(@$updated_diff) - 1]];
                     
                 }
                 else
                 {
-                    TRACE('[@$updated_diff[0 .. $i - 1]]');
-                    TRACE([@$updated_diff[0 .. $i - 1]]);
-                    $updated_diff = [@$updated_diff[0 .. $i - 1 + $shift]];
+                    TRACE('[@$updated_diff[0 .. $i - 1 + $shift]]');
+                    #TRACE([@$updated_diff[0 .. $i - 1 + $shift]]);
+                    $updated_diff = [@$updated_diff[0 .. $i - 1]];
                 }
             }
             TRACE("THIS:");
@@ -769,7 +771,6 @@ sub _expandInDepth($;$)
         my $in_diff = [];
         if ($$this{op} eq 'replace' && ref($$this{value}) eq ref($$this{old}) && ref($$this{old}) ne '')
         {
-
             TRACE("Reverse pointer:");
             my $curr_path = ReverseJSONPointer($$this{path});
             
@@ -778,21 +779,27 @@ sub _expandInDepth($;$)
             CompareValues($curr_path, $$this{old}, $$this{value}, $in_diff, $options);
             TRACE("ORIGINAL DIFF");
             TRACE($diff);
+            TRACE("THIS:");
+            TRACE($this);
             TRACE("IN DIFF:");
             TRACE($in_diff);
             if (!eq_deeply($in_diff, $this))
             {
-                $shift += scalar @$in_diff - 1;
+                $shift += scalar @$in_diff;
 
-                if ($i != (scalar(@$updated_diff) - 1))
+                if ($i != ($len_diff - 1))
                 {
-                    $updated_diff = [(@$updated_diff[0 .. $i + $shift - 1], @$in_diff, @$updated_diff[$i + 1 .. scalar(@$updated_diff) - 1 + $shift])];
+                    TRACE("Left:");
+                    #TRACE(@$updated_diff[0 .. $i + $shift - 2]);
+                    TRACE("RIGHT:");
+                    #TRACE(@$updated_diff[$i + 1 + $shift .. scalar(@$updated_diff) + $shift - 1]);
+                    $updated_diff = [(@$updated_diff[0 .. $i - 1], @$in_diff, @$updated_diff[$i + 1 .. scalar(@$updated_diff) - 1])];
                     TRACE("HER");
                 }
                 else
                 {
                     TRACE("3e");
-                    $updated_diff = $in_diff;
+                    $updated_diff = [@$updated_diff[0 .. $i - 1], @$in_diff];
                 }
             }
             TRACE("THIS DIFF:");
