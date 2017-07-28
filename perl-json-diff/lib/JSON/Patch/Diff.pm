@@ -18,6 +18,14 @@ sub GetPatch($$;$)
 {
     my ($src, $dst, $options ) = @_;
     # TODO: better input handling
+    # Example options config:
+    #
+    # $options = {
+    #     keep_old:    1, 
+    #     use_replace: 1,
+    #     use_move:    1,
+    #     in_depth:    1
+    # };
 
     my $diff = [];
     my $path = [];
@@ -307,10 +315,13 @@ sub _compareLists($$$$;$)
     my $left = $$sequence[0];
     my $right = $$sequence[1];
     my $shift = 0;
-    
+   
+    # only 'add' and 'remove' operations
     _compareWithShift($path, $src, $dst, $left, $right, \$shift, $diff, $options);
-    _optimize($diff);
-    _expandInDepth($diff, $options);
+    
+    # optional
+    _optimize($diff, $options)      if ($$options{use_replace});
+    _expandInDepth($diff, $options) if ($$options{use_depth});
 }
 
 sub _splitByCommonSequence($$$$)
@@ -553,9 +564,10 @@ sub _compareRight($$$$$;$)
     }
 }
 
-sub _optimize($)
+sub _optimize($;$)
 {
     my $diff = shift;
+    my $options = shift;
     my $len_diff = scalar @{$diff};
     my $updated_diff = [@{$diff}];
     my $shift = 0;
@@ -580,8 +592,9 @@ sub _optimize($)
                     'op'    => 'replace',
                     'path'  => $$prev{path},
                     'value' => $$this{value},
-                    'old'   => $$prev{value} # XXX: should be optional
                 };
+
+                $$op{old} = $$prev{value} if ($$options{keep_old});
                 $$updated_diff[$prev_id] = $op;
                 if ($i != $len_diff - 1)
                 {
@@ -874,7 +887,7 @@ sub PushOperation($$$$$$;$)
         die "$0: error: invalid or unsupported operation $operation_name";
     }
 
-    if (defined $options && $operation_name ne 'add' && $operation ne 'move')
+    if ($$options{keep_old} && $operation_name ne 'add' && $operation ne 'move')
     {
         $$operation{old} = $old_value; 
     }

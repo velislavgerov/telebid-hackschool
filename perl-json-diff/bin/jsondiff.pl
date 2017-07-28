@@ -14,14 +14,18 @@ my $is_help;
 my $is_pretty;
 my $is_verbose;
 my $is_keep_old;
+my $is_use_replace;
+my $is_use_depth;
 my $output;
 
 GetOptions(
-        'help|h'     => \$is_help,
-        'pretty|p'   => \$is_pretty,
-        'verbose|v'  => \$is_verbose,
-        'keep-old|k' => \$is_keep_old,
-        'output|o=s' => \$output
+        'help|h'        => \$is_help,
+        'pretty|p'      => \$is_pretty,
+        'verbose|v'     => \$is_verbose,
+        'keep-old|k'    => \$is_keep_old,
+        'use-replace|r' => \$is_use_replace,
+        'use-depth|d'   => \$is_use_depth,
+        'output|o=s'    => \$output
 ) or die "$0: missing operand after '$0'\n$0: Try '$0 --help' for more information.";
 
 if ($is_verbose)
@@ -35,8 +39,10 @@ if ($is_help)
     print "Calculate JSON Patch difference from source to destination JSON FILES.\n\n";
     print "Mandatory arguments to long options are mandatory for short options too.\n";
     print "  -o, --output=FILE  save output to FILE\n";
+    print "  -d, --use-depth    performs in depth expansion of operations within arrays\n";
     print "  -k, --keep-old     keep old values in patch (\"old\" key)\n";
     print "  -p, --pretty       display pretty formatted JSON Patch\n";
+    print "  -r, --use-replace  have 'replace' operations in resulting patch\n";
     print "  -v, --verbose      display extra text\n";
     print "  -h, --help         dispaly this help and exit\n\n";
     print "Report bugs to: velislav\@telebid-pro.com\n";
@@ -92,15 +98,14 @@ my $dst = $json->decode($dst_text);
 
 ## Calculate JSON Patch difference
 my $diff;
-if ($is_keep_old)
-{
-    my $option = 1;
-    $diff = JSON::Patch::Diff::GetPatch($src, $dst, $option);
-}
-else
-{
-    $diff = JSON::Patch::Diff::GetPatch($src, $dst);
-}
+
+my $options = {
+    "keep_old"    => $is_keep_old,
+    "use_replace" => $is_use_replace,
+    "use_depth"   => $is_use_depth
+};
+
+$diff = JSON::Patch::Diff::GetPatch($src, $dst, $options);
 
 ## Output
 if ($is_verbose) 
