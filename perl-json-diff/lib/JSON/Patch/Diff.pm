@@ -319,6 +319,13 @@ sub _compareLists($$$$;$)
     # only 'add' and 'remove' operations
     _compareWithShift($path, $src, $dst, $left, $right, \$shift, $diff, $options);
     
+    # NOTE: `use depth` relies on `use_replace` and `keep_old`
+    if ($$options{use_depth})
+    {
+        $$options{keep_old}    = 1;
+        $$options{use_replace} = 1;
+    }
+
     # optional
     _optimize($diff, $options)      if ($$options{use_replace});
     _expandInDepth($diff, $options) if ($$options{use_depth});
