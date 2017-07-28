@@ -641,50 +641,6 @@ sub _optimize($;$)
     @{$diff} = @{$updated_diff};
 }
 
-sub _optimizeWithReplace($)
-{
-    my $diff = shift;
-    my $len_diff = scalar @{$diff};
-    my $updated_diff = [@{$diff}];
-
-    TRACE("------------ OPTIMIZE WITH REPLACE ------------");
-
-    my $shift = 0;
-
-    for (my $i = 0; $i < $len_diff - 1; $i++)
-    {
-        my $this = $$diff[$i];
-        my $next = $$diff[$i+1];
-        
-        if ($$this{op} eq 'remove' && $$next{op} eq 'add' && $$this{path} eq $$next{path})
-        {
-            my $op = { 
-                'op'    => 'replace',
-                'path'  => $$this{path},
-                'value' => $$next{value},
-                'old'   => $$this{value} # XXX: should be optional
-            };
-            $updated_diff = [@$updated_diff[0 .. $i + $shift], $op, @$updated_diff[$i + $shift + 2 .. (scalar @$updated_diff) - 1]];
-            $shift -= 1;
-        }
-
-        TRACE("THIS:");
-        TRACE($this);
-        TRACE("NEXT:");
-        TRACE($next);
-        TRACE("DIFF:");
-        TRACE($diff);
-        TRACE("UDIFF:");
-        TRACE($updated_diff);
-        TRACE("SHIFT:");
-        TRACE($shift);
-    }
-
-    TRACE("------- END OF OPTIMIZE WITH REPLACE ---------");
-
-    @{$diff} = @{$updated_diff};
-}
-
 sub _optimizeWithMove($)
 {
     my $diff = shift;
