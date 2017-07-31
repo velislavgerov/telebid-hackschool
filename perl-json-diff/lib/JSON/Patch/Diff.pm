@@ -14,6 +14,35 @@ our $CALLED = 0; #TODO REMOVE
 
 my $json = JSON->new->allow_nonref;
 
+## Main subroutines
+sub GetPatch($$;$);
+sub CompareValues($$$$;$);
+sub CompareHashes($$$$;$);
+sub CompareArrays($$$$;$);
+
+## Arrays
+sub _longestCommonSubSequence($$);
+sub _splitByCommonSequence($$$$);
+sub _compareWithShift($$$$$$$;$);
+sub _compareLeft($$$$$;$);
+sub _compareRight($$$$$;$); 
+
+## Helpers
+sub OptimizeWithReplace($;$);
+#sub OptimizeWithMove($);
+sub ExpandInDepth($;$);
+sub NormalizePatch($;$);
+sub PushOperation($$$$$$;$);
+sub GetJSONPointer($);
+sub ReverseJSONPointer($);
+sub IsNum($);
+
+## Debug
+sub TRACE(@);
+sub ASSERT($$;$$); 
+
+
+
 sub GetPatch($$;$)
 {
     my ($src, $dst, $options ) = @_;
@@ -36,7 +65,7 @@ sub GetPatch($$;$)
         
     CompareValues($path, $src, $dst, $diff, $options);
     
-    _normalize($diff, $options);
+    NormalizePatch($diff, $options);
 
     return $diff;
 }
@@ -58,7 +87,7 @@ sub CompareValues($$$$;$)
     if (eq_deeply($src_text, $dst_text)) 
     {   
         # return only if the case is not like "1" == 1
-        if (isNum($src) == isNum($dst)) 
+        if (IsNum($src) == IsNum($dst)) 
         {
             TRACE("SOURCE is equal DEST");
             return;
@@ -71,12 +100,14 @@ sub CompareValues($$$$;$)
     }
     elsif (ref($src) eq 'ARRAY' && ref($dst) eq 'ARRAY') 
     {
-        _compareLists($path, $src, $dst, $diff, $options);
+        CompareArrays($path, $src, $dst, $diff, $options);
     }
     else 
     {
         PushOperation("replace", $path, undef, $dst, $src, $diff, $options); 
     }
+
+    return;
 }
 
 sub CompareHashes($$$$;$) {
@@ -114,6 +145,34 @@ sub CompareHashes($$$$;$) {
             PushOperation("add", \@curr_path, undef, $value, undef, $diff, $options);
         }
     }
+
+    return;
+}
+
+sub CompareArrays($$$$;$)
+{
+    my ($path, $src, $dst, $diff, $options) = @_;
+    my $sequence = _splitByCommonSequence($src, $dst, [0,-1], [0,-1]);
+    my $left = $$sequence[0];
+    my $right = $$sequence[1];
+    my $shift = 0;
+   
+    # only 'add' and 'remove' operations
+    _compareWithShift($path, $src, $dst, $left, $right, \$shift, $diff, $options);
+    
+    # NOTE: `use depth` relies on `use_replace` and `keep_old`
+    if ($$options{use_depth})
+    {
+        #$$options{keep_old}    = 1;
+        $$options{use_replace} = 1;
+    }
+
+    ## Optional]
+    OptimizeWithReplace($diff, $options) if ($$options{use_replace});
+    #OptimizeWithMove($diff)             if ($$options{use_move});
+    ExpandInDepth($diff, $options)       if ($$options{use_depth});
+
+    return;
 }
 
 sub _longestCommonSubSequence($$)
@@ -140,23 +199,23 @@ sub _longestCommonSubSequence($$)
         {
             if (eq_deeply($$src[$i], $$dst[$j]))
             {
-                    TRACE("Found match:");
-                    TRACE("i:", $i);
-                    TRACE("j:", $j);
-                    if ($i == 0 || $j == 0)
-                    {
-                        $matrix[$i][$j] = 1;
-                    }
-                    else
-                    {
-                        $matrix[$i][$j] = $matrix[$i - 1][$j - 1] + 1;
-                    }
-                    if ($matrix[$i][$j] > $z)
-                    {
-                        $z = $matrix[$i][$j];
-                        $range_src = [$i - $z + 1, $i + 1];
-                        $range_dst = [$j - $z + 1, $j + 1];
-                    }
+                TRACE("Found match:");
+                TRACE("i:", $i);
+                TRACE("j:", $j);
+                if ($i == 0 || $j == 0)
+                {
+                    $matrix[$i][$j] = 1;
+                }
+                else
+                {
+                    $matrix[$i][$j] = $matrix[$i - 1][$j - 1] + 1;
+                }
+                if ($matrix[$i][$j] > $z)
+                {
+                    $z = $matrix[$i][$j];
+                    $range_src = [$i - $z + 1, $i + 1];
+                    $range_dst = [$j - $z + 1, $j + 1];
+                }
 
             }
             else
@@ -180,7 +239,7 @@ sub _longestCommonSubSequence($$)
         # Test source range
         ASSERT(ref($range_src) eq 'ARRAY', "Source range must be an arrayref");
         ASSERT(scalar(@{$range_src}) == 2, "Source range must be of size 2");
-        ASSERT(isNum($$range_src[0]) && isNum($$range_src[1]),
+        ASSERT(IsNum($$range_src[0]) && IsNum($$range_src[1]),
                     "Both values in source range must be numbers");
     }
 
@@ -189,7 +248,7 @@ sub _longestCommonSubSequence($$)
         # Test destination range
         ASSERT(ref($range_dst) eq 'ARRAY',"Destination range must be an arrayref");
         ASSERT(scalar(@{$range_dst}) == 2, "Destination range must be of size 2");
-        ASSERT(isNum($$range_dst[0]) && isNum($$range_dst[1]),
+        ASSERT(IsNum($$range_dst[0]) && IsNum($$range_dst[1]),
             "Both values in destination range must be numbers");
     }
     
@@ -302,6 +361,8 @@ sub _compareWithShift($$$$$$$;$)
     }
 
     TRACE("------------ END OF COMPARE WITH SHIFT -----------\n\n");
+
+    return;
 }
 
 sub _compareLeft($$$$$;$) 
@@ -333,6 +394,8 @@ sub _compareLeft($$$$$;$)
         $$shift -= 1;
     }
     TRACE("------------ END OF COMPARE LEFT -----------\n\n");
+
+    return;
 }
 
 sub _compareRight($$$$$;$) 
@@ -354,9 +417,11 @@ sub _compareRight($$$$$;$)
         PushOperation('add', \@curr_path, undef, $$dst[$idx], undef, $diff, $options);
         $$shift += 1;
     }
+
+    return;
 }
 
-sub _optimize($;$)
+sub OptimizeWithReplace($;$)
 {
     my $diff = shift;
     my $options = shift;
@@ -424,10 +489,14 @@ sub _optimize($;$)
     }
     
     TRACE("------------ END OF OPTIMIZE  ------------");
+    
+    ## update diff
     @{$diff} = @{$updated_diff};
+
+    return;
 }
 
-sub _optimizeWithMove($)
+sub OptimizeWithMove($)
 {
     my $diff = shift;
     my $len_diff = scalar @{$diff};
@@ -528,9 +597,11 @@ sub _optimizeWithMove($)
     TRACE("------- END OF OPTIMIZE WITH MOVE ---------");
 
     @{$diff} = @{$updated_diff};
+
+    return;
 }
 
-sub _expandInDepth($;$)
+sub ExpandInDepth($;$)
 {
     $CALLED += 1;
     my $diff = shift;
@@ -586,35 +657,15 @@ sub _expandInDepth($;$)
     
     TRACE("------------ END OF EXPAND ------------");
 
+    ## update diff
     @{$diff} = @{$updated_diff};
+
+    return;
 }
 
-sub _compareLists($$$$;$)
-{
-    my ($path, $src, $dst, $diff, $options) = @_;
-    my $sequence = _splitByCommonSequence($src, $dst, [0,-1], [0,-1]);
-    my $left = $$sequence[0];
-    my $right = $$sequence[1];
-    my $shift = 0;
-   
-    # only 'add' and 'remove' operations
-    _compareWithShift($path, $src, $dst, $left, $right, \$shift, $diff, $options);
-    
-    # NOTE: `use depth` relies on `use_replace` and `keep_old`
-    if ($$options{use_depth})
-    {
-        #$$options{keep_old}    = 1;
-        $$options{use_replace} = 1;
-    }
 
-    # optional
-    _optimize($diff, $options)      if ($$options{use_replace});
 
-    #_optimizeWithMove($diff);
-    _expandInDepth($diff, $options) if ($$options{use_depth});
-}
-
-sub _normalize($;$)
+sub NormalizePatch($;$)
 {
     my $diff    = shift;
     my $options = shift;
@@ -630,6 +681,8 @@ sub _normalize($;$)
             delete $$op{value};
         }
     }
+
+    return;
 }
 
 sub PushOperation($$$$$$;$)
@@ -685,6 +738,8 @@ sub PushOperation($$$$$$;$)
     push @{$diff}, $operation;
 
     TRACE("DIFF updated: ", $diff);
+
+    return;
 }
 
 sub GetJSONPointer($) 
@@ -735,7 +790,7 @@ sub ReverseJSONPointer($)
     return $curr_path;
 }
 
-sub isNum($) 
+sub IsNum($) 
 {
     # Input: Perl Scalar
     # Returns: 1 if perl scalar is a number, 0 otherwise
@@ -754,7 +809,10 @@ sub TRACE(@)
     {
         return;
     }
-    foreach my $message (@_) 
+
+    my $messages = @_;
+
+    foreach my $message ($messages) 
     {
         if (ref($message)) 
         {
@@ -766,9 +824,11 @@ sub TRACE(@)
         }
     }
     print "\n";
+
+    return;
 }
 
-sub ASSERT($$$;$) 
+sub ASSERT($$;$$) 
 { 
     my ($condition, $message, $code, $args) = @_;
 
@@ -780,6 +840,8 @@ sub ASSERT($$$;$)
     {
         die "JSON::Diff: error: $message; code: $code";
     }
+
+    return;
 }
 
 1;
