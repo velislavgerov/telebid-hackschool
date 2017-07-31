@@ -35,8 +35,8 @@ sub GetPatch($$;$)
     TRACE("DEST:   ", $dst);
         
     CompareValues($path, $src, $dst, $diff, $options);
-     
-    #;_expandInDepth($diff, $options) if ($$options{use_depth});
+    
+    _normalize($diff, $options);
 
     return $diff;
 }
@@ -324,7 +324,7 @@ sub _compareLists($$$$;$)
     # NOTE: `use depth` relies on `use_replace` and `keep_old`
     if ($$options{use_depth})
     {
-        $$options{keep_old}    = 1;
+        #$$options{keep_old}    = 1;
         $$options{use_replace} = 1;
     }
 
@@ -605,7 +605,7 @@ sub _optimize($;$)
                     'value' => $$this{value},
                 };
 
-                $$op{old} = $$prev{value} if ($$options{keep_old});
+                $$op{old} = $$prev{value} if ($$options{keep_old} || $$options{use_depth});
 
                 $shift -= 1;
                 $$updated_diff[$prev_id] = $op;
@@ -806,6 +806,24 @@ sub _expandInDepth($;$)
     TRACE("------------ END OF EXPAND ------------");
 
     @{$diff} = @{$updated_diff};
+}
+
+sub _normalize($;$)
+{
+    my $diff    = shift;
+    my $options = shift;
+    
+    foreach my $op (@{$diff})
+    {
+        if (!$$options{keep_old})
+        {
+            delete $$op{old};
+        }
+        if ($$op{op} eq 'remove')
+        {
+            delete $$op{value};
+        }
+    }
 }
 
 sub PushOperation($$$$$$;$)
