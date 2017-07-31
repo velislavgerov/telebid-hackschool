@@ -35,8 +35,8 @@ sub GetPatch($$;$)
     TRACE("DEST:   ", $dst);
         
     CompareValues($path, $src, $dst, $diff, $options);
-    
-    _expandInDepth($diff, $options) if ($$options{use_depth});
+     
+    #;_expandInDepth($diff, $options) if ($$options{use_depth});
 
     return $diff;
 }
@@ -331,6 +331,8 @@ sub _compareLists($$$$;$)
     # optional
     _optimize($diff, $options)      if ($$options{use_replace});
 
+    #_optimizeWithMove($diff);
+    _expandInDepth($diff, $options) if ($$options{use_depth});
 }
 
 sub _splitByCommonSequence($$$$)
@@ -688,7 +690,7 @@ sub _optimizeWithMove($)
                 'op'    => 'move',
                 'from'  => $from_path,
                 'path'  => $to_path,
-                'value' => $$this{value}
+                #'value' => $$this{value}
             };
 
             $$updated_diff[$from_id] = $op;
@@ -767,10 +769,9 @@ sub _expandInDepth($;$)
         {
             TRACE("Reverse pointer:");
             my $curr_path = ReverseJSONPointer($$this{path});
-            
-            #XXX: TRY WITH GetPatch
-            #DONT GO IN FOR SCALARS!
+
             CompareValues($curr_path, $$this{old}, $$this{value}, $in_diff, $options);
+            
             TRACE("ORIGINAL DIFF");
             TRACE($diff);
             TRACE("THIS:");
@@ -779,22 +780,21 @@ sub _expandInDepth($;$)
             TRACE($in_diff);
             TRACE("BEFORE UPDATE DIFF:");
             TRACE($updated_diff);
+            
             if (!eq_deeply($in_diff, $this))
             {
                 $shift += scalar @$in_diff;
 
                 if ($i != ($len_diff - 1))
                 {
-                    #TRACE("Left:");
-                    #TRACE(@$updated_diff[0 .. $i + $shift - 2]);
-                    #TRACE("RIGHT:");
-                    #TRACE(@$updated_diff[$i + 1 + $shift .. scalar(@$updated_diff) + $shift - 1]);
-                    $updated_diff = [(@$updated_diff[0 .. $i - 1], @$in_diff, @$updated_diff[$i + 1 .. scalar(@$updated_diff) - 1])];
-                    TRACE("HER");
+                    $updated_diff = [
+                        (@$updated_diff[0 .. $i - 1],
+                         @$in_diff, 
+                         @$updated_diff[$i + 1 .. scalar(@$updated_diff) - 1])
+                    ];
                 }
                 else
                 {
-                    TRACE("3e");
                     $updated_diff = [@$updated_diff[0 .. $i - 1], @$in_diff];
                 }
             }
