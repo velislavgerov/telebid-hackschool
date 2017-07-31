@@ -103,7 +103,8 @@ sub CompareValues($$$$;$)
     return;
 }
 
-sub CompareHashes($$$$;$) {
+sub CompareHashes($$$$;$)
+{
     my ($path, $src, $dst, $diff, $options) = @_;
     my @curr_path;
 
@@ -194,6 +195,7 @@ sub _longestCommonSubSequence($$)
                 TRACE("Found match:");
                 TRACE("i:", $i);
                 TRACE("j:", $j);
+                
                 if ($i == 0 || $j == 0)
                 {
                     $matrix[$i][$j] = 1;
@@ -202,13 +204,13 @@ sub _longestCommonSubSequence($$)
                 {
                     $matrix[$i][$j] = $matrix[$i - 1][$j - 1] + 1;
                 }
+                
                 if ($matrix[$i][$j] > $z)
                 {
                     $z = $matrix[$i][$j];
                     $range_src = [$i - $z + 1, $i + 1];
                     $range_dst = [$j - $z + 1, $j + 1];
                 }
-
             }
             else
             {
@@ -218,12 +220,9 @@ sub _longestCommonSubSequence($$)
     }
     
     TRACE("--------------- LONGEST COMMON SEQUENCE ---------------");
-    TRACE("Matrix:");
-    TRACE(@matrix);
-    TRACE("Range src:");
-    TRACE($range_src);
-    TRACE("Range dst:");
-    TRACE($range_dst);
+    TRACE("Matrix:",    @matrix);
+    TRACE("Range src:", $range_src);
+    TRACE("Range dst:", $range_dst);
     TRACE("------------ END OF LONGEST COMMON SEQUENCE -----------\n\n");
     
     if (defined $range_src)
@@ -256,14 +255,10 @@ sub _splitByCommonSequence($$$$)
     $range_dst = ($$range_dst[0] != $$range_dst[1])  ? $range_dst : undef;
     
     TRACE("-------------SPLIT BY COMMON SEQUENCE----------\n\n\n"); 
-    TRACE("SRC: ");
-    TRACE($src);
-    TRACE("Range SRC: ");
-    TRACE($range_src);
-    TRACE("DST: ");
-    TRACE($dst);
-    TRACE("Range DST: ");
-    TRACE($range_dst);
+    TRACE("SRC: ",       $src);
+    TRACE("Range SRC: ", $range_src);
+    TRACE("DST: ",       $dst);
+    TRACE("Range DST: ", $range_dst);
 
     if (!defined $src)
     {
@@ -276,63 +271,49 @@ sub _splitByCommonSequence($$$$)
 
     my ($x, $y) = _longestCommonSubSequence($src, $dst);
     
-    TRACE("X:");
-    TRACE($x);
-    TRACE("Y:");
-    TRACE($y);
+    TRACE("X:", $x);
+    TRACE("Y:", $y);
     
     if (!defined $x || !defined $y)
     {
         return [$range_src, $range_dst];
     }
 
-
     my $l_src = $$x[0] == -1 ? [@$src[0 .. (scalar(@{$src}) - 2)]] : [@$src[0 .. $$x[0] - 1]];
     my $l_dst = $$y[0] == -1 ? [@$dst[0 .. (scalar(@{$dst}) - 2)]] : [@$dst[0 .. $$y[0] - 1]];
     my $l_range_src = [$$range_src[0], $$range_src[0] + $$x[0]];
     my $l_range_dst = [$$range_dst[0], $$range_dst[0] + $$y[0]];
 
-    TRACE("left src:");
-    TRACE($l_src);
-    TRACE("left range src:");
-    TRACE($l_range_src);
-    TRACE("left dst:");
-    TRACE($l_dst);
-    TRACE("left range dst:");
-    TRACE($l_range_dst);
+    TRACE("left src:",       $l_src);
+    TRACE("left range src:", $l_range_src);
+    TRACE("left dst:",       $l_dst);
+    TRACE("left range dst:", $l_range_dst);
     
     my $r_src = $$x[1] == -1 ? [@$src[scalar @{$src} - 1]] : [@$src[$$x[1] .. (scalar(@{$src}) - 1)]];
     my $r_dst = $$y[1] == -1 ? [@$dst[scalar @{$dst} - 1]] : [@$dst[$$y[1] .. (scalar(@{$dst}) - 1)]];
     my $r_range_src = [$$range_src[0] + $$x[1], ($$range_src[0] + scalar @{$src})];
     my $r_range_dst = [$$range_dst[0] + $$y[1], ($$range_dst[0] + scalar @{$dst})];
     
-    TRACE("righ src:");
-    TRACE($r_src);
-    TRACE("right range src:");
-    TRACE($r_range_src);
-    TRACE("right dst:");
-    TRACE($r_dst);
-    TRACE("right range dst:");
-    TRACE($r_range_dst);
+    TRACE("righ src:",        $r_src);
+    TRACE("right range src:", $r_range_src);
+    TRACE("right dst:",       $r_dst);
+    TRACE("right range dst:", $r_range_dst);
  
 
     TRACE("--------------END SPLIT-----------------\n\n\n"); 
     return [_splitByCommonSequence($l_src, $l_dst, $l_range_src, $l_range_dst),
             _splitByCommonSequence($r_src, $r_dst, $r_range_src, $r_range_dst)];
-                            
 }   
 
 sub _compareWithShift($$$$$$$;$)
 {
+    ## TODO: Hashify params
     my ($path, $src, $dst, $left, $right, $shift, $diff, $options) = @_;
     
     TRACE("--------------- COMPARE WITH SHIFT ---------------");
-    TRACE("LEFT:");
-    TRACE($left);
-    TRACE("RIGHT:");
-    TRACE($right);
-    TRACE("CURR SHIFT:");
-    TRACE($$shift);
+    TRACE("LEFT:",       $left);
+    TRACE("RIGHT:",      $right);
+    TRACE("CURR SHIFT:", $$shift);
         
     if (defined $left && scalar @$left == 2 && (ref($$left[0]) eq 'ARRAY' || ref($$left[1]) eq 'ARRAY'))
     {
@@ -357,7 +338,7 @@ sub _compareWithShift($$$$$$$;$)
     return;
 }
 
-sub _compareLeft($$$$$;$) 
+sub _compareLeft($$$$$;$)
 {
     my ($path, $src, $left, $shift, $diff, $options) = @_;
     my ($start, $end) = @{$left};
@@ -371,20 +352,21 @@ sub _compareLeft($$$$$;$)
         $end = scalar @{$src};
     }
     # we need to `remove` elements from list tail to not deal with index shift
-    foreach my $idx (reverse ($start + $$shift .. $end + $$shift - 1))
+    foreach my $idx (reverse (($start + $$shift) .. ($end + $$shift - 1)))
     {
-        TRACE("SRC:");
-        TRACE($src);
-        TRACE("IDX:");
-        TRACE($idx);
-        TRACE("SHIFT");
-        TRACE($$shift);
+        TRACE("SRC:",  $src);
+        TRACE("IDX:",  $idx);
+        TRACE("SHIFT", $$shift);
+
         my @curr_path = (@$path, $idx);
-        my $value =  $$src[$idx - $$shift];
-        my $old = $$src[$idx - $$shift];
+        my $value     = $$src[$idx - $$shift];
+        my $old       = $$src[$idx - $$shift];
+        
         PushOperation('remove', \@curr_path, undef, $value, $old, $diff, $options);
+        
         $$shift -= 1;
     }
+
     TRACE("------------ END OF COMPARE LEFT -----------\n\n");
 
     return;
@@ -405,7 +387,9 @@ sub _compareRight($$$$$;$)
     foreach my $idx (($start .. $end - 1))
     {
         my @curr_path = (@$path, $idx);
+        
         PushOperation('add', \@curr_path, undef, $$dst[$idx], undef, $diff, $options);
+        
         $$shift += 1;
     }
 
@@ -414,8 +398,7 @@ sub _compareRight($$$$$;$)
 
 sub OptimizeWithReplace($;$)
 {
-    my $diff = shift;
-    my $options = shift;
+    my ($diff, $options) = @_;
     my $len_diff = scalar @{$diff};
     my $updated_diff = [@{$diff}];
     my $shift = 0;
@@ -423,16 +406,17 @@ sub OptimizeWithReplace($;$)
     my $paths_ids = {};
     
     TRACE("------------ OPTIMIZE  ------------");
-    TRACE("DIFF");
-    TRACE($diff);
+    TRACE("DIFF", $diff);
 
     for (my $i = 0; $i < $len_diff; $i++)
     {
         my $this = $$diff[$i];
+
         if (exists $$paths{$$this{path}})
         {
             my $prev = $$paths{$$this{path}};
             my $prev_id = $$paths_ids{$$this{path}};
+            
             if ($$prev{op} eq 'remove' && $$this{op} eq 'add')
             {
                 my $op = { 
@@ -440,42 +424,33 @@ sub OptimizeWithReplace($;$)
                     'path'  => $$prev{path},
                     'value' => $$this{value},
                 };
-
-                $$op{old} = $$prev{value} if ($$options{keep_old} || $$options{use_depth});
+                
+                if ($$options{keep_old} || $$options{use_depth})
+                {
+                    $$op{old} = $$prev{value};
+                }
 
                 $shift -= 1;
+
                 $$updated_diff[$prev_id] = $op;
-
-
-                TRACE("Left OF i=$i");
-                #TRACE(@$updated_diff[0 .. $i - 1]);
-                TRACE("RIGHT OF i=$i");
-                #TRACE(@$updated_diff[$i + 1 .. scalar(@$updated_diff) - 1]);
                 
-                $updated_diff = [@$updated_diff[0 .. $i + $shift], @$updated_diff[$i + 1  .. scalar(@$updated_diff) - 1]];
-                
+                $updated_diff = [@{$updated_diff}[0 .. $i + $shift], @{$updated_diff}[($i + 1) .. (scalar(@{$updated_diff}) - 1)]];
             }
-            TRACE("THIS:");
-            TRACE($this);
-            TRACE("PREV:");
-            TRACE($prev);
-            TRACE("DIFF:");
-            TRACE($diff);
-            TRACE("UDIFF:");
-            TRACE($updated_diff);
-            TRACE("i:");
-            TRACE($i);
-            TRACE("SHIFT:");
-            TRACE($shift);
+
+            TRACE("THIS:",  $this);
+            TRACE("PREV:",  $prev);
+            TRACE("DIFF:",  $diff);
+            TRACE("UDIFF:", $updated_diff);
+            TRACE("i:",     $i);
+            TRACE("SHIFT:", $shift);
+
             next;
         }
         $$paths{$$this{path}} = $this;
         $$paths_ids{$$this{path}} = $i + $shift;
         
-        TRACE("PATHS UPDATED:");
-        TRACE($paths);
-        TRACE("PATHS IDS UPDATED:");
-        TRACE($paths_ids);
+        TRACE("PATHS UPDATED:",     $paths);
+        TRACE("PATHS IDS UPDATED:", $paths_ids);
     }
     
     TRACE("------------ END OF OPTIMIZE  ------------");
@@ -539,10 +514,8 @@ sub OptimizeWithMove($)
 
             if ($i != (scalar(@$updated_diff) - 1))
             {
-                TRACE("UDIFF[0..i]:");
-                TRACE(@$updated_diff[0 .. $i - 1]);
-                TRACE("UDIFF[i..0]:");
-                TRACE(@$updated_diff[$i + 1 .. scalar(@$updated_diff) + $shift]);
+                TRACE("UDIFF[0..i]:", @$updated_diff[0 .. $i - 1]);
+                TRACE("UDIFF[i..0]:", @$updated_diff[$i + 1 .. scalar(@$updated_diff) + $shift]);
                 $updated_diff = [@$updated_diff[0 .. $i + $shift], @$updated_diff[$i + 1 .. scalar(@$updated_diff) + $shift]];
             }
             else
@@ -572,16 +545,11 @@ sub OptimizeWithMove($)
             }
         }
 
-        TRACE("THIS:");
-        TRACE($this);
-        TRACE("UVALUES HASH:");
-        TRACE(%unique_value_path);
-        TRACE("DIFF:");
-        TRACE($diff);
-        TRACE("UDIFF:");
-        TRACE($updated_diff);
-        TRACE("SHIFT:");
-        TRACE($shift);
+        TRACE("THIS:",         $this);
+        TRACE("UVALUES HASH:", %unique_value_path);
+        TRACE("DIFF:",         $diff);
+        TRACE("UDIFF:",        $updated_diff);
+        TRACE("SHIFT:",        $shift);
     }
 
     TRACE("------- END OF OPTIMIZE WITH MOVE ---------");
@@ -593,8 +561,7 @@ sub OptimizeWithMove($)
 
 sub ExpandInDepth($;$)
 {
-    my $diff = shift;
-    my $options = shift;
+    my ($diff, $options) = @_;
     my $len_diff = scalar @{$diff};
     my $updated_diff = [@{$diff}];
     
@@ -606,21 +573,19 @@ sub ExpandInDepth($;$)
     {
         my $this = $$diff[$i];
         my $in_diff = [];
+
         if ($$this{op} eq 'replace' && ref($$this{value}) eq ref($$this{old}) && ref($$this{old}) ne '')
         {
             TRACE("Reverse pointer:");
+
             my $curr_path = ReverseJSONPointer($$this{path});
 
             CompareValues($curr_path, $$this{old}, $$this{value}, $in_diff, $options);
             
-            TRACE("ORIGINAL DIFF");
-            TRACE($diff);
-            TRACE("THIS:");
-            TRACE($this);
-            TRACE("IN DIFF:");
-            TRACE($in_diff);
-            TRACE("BEFORE UPDATE DIFF:");
-            TRACE($updated_diff);
+            TRACE("ORIGINAL DIFF",       $diff);
+            TRACE("THIS:",               $this);
+            TRACE("IN DIFF:",            $in_diff);
+            TRACE("BEFORE UPDATE DIFF:", $updated_diff);
             
             if (!eq_deeply($in_diff, $this))
             {
@@ -639,8 +604,7 @@ sub ExpandInDepth($;$)
                     $updated_diff = [@$updated_diff[0 .. $i - 1], @$in_diff];
                 }
             }
-            TRACE("UPDATED DIFF:");
-            TRACE($updated_diff);
+            TRACE("UPDATED DIFF:", $updated_diff);
         }
     }
     
@@ -652,12 +616,9 @@ sub ExpandInDepth($;$)
     return;
 }
 
-
-
 sub NormalizePatch($;$)
 {
-    my $diff    = shift;
-    my $options = shift;
+    my ($diff, $options) = @_;
     
     foreach my $op (@{$diff})
     {
@@ -665,6 +626,7 @@ sub NormalizePatch($;$)
         {
             delete $$op{old};
         }
+        
         if ($$op{op} eq 'remove')
         {
             delete $$op{value};
@@ -737,15 +699,15 @@ sub GetJSONPointer($)
     # Input
     #  :path - reference to array specifying JSON path elements
     
-    my @curr_path = @{$_[0]};
+    my ($curr_path) = @_;
     my $pointer;
     
-    if (!@curr_path) 
+    if (!scalar @{$curr_path})
     {
         return '';        # path to whole document
     }
 
-    foreach my $point (@curr_path)
+    foreach my $point (@{$curr_path})
     {
         $point =~ s/~/~0/g;   # replace ~ with ~0
         $point =~ s/\//~1/g;  # replace / with ~1
@@ -758,14 +720,12 @@ sub GetJSONPointer($)
 sub ReverseJSONPointer($)
 {
     # Reverses JSON Pointer to path array
-    my $pointer = shift;
+    my ($pointer) = @_;
     my $curr_path = [split(/\//, $pointer)];
     shift @$curr_path;
     
-    TRACE("POINTER BEFRORE REPLACE:");
-    TRACE($pointer);
-    TRACE("PATH BEFORE REPLACE:");
-    TRACE($curr_path);
+    TRACE("POINTER BEFRORE REPLACE:", $pointer);
+    TRACE("PATH BEFORE REPLACE:"    , $curr_path);
 
     foreach my $point (@$curr_path)
     {
@@ -773,8 +733,7 @@ sub ReverseJSONPointer($)
         $point =~ s/~0/~/g;
     }
 
-    TRACE("PATH AFTER REPLACE:");
-    TRACE($curr_path);
+    TRACE("PATH AFTER REPLACE:", $curr_path);
 
     return $curr_path;
 }
@@ -788,8 +747,15 @@ sub IsNum($)
     # Answer: XORing a string gives a string of nulls while XORring
     # a number gives zero
     # URL: https://tinyurl.com/ycnltx55
-    return 0 if $_[0] eq '';
-    return $_[0] ^ $_[0] ? 0 : 1
+    
+    my ($scalar) = @_;
+
+    if ($scalar eq '')
+    {
+        return 0;
+    }
+    
+    return $scalar ^ $scalar ? 0 : 1
 }
 
 sub TRACE(@) 
@@ -798,19 +764,26 @@ sub TRACE(@)
     {
         return;
     }
-
+    
+    my $msg = '';
     foreach my $message (@_) 
     {
-        if (ref($message)) 
+        if (!defined $message)
         {
-            print Dumper $message;
+            $msg .= '<undef>';
+            next;
+        }
+
+        if (ref $message) 
+        {
+            $msg .= Dumper $message;
         }
         else
         {
-            print $message;
+            $msg .= $message;
         }
     }
-    print "\n";
+    print STDERR $msg, "\n";
 
     return;
 }
