@@ -8,13 +8,13 @@ use Data::Dumper;
 use Test::Deep::NoTest qw(eq_deeply);
 use Scalar::Util qw(looks_like_number);
 
-## Main subroutines
+## Main Subroutines
 sub GetPatch($$;$);
 sub CompareValues($$$$;$);
 sub CompareHashes($$$$;$);
 sub CompareArrays($$$$;$);
 
-## Arrays
+## Handling Arrays
 sub _longestCommonSubSequence($$);
 sub _splitByCommonSequence($$$$);
 sub _compareWithShift($$$$$$$;$);
@@ -33,8 +33,7 @@ sub IsNum($);
 
 ## Debug
 sub TRACE(@);
-sub ASSERT($$;$$); 
-
+sub ASSERT($$;$$);
 our $DEBUG = 0;
 
 sub GetPatch($$;$)
@@ -800,9 +799,7 @@ sub TRACE(@)
         return;
     }
 
-    my $messages = @_;
-
-    foreach my $message ($messages) 
+    foreach my $message (@_) 
     {
         if (ref($message)) 
         {
