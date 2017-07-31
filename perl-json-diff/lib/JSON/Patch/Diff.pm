@@ -7,12 +7,6 @@ use JSON;
 use Data::Dumper;
 use Test::Deep::NoTest qw(eq_deeply);
 use Scalar::Util qw(looks_like_number);
-use Storable 'dclone';
-
-our $DEBUG = 0;
-our $CALLED = 0; #TODO REMOVE
-
-my $json = JSON->new->allow_nonref;
 
 ## Main subroutines
 sub GetPatch($$;$);
@@ -41,7 +35,7 @@ sub IsNum($);
 sub TRACE(@);
 sub ASSERT($$;$$); 
 
-
+our $DEBUG = 0;
 
 sub GetPatch($$;$)
 {
@@ -64,7 +58,6 @@ sub GetPatch($$;$)
     TRACE("DEST:   ", $dst);
         
     CompareValues($path, $src, $dst, $diff, $options);
-    
     NormalizePatch($diff, $options);
 
     return $diff;
@@ -79,6 +72,7 @@ sub CompareValues($$$$;$)
     TRACE("SOURCE: ", $src);
     TRACE("DEST:   ", $dst);
 
+    my $json = JSON->new->allow_nonref;
     $json = $json->canonical([1]);
 
     my $src_text = $json->encode($src);
@@ -160,14 +154,13 @@ sub CompareArrays($$$$;$)
     # only 'add' and 'remove' operations
     _compareWithShift($path, $src, $dst, $left, $right, \$shift, $diff, $options);
     
-    # NOTE: `use depth` relies on `use_replace` and `keep_old`
+    # NOTE: `use_depth` depends on `use_replace`
     if ($$options{use_depth})
     {
-        #$$options{keep_old}    = 1;
         $$options{use_replace} = 1;
     }
 
-    ## Optional]
+    ## Optional
     OptimizeWithReplace($diff, $options) if ($$options{use_replace});
     #OptimizeWithMove($diff)             if ($$options{use_move});
     ExpandInDepth($diff, $options)       if ($$options{use_depth});
@@ -409,7 +402,6 @@ sub _compareRight($$$$$;$)
         $end = scalar @{$dst};
     } 
     # we need to `remove` elements from list tail to not deal with index shift
-    
 
     foreach my $idx (($start .. $end - 1))
     {
@@ -434,7 +426,6 @@ sub OptimizeWithReplace($;$)
     TRACE("------------ OPTIMIZE  ------------");
     TRACE("DIFF");
     TRACE($diff);
-
 
     for (my $i = 0; $i < $len_diff; $i++)
     {
@@ -603,7 +594,6 @@ sub OptimizeWithMove($)
 
 sub ExpandInDepth($;$)
 {
-    $CALLED += 1;
     my $diff = shift;
     my $options = shift;
     my $len_diff = scalar @{$diff};
