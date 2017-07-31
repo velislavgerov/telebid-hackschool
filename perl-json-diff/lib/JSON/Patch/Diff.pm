@@ -35,6 +35,8 @@ sub GetPatch($$;$)
     TRACE("DEST:   ", $dst);
         
     CompareValues($path, $src, $dst, $diff, $options);
+    
+    _expandInDepth($diff, $options) if ($$options{use_depth});
 
     return $diff;
 }
@@ -328,7 +330,7 @@ sub _compareLists($$$$;$)
 
     # optional
     _optimize($diff, $options)      if ($$options{use_replace});
-    _expandInDepth($diff, $options) if ($$options{use_depth});
+
 }
 
 sub _splitByCommonSequence($$$$)
@@ -605,23 +607,15 @@ sub _optimize($;$)
 
                 $shift -= 1;
                 $$updated_diff[$prev_id] = $op;
-                if ($i != $len_diff - 1)
-                {
 
-                    TRACE("Left OF i=$i");
-                    #TRACE(@$updated_diff[0 .. $i - 1]);
-                    TRACE("RIGHT OF i=$i");
-                    #TRACE(@$updated_diff[$i + 1 .. scalar(@$updated_diff) - 1 - $shift]);
-                    
-                    $updated_diff = [@$updated_diff[0 .. $i - 1], @$updated_diff[$i + 1  .. scalar(@$updated_diff) - 1]];
-                    
-                }
-                else
-                {
-                    TRACE('[@$updated_diff[0 .. $i - 1 + $shift]]');
-                    #TRACE([@$updated_diff[0 .. $i - 1 + $shift]]);
-                    $updated_diff = [@$updated_diff[0 .. $i - 1]];
-                }
+
+                TRACE("Left OF i=$i");
+                #TRACE(@$updated_diff[0 .. $i - 1]);
+                TRACE("RIGHT OF i=$i");
+                #TRACE(@$updated_diff[$i + 1 .. scalar(@$updated_diff) - 1]);
+                
+                $updated_diff = [@$updated_diff[0 .. $i + $shift], @$updated_diff[$i + 1  .. scalar(@$updated_diff) - 1]];
+                
             }
             TRACE("THIS:");
             TRACE($this);
@@ -783,15 +777,17 @@ sub _expandInDepth($;$)
             TRACE($this);
             TRACE("IN DIFF:");
             TRACE($in_diff);
+            TRACE("BEFORE UPDATE DIFF:");
+            TRACE($updated_diff);
             if (!eq_deeply($in_diff, $this))
             {
                 $shift += scalar @$in_diff;
 
                 if ($i != ($len_diff - 1))
                 {
-                    TRACE("Left:");
+                    #TRACE("Left:");
                     #TRACE(@$updated_diff[0 .. $i + $shift - 2]);
-                    TRACE("RIGHT:");
+                    #TRACE("RIGHT:");
                     #TRACE(@$updated_diff[$i + 1 + $shift .. scalar(@$updated_diff) + $shift - 1]);
                     $updated_diff = [(@$updated_diff[0 .. $i - 1], @$in_diff, @$updated_diff[$i + 1 .. scalar(@$updated_diff) - 1])];
                     TRACE("HER");
@@ -802,7 +798,7 @@ sub _expandInDepth($;$)
                     $updated_diff = [@$updated_diff[0 .. $i - 1], @$in_diff];
                 }
             }
-            TRACE("THIS DIFF:");
+            TRACE("UPDATED DIFF:");
             TRACE($updated_diff);
         }
     }
