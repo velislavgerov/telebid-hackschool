@@ -104,14 +104,15 @@ foreach my $test_file (@test_files) {
             }
             else {
                 print "[FAIL] $comment_text";
+                
                 #print "Source document:\n";
                 #print $src_text;
                 #print "Destination document:\n";
                 #print $dst_text;
-                #print "Expected patch:\n";
-                #print $patch_text;
-                #print "Got:\n";
-                #print "$result_patch\n";
+                print "Expected patch:\n";
+                print $patch_text;
+                print "Got:\n";
+                print "$result_patch\n";
 
                 #$JSON::Patch::Diff::DEBUG = 1;
                 #my $diff = JSON::Patch::Diff->json_diff($src, $dst);

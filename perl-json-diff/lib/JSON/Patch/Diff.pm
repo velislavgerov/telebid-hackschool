@@ -116,300 +116,6 @@ sub CompareHashes($$$$;$) {
     }
 }
 
-sub CompareArraysSimpl($$$$;$)
-{
-    my ($path, $src, $dst, $diff, $options) = @_;
-    my @curr_path;
-
-    TRACE("Comparing ARRAYS Exp");
-    TRACE("PATH:   ", $path);
-    TRACE("SOURCE: ", $src);
-    TRACE("DEST:   ", $dst);
-    
-    ## Goes through each element of the DST array and replaces each value from the SRC
-    ## array accordingly. When the end of the SRC is reached we add to it's end.
-    ## TODO: $dst_idx => $i || $dst_idx
-    for (my $dst_idx = 0; $dst_idx < scalar @{$dst}; $dst_idx++)
-    {
-        my $target_value = $${dst}[$dst_idx];;
-        
-        if($dst_idx >= scalar @{$src})
-        {
-            @curr_path = (@{$path}, '-');
-            PushOperation("add", \@curr_path, undef, $target_value, undef, $diff, $options);
-            last;
-        }
-        
-        my $updated_value = $${src}[$dst_idx];
-        
-        @curr_path = (@{$path}, $dst_idx);
-        
-        CompareValues(\@curr_path, $updated_value, $target_value, $diff);
-
-    }
-    
-    ## Remove all extra values if the SRC array was longer than our desired DST
-    if (scalar @{$src} > scalar @{$dst})
-    {
-        for (my $i = scalar(@{$src}) - 1; $i >= scalar @{$dst}; $i--)
-        {
-            my $old_value = $$src[$i];
-            @curr_path = (@{$path}, $i);
-            PushOperation("remove", \@curr_path, undef, undef, $old_value, $diff, $options);
-        }
-    }
-}
-
-
-sub CompareArraysExp($$$$;$)
-{
-    my ($path, $src, $dst, $diff, $options) = @_;
-    my @curr_path;
-
-    TRACE("Comparing ARRAYS Exp");
-    TRACE("PATH:   ", $path);
-    TRACE("SOURCE: ", $src);
-    TRACE("DEST:   ", $dst);
-    
-    my @updated_src = @{$src};
-
-    ## For each index in DST
-    for (my $dst_idx = 0; $dst_idx <= scalar @{$dst}; $dst_idx++)
-    {
-        ## Hold both SRC and DST values at the current DST index
-        my $target_value = $$dst[$dst_idx];
-        my $updated_value = $updated_src[$dst_idx];
-
-        ## Loop through the src array to see if we can find a match for our target value.
-        ## Note: If no match was found, we loop an extra time to replace the SRC value at
-        ## our current DST index 
-        for (my $src_idx = $dst_idx; $src_idx <= scalar @updated_src; $src_idx++)
-        {
-            TRACE("UPDATED SRC", \@updated_src);
-            
-            if ($src_idx == scalar @updated_src)
-            {                
-                if(scalar @updated_src < scalar @{$dst} && $dst_idx == (scalar(@{$dst}) - 1))
-                {
-                    for (my $i = scalar(@updated_src); $i <= (scalar(@{$dst}) - 1); $i++)
-                    {
-                        $target_value = $$dst[$i];
-                        @curr_path = (@{$path}, '-');
-                        PushOperation("add", \@curr_path, undef, $target_value, undef, $diff, $options);
-                    }
- 
-                }
-                
-                @curr_path = (@{$path}, $dst_idx);
-                CompareValues(\@curr_path, $updated_value, $target_value, $diff, $options);
-                #@updated_src[$dst_idx] = $target_value; #XXX: Not sure if updated, needs checking
-
-                last;
-            }
-
-            my $curr_value = $updated_src[$src_idx];
-            
-            if (eq_deeply($curr_value, $target_value) && $src_idx != $dst_idx)
-            {
-                @curr_path = (@{$path}, $dst_idx);
-                my @from_path = (@{$path}, $src_idx);
-                
-                TRACE("FROM PATH: ", \@from_path);
-                TRACE("TV:        ", $target_value);
-                TRACE("UP:        ", $updated_value);
-
-                PushOperation("move", \@curr_path, \@from_path, $target_value, $updated_value, $diff, $options);
-                
-                @updated_src[$dst_idx] = $target_value;
-                @updated_src[$src_idx] = $updated_value;
-                
-                last;
-            }
-        }
-
-        if (scalar @updated_src >= scalar @{$dst} && $dst_idx == scalar(@{$dst}))
-        { 
-            for (my $i = scalar(@updated_src) - 1; $i >= scalar @{$dst}; $i--)
-            {
-                my $old_value = $updated_src[$i];
-                @curr_path = (@{$path}, $i);
-                PushOperation("remove", \@curr_path, undef, undef, $old_value, $diff, $options);
-            }
-            last;
-        }
-    }
-    
-}
-
-sub CompareArrays($$$$;$)
-{
-    my ($path, $src, $dst, $diff, $options) = @_;
-    my @curr_path;
-   
-    TRACE("Comparing ARRAYS");
-    TRACE("PATH:   ", $path);
-    TRACE("SOURCE: ", $src);
-    TRACE("DEST:   ", $dst);
-    
-    my @src_new = @{$src};
-    my $len_dst = @{$dst};
-    my $i = 0;
-    my $j = 0;
-    while ($i < $len_dst)
-    {
-        my $left  = @{$dst}[$i];
-        my $right = $src_new[$j];
-        if (eq_deeply($left, $right)) 
-        {
-            if ($i != $j) 
-            {
-                ListOperationAdd($path, $i, $left, $right, \@src_new, $diff, $options);
-            }
-            $i += 1;
-            $j = $i;
-        }
-        else {
-            if ($j == $len_dst - 1) 
-            {
-                ListOperationAdd($path, $i, $left, $right, \@src_new, $diff, $options);
-                $i += 1;
-                $j = 0;
-            }
-            else {
-                $j += 1;
-            }
-        }
-    }
-    
-    my $len_src_new = @src_new;
-    for (my $i = $len_src_new - 1; $i >= $len_dst; $i--) 
-    {
-        @curr_path = (@{$path}, $i);
-        PushOperation("remove", \@curr_path, undef, undef, undef, $diff, $options); 
-    }
-}
-
-sub ListOperationAdd($$$$$;$)
-{
-    my ($path, $i, $value, $old_value, $src_new, $diff, $options) = @_;
-    my @curr_path = (@{$path}, $i); 
-
-    PushOperation("add", \@curr_path, undef, $value, $old_value, $diff, $options);
-
-    TRACE("DIFF updated: ", $diff);
-    
-    my $len_src_new = @{$src_new};
-    @{$src_new} = (@{$src_new}[0 .. ($i - 1)],
-                $value, 
-                @{$src_new}[$i .. ($len_src_new-1)]
-    );
-}
-
-sub _compareLists($$$$;$);
-sub _compareWithShift($$$$$$$;$);
-sub _splitByCommonSequence($$$$);
-sub _longestCommonSubSequence($$);
-
-sub _compareLists($$$$;$)
-{
-    my ($path, $src, $dst, $diff, $options) = @_;
-    my $sequence = _splitByCommonSequence($src, $dst, [0,-1], [0,-1]);
-    my $left = $$sequence[0];
-    my $right = $$sequence[1];
-    my $shift = 0;
-   
-    # only 'add' and 'remove' operations
-    _compareWithShift($path, $src, $dst, $left, $right, \$shift, $diff, $options);
-    
-    # NOTE: `use depth` relies on `use_replace` and `keep_old`
-    if ($$options{use_depth})
-    {
-        #$$options{keep_old}    = 1;
-        $$options{use_replace} = 1;
-    }
-
-    # optional
-    _optimize($diff, $options)      if ($$options{use_replace});
-
-    #_optimizeWithMove($diff);
-    _expandInDepth($diff, $options) if ($$options{use_depth});
-}
-
-sub _splitByCommonSequence($$$$)
-{
-    my ($src, $dst, $range_src, $range_dst) = @_;
-    
-    # Prevent useless comparisons in future
-    $range_src = ($$range_src[0] != $$range_src[1]) ? $range_src : undef;
-    $range_dst = ($$range_dst[0] != $$range_dst[1])  ? $range_dst : undef;
-    
-    TRACE("-------------SPLIT BY COMMON SEQUENCE----------\n\n\n"); 
-    TRACE("SRC: ");
-    TRACE($src);
-    TRACE("Range SRC: ");
-    TRACE($range_src);
-    TRACE("DST: ");
-    TRACE($dst);
-    TRACE("Range DST: ");
-    TRACE($range_dst);
-
-    if (!defined $src)
-    {
-        return [undef, $range_dst];
-    }
-    elsif (!defined $dst)
-    {
-        return [$range_src, undef];
-    }
-
-    my ($x, $y) = _longestCommonSubSequence($src, $dst);
-    
-    TRACE("X:");
-    TRACE($x);
-    TRACE("Y:");
-    TRACE($y);
-    
-    if (!defined $x || !defined $y)
-    {
-        return [$range_src, $range_dst];
-    }
-
-
-    my $l_src = $$x[0] == -1 ? [@$src[0 .. (scalar(@{$src}) - 2)]] : [@$src[0 .. $$x[0] - 1]];
-    my $l_dst = $$y[0] == -1 ? [@$dst[0 .. (scalar(@{$dst}) - 2)]] : [@$dst[0 .. $$y[0] - 1]];
-    my $l_range_src = [$$range_src[0], $$range_src[0] + $$x[0]];
-    my $l_range_dst = [$$range_dst[0], $$range_dst[0] + $$y[0]];
-
-    TRACE("left src:");
-    TRACE($l_src);
-    TRACE("left range src:");
-    TRACE($l_range_src);
-    TRACE("left dst:");
-    TRACE($l_dst);
-    TRACE("left range dst:");
-    TRACE($l_range_dst);
-    
-    my $r_src = $$x[1] == -1 ? [@$src[scalar @{$src} - 1]] : [@$src[$$x[1] .. (scalar(@{$src}) - 1)]];
-    my $r_dst = $$y[1] == -1 ? [@$dst[scalar @{$dst} - 1]] : [@$dst[$$y[1] .. (scalar(@{$dst}) - 1)]];
-    my $r_range_src = [$$range_src[0] + $$x[1], ($$range_src[0] + scalar @{$src})];
-    my $r_range_dst = [$$range_dst[0] + $$y[1], ($$range_dst[0] + scalar @{$dst})];
-    
-    TRACE("righ src:");
-    TRACE($r_src);
-    TRACE("right range src:");
-    TRACE($r_range_src);
-    TRACE("right dst:");
-    TRACE($r_dst);
-    TRACE("right range dst:");
-    TRACE($r_range_dst);
- 
-
-    TRACE("--------------END SPLIT-----------------\n\n\n"); 
-    return [_splitByCommonSequence($l_src, $l_dst, $l_range_src, $l_range_dst),
-            _splitByCommonSequence($r_src, $r_dst, $r_range_src, $r_range_dst)];
-                            
-}   
-
 sub _longestCommonSubSequence($$)
 {
     my ($src, $dst) = @_;
@@ -489,6 +195,81 @@ sub _longestCommonSubSequence($$)
     
     return ($range_src, $range_dst);
 }
+
+sub _splitByCommonSequence($$$$)
+{
+    my ($src, $dst, $range_src, $range_dst) = @_;
+    
+    # Prevent useless comparisons in future
+    $range_src = ($$range_src[0] != $$range_src[1]) ? $range_src : undef;
+    $range_dst = ($$range_dst[0] != $$range_dst[1])  ? $range_dst : undef;
+    
+    TRACE("-------------SPLIT BY COMMON SEQUENCE----------\n\n\n"); 
+    TRACE("SRC: ");
+    TRACE($src);
+    TRACE("Range SRC: ");
+    TRACE($range_src);
+    TRACE("DST: ");
+    TRACE($dst);
+    TRACE("Range DST: ");
+    TRACE($range_dst);
+
+    if (!defined $src)
+    {
+        return [undef, $range_dst];
+    }
+    elsif (!defined $dst)
+    {
+        return [$range_src, undef];
+    }
+
+    my ($x, $y) = _longestCommonSubSequence($src, $dst);
+    
+    TRACE("X:");
+    TRACE($x);
+    TRACE("Y:");
+    TRACE($y);
+    
+    if (!defined $x || !defined $y)
+    {
+        return [$range_src, $range_dst];
+    }
+
+
+    my $l_src = $$x[0] == -1 ? [@$src[0 .. (scalar(@{$src}) - 2)]] : [@$src[0 .. $$x[0] - 1]];
+    my $l_dst = $$y[0] == -1 ? [@$dst[0 .. (scalar(@{$dst}) - 2)]] : [@$dst[0 .. $$y[0] - 1]];
+    my $l_range_src = [$$range_src[0], $$range_src[0] + $$x[0]];
+    my $l_range_dst = [$$range_dst[0], $$range_dst[0] + $$y[0]];
+
+    TRACE("left src:");
+    TRACE($l_src);
+    TRACE("left range src:");
+    TRACE($l_range_src);
+    TRACE("left dst:");
+    TRACE($l_dst);
+    TRACE("left range dst:");
+    TRACE($l_range_dst);
+    
+    my $r_src = $$x[1] == -1 ? [@$src[scalar @{$src} - 1]] : [@$src[$$x[1] .. (scalar(@{$src}) - 1)]];
+    my $r_dst = $$y[1] == -1 ? [@$dst[scalar @{$dst} - 1]] : [@$dst[$$y[1] .. (scalar(@{$dst}) - 1)]];
+    my $r_range_src = [$$range_src[0] + $$x[1], ($$range_src[0] + scalar @{$src})];
+    my $r_range_dst = [$$range_dst[0] + $$y[1], ($$range_dst[0] + scalar @{$dst})];
+    
+    TRACE("righ src:");
+    TRACE($r_src);
+    TRACE("right range src:");
+    TRACE($r_range_src);
+    TRACE("right dst:");
+    TRACE($r_dst);
+    TRACE("right range dst:");
+    TRACE($r_range_dst);
+ 
+
+    TRACE("--------------END SPLIT-----------------\n\n\n"); 
+    return [_splitByCommonSequence($l_src, $l_dst, $l_range_src, $l_range_dst),
+            _splitByCommonSequence($r_src, $r_dst, $r_range_src, $r_range_dst)];
+                            
+}   
 
 sub _compareWithShift($$$$$$$;$)
 {
@@ -806,6 +587,31 @@ sub _expandInDepth($;$)
     TRACE("------------ END OF EXPAND ------------");
 
     @{$diff} = @{$updated_diff};
+}
+
+sub _compareLists($$$$;$)
+{
+    my ($path, $src, $dst, $diff, $options) = @_;
+    my $sequence = _splitByCommonSequence($src, $dst, [0,-1], [0,-1]);
+    my $left = $$sequence[0];
+    my $right = $$sequence[1];
+    my $shift = 0;
+   
+    # only 'add' and 'remove' operations
+    _compareWithShift($path, $src, $dst, $left, $right, \$shift, $diff, $options);
+    
+    # NOTE: `use depth` relies on `use_replace` and `keep_old`
+    if ($$options{use_depth})
+    {
+        #$$options{keep_old}    = 1;
+        $$options{use_replace} = 1;
+    }
+
+    # optional
+    _optimize($diff, $options)      if ($$options{use_replace});
+
+    #_optimizeWithMove($diff);
+    _expandInDepth($diff, $options) if ($$options{use_depth});
 }
 
 sub _normalize($;$)
