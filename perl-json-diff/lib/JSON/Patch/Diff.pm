@@ -359,8 +359,9 @@ sub _compareLeft($$$$$;$)
         TRACE("SHIFT", $$shift);
 
         my @curr_path = (@$path, $idx);
-        my $value     = $$src[$idx - $$shift];
-        my $old       = $$src[$idx - $$shift];
+        my $shifted_index = $idx - $$shift;
+        my $value     = $$src[$shifted_index];
+        my $old       = $$src[$shifted_index];
         
         PushOperation('remove', \@curr_path, undef, $value, $old, $diff, $options);
         
@@ -383,8 +384,10 @@ sub _compareRight($$$$$;$)
         $end = scalar @{$dst};
     } 
     # we need to `remove` elements from list tail to not deal with index shift
+    
+    my @elements_range = ($start .. $end - 1);
 
-    foreach my $idx (($start .. $end - 1))
+    foreach my $idx (@elements_range)
     {
         my @curr_path = (@$path, $idx);
         
@@ -399,11 +402,12 @@ sub _compareRight($$$$$;$)
 sub OptimizeWithReplace($;$)
 {
     my ($diff, $options) = @_;
-    my $len_diff = scalar @{$diff};
+    
+    my $len_diff     = scalar @{$diff};
     my $updated_diff = [@{$diff}];
-    my $shift = 0;
-    my $paths = {};
-    my $paths_ids = {};
+    my $shift        = 0;
+    my $paths        = {};
+    my $paths_ids    = {};
     
     TRACE("------------ OPTIMIZE  ------------");
     TRACE("DIFF", $diff);
@@ -430,11 +434,14 @@ sub OptimizeWithReplace($;$)
                     $$op{old} = $$prev{value};
                 }
 
-                $shift -= 1;
-
+                ## Update first operation and shift
                 $$updated_diff[$prev_id] = $op;
+                $shift -= 1;
                 
-                $updated_diff = [@{$updated_diff}[0 .. $i + $shift], @{$updated_diff}[($i + 1) .. (scalar(@{$updated_diff}) - 1)]];
+                ## Update the resulting diff
+                my @left_of_this  = @{$updated_diff}[0 .. $i + $shift];
+                my @right_of_this = @{$updated_diff}[($i + 1) .. (scalar(@{$updated_diff}) - 1)];
+                $updated_diff  = [@left_of_this, @right_of_this];
             }
 
             TRACE("THIS:",  $this);
@@ -446,6 +453,8 @@ sub OptimizeWithReplace($;$)
 
             next;
         }
+        
+        ## Update paths hash
         $$paths{$$this{path}} = $this;
         $$paths_ids{$$this{path}} = $i + $shift;
         
@@ -455,7 +464,7 @@ sub OptimizeWithReplace($;$)
     
     TRACE("------------ END OF OPTIMIZE  ------------");
     
-    ## update diff
+    ## Update changes to original diff
     @{$diff} = @{$updated_diff};
 
     return;
@@ -463,7 +472,7 @@ sub OptimizeWithReplace($;$)
 
 sub OptimizeWithMove($)
 {
-    my $diff = shift;
+    my ($diff) = @_;
     my $len_diff = scalar @{$diff};
     my $updated_diff = [@{$diff}];
 
