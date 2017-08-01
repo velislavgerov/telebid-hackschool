@@ -152,7 +152,7 @@ sub CompareArrays($$$$;$)
     my $shift = 0;
    
     # only 'add' and 'remove' operations
-    _compareWithShift($path, $src, $dst, $left, $right, \$shift, $diff, $options);
+    _compareWithShift($path, $src, $dst, $left, $right, $shift, $diff, $options);
     
     # NOTE: `use_depth` depends on `use_replace`
     if ($$options{use_depth})
@@ -313,29 +313,29 @@ sub _compareWithShift($$$$$$$;$)
     TRACE("--------------- COMPARE WITH SHIFT ---------------");
     TRACE("LEFT:",       $left);
     TRACE("RIGHT:",      $right);
-    TRACE("CURR SHIFT:", $$shift);
+    TRACE("CURR SHIFT:", $shift);
         
     if (defined $left && scalar @$left == 2 && (ref($$left[0]) eq 'ARRAY' || ref($$left[1]) eq 'ARRAY'))
     {
-        _compareWithShift($path, $src, $dst, $$left[0], $$left[1], $shift, $diff, $options);
+        $shift = _compareWithShift($path, $src, $dst, $$left[0], $$left[1], $shift, $diff, $options);
     }
     elsif(defined $$left[0] && defined $$left[1])
     {
-        _compareLeft($path, $src, $left, $shift, $diff, $options);
+        $shift = _compareLeft($path, $src, $left, $shift, $diff, $options);
     }
     if (defined $right && scalar @$right == 2 && (ref($$right[0]) eq 'ARRAY' || ref($$right[1]) eq 'ARRAY'))
     {
-        _compareWithShift($path, $src, $dst, $$right[0], $$right[1], $shift, $diff, $options);
+        $shift = _compareWithShift($path, $src, $dst, $$right[0], $$right[1], $shift, $diff, $options);
 
     }
     elsif(defined $$right[0] && defined $$right[1])
     {
-        _compareRight($path, $dst, $right, $shift, $diff, $options);
+        $shift = _compareRight($path, $dst, $right, $shift, $diff, $options);
     }
 
     TRACE("------------ END OF COMPARE WITH SHIFT -----------\n\n");
 
-    return;
+    return $shift;
 }
 
 sub _compareLeft($$$$$;$)
@@ -345,32 +345,33 @@ sub _compareLeft($$$$$;$)
     
     TRACE("------------ COMPARE LEFT -----------\n\n");
     
-
     if ($end == -1)
     {   
-        #XXX: Does this happen in my impl?
-        $end = scalar @{$src};
+        $end = scalar @{$src} ;
     }
+
     # we need to `remove` elements from list tail to not deal with index shift
-    foreach my $idx (reverse (($start + $$shift) .. ($end + $$shift - 1)))
+    my @elements_range = reverse (($start + $shift) .. ($end + $shift - 1));
+
+    foreach my $idx (@elements_range)
     {
         TRACE("SRC:",  $src);
         TRACE("IDX:",  $idx);
-        TRACE("SHIFT", $$shift);
+        TRACE("SHIFT", $shift);
 
         my @curr_path = (@$path, $idx);
-        my $shifted_index = $idx - $$shift;
+        my $shifted_index = $idx - $shift;
         my $value     = $$src[$shifted_index];
         my $old       = $$src[$shifted_index];
         
         PushOperation('remove', \@curr_path, undef, $value, $old, $diff, $options);
         
-        $$shift -= 1;
+        $shift -= 1;
     }
 
     TRACE("------------ END OF COMPARE LEFT -----------\n\n");
 
-    return;
+    return $shift;
 }
 
 sub _compareRight($$$$$;$) 
@@ -381,7 +382,7 @@ sub _compareRight($$$$$;$)
     if ($end == -1)
     {
         #XXX: Does this happen in my impl?
-        $end = scalar @{$dst};
+        $end = scalar @{$dst} ;
     } 
     # we need to `remove` elements from list tail to not deal with index shift
     
@@ -393,10 +394,10 @@ sub _compareRight($$$$$;$)
         
         PushOperation('add', \@curr_path, undef, $$dst[$idx], undef, $diff, $options);
         
-        $$shift += 1;
+        $shift += 1;
     }
 
-    return;
+    return $shift;
 }
 
 sub OptimizeWithReplace($;$)
@@ -581,7 +582,7 @@ sub ExpandInDepth($;$)
     for (my $i = 0; $i < $len_diff; $i++)
     {
         my $this = $$diff[$i];
-        my $in_diff = [];
+        my $sub_diff = [];
 
         if ($$this{op} eq 'replace' && ref($$this{value}) eq ref($$this{old}) && ref($$this{old}) ne '')
         {
@@ -589,37 +590,31 @@ sub ExpandInDepth($;$)
 
             my $curr_path = ReverseJSONPointer($$this{path});
 
-            CompareValues($curr_path, $$this{old}, $$this{value}, $in_diff, $options);
+            CompareValues($curr_path, $$this{old}, $$this{value}, $sub_diff, $options);
             
             TRACE("ORIGINAL DIFF",       $diff);
             TRACE("THIS:",               $this);
-            TRACE("IN DIFF:",            $in_diff);
+            TRACE("IN DIFF:",            $sub_diff);
             TRACE("BEFORE UPDATE DIFF:", $updated_diff);
             
-            if (!eq_deeply($in_diff, $this))
+            if (!eq_deeply($sub_diff, $this))
             {
-                $shift += scalar @$in_diff;
-
-                if ($i != ($len_diff - 1))
-                {
-                    $updated_diff = [
-                        (@$updated_diff[0 .. $i - 1],
-                         @$in_diff, 
-                         @$updated_diff[$i + 1 .. scalar(@$updated_diff) - 1])
-                    ];
-                }
-                else
-                {
-                    $updated_diff = [@$updated_diff[0 .. $i - 1], @$in_diff];
-                }
+                ## Shift for the number of operations in sub diff
+                $shift += scalar @$sub_diff;
+                
+                ## Update our diff
+                my @left_of_this  = @$updated_diff[0 .. $i - 1];
+                my @right_of_this = @$updated_diff[$i + 1 .. scalar(@$updated_diff) - 1];
+                $updated_diff     = [@left_of_this, @$sub_diff, @right_of_this];
             }
+
             TRACE("UPDATED DIFF:", $updated_diff);
         }
     }
     
     TRACE("------------ END OF EXPAND ------------");
 
-    ## update diff
+    ## Update original diff
     @{$diff} = @{$updated_diff};
 
     return;
