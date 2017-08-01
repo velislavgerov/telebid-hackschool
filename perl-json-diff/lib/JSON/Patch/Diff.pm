@@ -119,7 +119,7 @@ sub CompareHashes($$$$;$)
         if (! exists $$dst{$key}) 
         {
             @curr_path = (@$path, $key);
-            PushOperation("remove", \@curr_path, undef, $$src{$key}, $src, $diff, $options);
+            PushOperation("remove", \@curr_path, undef, $$src{$key}, $$src{$key}, $diff, $options);
 
             next;
         }
@@ -355,6 +355,7 @@ sub _compareLeft($$$$$;$)
 
     foreach my $idx (@elements_range)
     {
+        TRACE("ELEMENTS RANGE", \@elements_range);
         TRACE("SRC:",  $src);
         TRACE("IDX:",  $idx);
         TRACE("SHIFT", $shift);
@@ -363,12 +364,14 @@ sub _compareLeft($$$$$;$)
         my $shifted_index = $idx - $shift;
         my $value     = $$src[$shifted_index];
         my $old       = $$src[$shifted_index];
-        
-        PushOperation('remove', \@curr_path, undef, $value, $old, $diff, $options);
-        
-        $shift -= 1;
-    }
 
+        TRACE("VALUE", $value);
+        TRACE("OLD", $old);
+        
+        PushOperation('remove', \@curr_path, undef, $value, $old, $diff, $options);    
+    }
+    $shift -= 1;
+    
     TRACE("------------ END OF COMPARE LEFT -----------\n\n");
 
     return $shift;
@@ -394,8 +397,9 @@ sub _compareRight($$$$$;$)
         
         PushOperation('add', \@curr_path, undef, $$dst[$idx], undef, $diff, $options);
         
-        $shift += 1;
+
     }
+    $shift += 1;
 
     return $shift;
 }
