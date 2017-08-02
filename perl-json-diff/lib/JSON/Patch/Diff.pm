@@ -1017,13 +1017,44 @@ TODO: Document
 
 =item I<_optimizeWithReplace($diff, $options)>
 
-=item I<_optimizeWithMove($diff)>
+ Inputs:    $diff:           arrayref: Used to hold and update the resulting JSON Patch
+            
+ Optional:  $options:        hashref:  Used to specify optional parameters for the output and
+                                       the overall operation of the module
+ 
+ Returns:   void
+
+ Throws:    no
+
+Searches I<$diff> for pairs of I<remove> followed by I<add> operations pointing to the same path and substitutes them with a single I<replace> operation. The I<$diff> refference is then updated by the subroutine.
+
+=item I<_optimizeWithMove($diff, $options)>
 
 NOTE: Currently disabled.
 
-TODO: Document
+ Inputs:    $diff:           arrayref: Used to hold and update the resulting JSON Patch
+            
+ Optional:  $options:        hashref:  Used to specify optional parameters for the output and
+                                       the overall operation of the module
+ 
+ Returns:   void
+
+ Throws:    no
+
+Searches I<$diff> for pairs of I<remove> followed by I<add> operations pointing to the same value and substitutes them with a single I<move> operation. The I<$diff> refference is then updated by the subroutine.
 
 =item I<_expandInDepth($diff, $options)>
+
+ Inputs:    $diff:           arrayref: Used to hold and update the resulting JSON Patch
+            
+ Optional:  $options:        hashref:  Used to specify optional parameters for the output and
+                                       the overall operation of the module
+ 
+ Returns:   void
+
+ Throws:    no
+
+Searches I<$diff> for I<replace> operations that have updated a composite object with a composite object and goes in to compare the values in depth. The I<$diff> refference is then updated by the subroutine.
 
 =back
 
@@ -1033,20 +1064,38 @@ TODO: Document
 
 =item I<NormalizePatch($diff, $options)>
 
+ Inputs:    $diff:           arrayref: Used to hold and update the resulting JSON Patch
+            
+ Optional:  $options:        hashref:  Used to specify optional parameters for the output and
+                                       the overall operation of the module
+ 
+ Returns:   void
+
+ Throws:    no
+
+Removes additional values stored inside the operation hashes that are neccessary for the operation of I<_optimizeWithReplace()> and I<_expandInDepth()>.
+
 =item I<PushOperation($operation_name, $path, $value, $old_value, $diff, $options)>
 
- Inputs:   $operation_name  scalar:   either 'add', 'replace' or 'remove'
-           $path            arrayref: each element represents a key in the JSON object
-           $value:          perlref:  the value to be 'added' or 'replaced'
-           $old_value:      perlref:  the old value to be used for 'replace' or 'remove'
-           $diff:           arrayref: holds all of the operations
-           $options:        defined:  specifies whether to use the old value
+ Inputs:    $operation_name  scalar:   Can be either 'add', 'replace', 'remove' or 'move'
+
+            $path            arrayref: Path array where each element relates to successive
+                                       JSON object key
+
+            $value:          perlref:  The value to be 'added' or 'replaced'
+
+            $old_value:      perlref:  The old value to be used if necessary
+
+            $diff:           arrayref: Used to hold and update the resulting JSON Patch
+
+ Optional:  $options:        hashref:  Used to specify optional parameters for the output and
+                                       the overall operation of the module
  
  Returns:  void
  
  Throws:   if '$operation_name' is invalid or unsupported
 
-Prepares and pushes a new operation to our '$diff' array.
+Prepares and pushes a new operation to our I<$diff>.
 
 =item I<GetJSONPointer($path)>
 
@@ -1060,7 +1109,24 @@ Returns a JSON Pointer string created from $path.
 
 =item I<ReverseJSONPointer($pointer)>
 
+ Inputs:   $pointer         scalar:   JSON Pointer string
+
+ Returns:  $path            arrayref: Path array where each element relates to successive
+                                      JSON object key
+ 
+ Throws:   no 
+
+Returns the $path corresponding to a JSON Pointer string.
+
 =item I<IsNum($scalar)>
+
+ Inputs:   $scalar         scalar:   A scalar value which can be either string or a number
+
+ Returns:  1 or 0
+ 
+ Throws:   no 
+
+Returns 1 if the scalar value is a number or 0 otherwise.
 
 =back
 
