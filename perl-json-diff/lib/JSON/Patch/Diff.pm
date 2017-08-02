@@ -159,9 +159,9 @@ sub CompareArrays($$$$;$)
         $$options{use_replace} = 1;
     }
 
-    ## Optional
+    ## Optional 
+    #_optimizeWithMove($diff)              if ($$options{use_move});
     _optimizeWithReplace($diff, $options) if ($$options{use_replace});
-    #_optimizeWithMove($diff)             if ($$options{use_move});
     _expandInDepth($diff, $options)       if ($$options{use_depth});
 
     return;
@@ -491,16 +491,21 @@ sub _optimizeWithMove($)
     for (my $i = 0; $i < $len_diff; $i++)
     {
         my $this = $$diff[$i];
-
+        
+  
         if (defined $unique_value_path{$$this{value}} && $$this{op} ne $unique_value_path{$$this{value}}{op})
         {
+            if ($unique_value_path{$$this{value}}{path} eq $$this{path})
+            {
+                next;
+            }
             TRACE("HERREEEEEEE");
             my $from_id   = $unique_value_path{$$this{value}}{idx};
             my $from_path;
             my $to_path;
 
             my ($before_index, $index) = $$this{path} =~ /(.*)\/([-]?|[0-9]*)\z/; 
-            $index += $path_shift - $shift;
+            $index += $path_shift;
 
 
             if ($unique_value_path{$$this{value}}{op} eq 'remove')
@@ -518,7 +523,7 @@ sub _optimizeWithMove($)
                 'op'    => 'move',
                 'from'  => $from_path,
                 'path'  => $to_path,
-                #'value' => $$this{value}
+                'value' => $$this{value}
             };
 
             $$updated_diff[$from_id] = $op;
@@ -550,11 +555,11 @@ sub _optimizeWithMove($)
 
             if ($$this{op} eq 'add')
             {
-                $path_shift -= 1;
+                $path_shift += $shift;
             }
             elsif ($$this{op} eq 'remove')
             {
-                $path_shift += 1;
+                $path_shift -= $shift;
             }
         }
 
@@ -1002,6 +1007,8 @@ Returns a pair of ranges that specify the index ranges from source and destinati
  Throws:   no
 
 TODO: Document
+
+
 
 =item _compareWithShift($$$$$$$;$);
 

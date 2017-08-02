@@ -18,6 +18,7 @@ my $is_pretty;
 my $is_verbose;
 my $is_keep_old;
 my $is_use_replace;
+my $is_use_move;
 my $is_use_depth;
 
 GetOptions(
@@ -26,6 +27,7 @@ GetOptions(
         'verbose|v'     => \$is_verbose,
         'keep-old|k'    => \$is_keep_old,
         'use-replace|r' => \$is_use_replace,
+        #'use-move|m'    => \$is_use_move,
         'use-depth|d'   => \$is_use_depth
 ) or die "$name: missing operand after '$name'\n$name: Try '$name --help' for more information.";
 
@@ -43,6 +45,7 @@ if ($is_help)
     print "  -k, --keep-old     keep old values in patch (\"old\" key)\n";
     print "  -p, --pretty       display pretty formatted JSON Patch\n";
     print "  -r, --use-replace  have 'replace' operations in resulting patch\n";
+    #print "  -m, --use-move     have 'move' operations in resulting patch\n";
     print "  -v, --verbose      display extra text\n";
     print "  -h, --help         dispaly this help and exit\n\n";
     print "Report bugs to: velislav\@telebid-pro.com\n";
@@ -102,7 +105,8 @@ my $diff;
 my $options = {
     "keep_old"    => $is_keep_old,
     "use_replace" => $is_use_replace,
-    "use_depth"   => $is_use_depth
+    "use_depth"   => $is_use_depth,
+    #"use_move"    => $is_use_move
 };
 
 $diff = JSON::Patch::Diff::GetPatch($src, $dst, $options);
