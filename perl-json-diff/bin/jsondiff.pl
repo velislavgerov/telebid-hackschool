@@ -9,6 +9,9 @@ use JSON;
 use Getopt::Long qw(GetOptions);
 Getopt::Long::Configure ("bundling");
 
+use File::Basename;
+my $name = basename($0);
+
 ## Handle OPTIONS
 my $is_help;
 my $is_pretty;
@@ -16,7 +19,6 @@ my $is_verbose;
 my $is_keep_old;
 my $is_use_replace;
 my $is_use_depth;
-my $output;
 
 GetOptions(
         'help|h'        => \$is_help,
@@ -24,9 +26,8 @@ GetOptions(
         'verbose|v'     => \$is_verbose,
         'keep-old|k'    => \$is_keep_old,
         'use-replace|r' => \$is_use_replace,
-        'use-depth|d'   => \$is_use_depth,
-        'output|o=s'    => \$output
-) or die "$0: missing operand after '$0'\n$0: Try '$0 --help' for more information.";
+        'use-depth|d'   => \$is_use_depth
+) or die "$name: missing operand after '$name'\n$name: Try '$name --help' for more information.";
 
 if ($is_verbose)
 {
@@ -35,10 +36,9 @@ if ($is_verbose)
 
 if ($is_help) 
 {
-    print "Usage: $0 [OPTION]... [-o FILE] FILES\n";
+    print "Usage: $name [OPTION]... [-o FILE] FILES\n";
     print "Calculate JSON Patch difference from source to destination JSON FILES.\n\n";
     print "Mandatory arguments to long options are mandatory for short options too.\n";
-    print "  -o, --output=FILE  save output to FILE\n";
     print "  -d, --use-depth    performs in depth expansion of operations within arrays\n";
     print "  -k, --keep-old     keep old values in patch (\"old\" key)\n";
     print "  -p, --pretty       display pretty formatted JSON Patch\n";
@@ -54,18 +54,18 @@ my $ARGC = @ARGV;
 
 if ($ARGC == 0) 
 {
-    print "$0: missing operand after '$0'\n";
-    print "$0: Try '$0 --help' for more information.\n";
+    print "$name: missing operand after '$name'\n";
+    print "$name: Try '$name --help' for more information.\n";
     exit;
 }
 if ($ARGC == 1) 
 {
-    print "$0: missing destination file operand.\n";
+    print "$name: missing destination file operand.\n";
     exit;
 }
 elsif ($ARGC > 2) 
 {
-    print "$0: extra operand '$ARGV[2]'\n";
+    print "$name: extra operand '$ARGV[2]'\n";
     exit;
 }
 
@@ -130,20 +130,6 @@ else
     print "\n";
 }
 
-## XXX: Should this be a subroutine of the module?
-## Save JSON Pointer
-if ($output) 
-{
-    if ($is_verbose) 
-    { 
-        print "Saving JSON Pointer to: $output.\n"; 
-    }
-    open ( FILE, '>:encoding(UTF-8)', $output) 
-        or die "Could not open file $output $!";
-    print FILE to_json($diff, {"utf8"=>1, "pretty"=>($is_pretty ? 1 : 0)});
-    close FILE;
-}
-
 exit;
 
 __END__
@@ -152,19 +138,15 @@ __END__
 
 =head1 NAME
 
-jsondiff.pl - perl script utilizing JSON::Patch::Diff
+jsondiff.pl - Calculate JSON Patch difference between two JSON files.
 
 =head1 SYNOPSIS
 
-jsondiff.pl [OPTION]... [-o FILE] FILES
+jsondiff.pl [OPTION]... [-o F<FILE>] F<FILE1> F<FILE2>
 
 =head1 OPTIONS
 
 =over 4
-
-=item B<-o, --output=FILE>
-
-Used to specify the output FILE for the resulting JSON Patch.
 
 =item B<-k, --keep-old>
 
@@ -186,7 +168,7 @@ Displays help text and exits.
 
 =head1 DESCRIPTION
 
-Using JSON::Patch::Diff to calculate JSON Patch difference between two FILES.
+Uses JSON::Patch::Diff to calculate JSON Patch difference between two FILES.
 
 =head1 AUTHOR
 

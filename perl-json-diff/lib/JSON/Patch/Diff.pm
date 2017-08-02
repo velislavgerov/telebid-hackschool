@@ -1001,7 +1001,7 @@ Returns a pair of ranges that specify the index ranges from source and destinati
  
  Throws:   no
 
-Returns a pair of ranges that specify the index ranges from source and destination of the longest common subsequence found between the two.
+TODO: Document
 
 =item _compareWithShift($$$$$$$;$);
 
