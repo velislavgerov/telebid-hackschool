@@ -6,78 +6,53 @@ use JSON::Patch::Diff;
 use strict;
 use warnings;
 use JSON;
+use Pod::Usage;
 use Getopt::Long qw(GetOptions);
-Getopt::Long::Configure ("bundling");
 
 use File::Basename;
 my $name = basename($0);
 
-## Handle OPTIONS
-my $is_help;
-my $is_pretty;
-my $is_verbose;
-my $is_keep_old;
-my $is_use_replace;
-my $is_use_move;
-my $is_use_depth;
+my %opt;
 
-GetOptions(
-        'help|h'        => \$is_help,
-        'pretty|p'      => \$is_pretty,
-        'verbose|v'     => \$is_verbose,
-        'keep-old|k'    => \$is_keep_old,
-        'use-replace|r' => \$is_use_replace,
-        #'use-move|m'    => \$is_use_move,
-        'use-depth|d'   => \$is_use_depth
-) or die "$name: missing operand after '$name'\n$name: Try '$name --help' for more information.";
+Getopt::Long::Configure ("bundling");
+GetOptions(\%opt, 'help|h',
+    'pretty|p', 'verbose|v',
+    'keep-old|k', 'use-replace|r', 'use-depth|d'
+) or pod2usage(2);
 
-if ($is_verbose)
+if ($opt{verbose})
 {
     $JSON::Patch::Diff::DEBUG = 1;
 }
 
-if ($is_help) 
+if ($opt{help})
 {
-    print "Usage: $name [OPTION]... [-o FILE] FILES\n";
-    print "Calculate JSON Patch difference from source to destination JSON FILES.\n\n";
-    print "Mandatory arguments to long options are mandatory for short options too.\n";
-    print "  -d, --use-depth    performs in depth expansion of operations within arrays\n";
-    print "  -k, --keep-old     keep old values in patch (\"old\" key)\n";
-    print "  -p, --pretty       display pretty formatted JSON Patch\n";
-    print "  -r, --use-replace  have 'replace' operations in resulting patch\n";
-    #print "  -m, --use-move     have 'move' operations in resulting patch\n";
-    print "  -v, --verbose      display extra text\n";
-    print "  -h, --help         dispaly this help and exit\n\n";
-    print "Report bugs to: velislav\@telebid-pro.com\n";
-    exit;
+    pod2usage(0);
 }
 
-## Handle FILES
-my $ARGC = @ARGV;
+my $exit_message = "";
 
-if ($ARGC == 0) 
+if (@ARGV == 0)
 {
-    print "$name: missing operand after '$name'\n";
-    print "$name: Try '$name --help' for more information.\n";
-    exit;
+    $exit_message .= "$name: Missing operand after '$name' ...\n";
+    $exit_message .= "$name: Try '$name --help' for more information.";
 }
-if ($ARGC == 1) 
+elsif (@ARGV == 1)
 {
-    print "$name: missing destination file operand.\n";
-    exit;
+    $exit_message .= "$name: Missing destination file operand: FILE2.";
 }
-elsif ($ARGC > 2) 
+elsif (@ARGV > 2)
 {
-    print "$name: extra operand '$ARGV[2]'\n";
-    exit;
+    $exit_message .= "$name: Extra operand '$ARGV[2]'";
+}
+
+if ($exit_message)
+{
+    pod2usage({-exitval=>2, -verbose=>0, -message=>$exit_message});
 }
 
 my $srcfile = $ARGV[0];
 my $dstfile = $ARGV[1];
-
-## TODO: Move the logic below to a method inside JSON::Patch::Diff. New method to handle 
-## retrieval of $src and $dst from filenames. GetPatch should work with JSON text, files
-## or file names and perl scalars.
 
 ## Open source FILE
 local $/=undef;
@@ -103,16 +78,16 @@ my $dst = $json->decode($dst_text);
 my $diff;
 
 my $options = {
-    "keep_old"    => $is_keep_old,
-    "use_replace" => $is_use_replace,
-    "use_depth"   => $is_use_depth,
+    "keep_old"    => $opt{'keep-old'},
+    "use_replace" => $opt{'use-replace'},
+    "use_depth"   => $opt{'use-depth'},
     #"use_move"    => $is_use_move
 };
 
 $diff = JSON::Patch::Diff::GetPatch($src, $dst, $options);
 
 ## Output
-if ($is_verbose) 
+if ($opt{verbose}) 
 {
     print "Source JSON:\n";
     print $json->pretty->encode($src), "\n";
@@ -124,7 +99,7 @@ if ($is_verbose)
     print "JSON Patch diff ($number_of_ops " . ($number_of_ops == 1 ? "operation" : "operations") . "):\n";
 }
 
-if ($is_pretty) 
+if ($opt{pretty}) 
 {
     print $json->pretty->encode($diff);
 }
@@ -146,11 +121,15 @@ jsondiff.pl - Calculate JSON Patch difference between two JSON files.
 
 =head1 SYNOPSIS
 
-jsondiff.pl [OPTION]... [-o F<FILE>] F<FILE1> F<FILE2>
+jsondiff.pl [OPTION]... F<FILE1> F<FILE2>
 
 =head1 OPTIONS
 
 =over 4
+
+=item B<-d, --use-depth>
+
+In depth expansion for array operations.
 
 =item B<-k, --keep-old>
 
@@ -158,21 +137,27 @@ Keep old values for 'replace' and 'remove' operations ("old" key).
 
 =item B<-p, --pretty>
 
-Used to pretty print the resulting JSON Pointer.
+Makes the resulting JSON Pointer easily readable.
+
+=item B<-r, --recursive>
+
+Uses 'replace' operations for arrays.
 
 =item B<-v, --verbose>
 
-Enters verbose mode.
+Runs in verbose mode.
 
 =item B<-h, --help>
  
-Displays help text and exits.
+Displays this help text and exits.
 
 =back
 
+Report bugs to: E<lt>velislav@telebid-pro.comE<gt>
+
 =head1 DESCRIPTION
 
-Uses JSON::Patch::Diff to calculate JSON Patch difference between two FILES.
+B<jsondiff.pl> will use JSON::Patch::Diff to calculate JSON Patch difference between two FILES.
 
 =head1 AUTHOR
 
