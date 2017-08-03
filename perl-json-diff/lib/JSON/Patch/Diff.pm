@@ -159,7 +159,6 @@ sub CompareArrays($$$$;$)
         $$options{use_replace} = 1;
     }
 
-    ## Optional 
     #_optimizeWithMove($diff)              if ($$options{use_move});
     _optimizeWithReplace($diff, $options) if ($$options{use_replace});
     _expandInDepth($diff, $options)       if ($$options{use_depth});
@@ -322,10 +321,10 @@ sub _compareWithShift($$$$$$$;$)
     {
         $shift = _compareLeft($path, $src, $left, $shift, $diff, $options);
     }
+
     if (defined $right && scalar @$right == 2 && (ref($$right[0]) eq 'ARRAY' || ref($$right[1]) eq 'ARRAY'))
     {
         $shift = _compareWithShift($path, $src, $dst, $$right[0], $$right[1], $shift, $diff, $options);
-
     }
     elsif(defined $$right[0] && defined $$right[1])
     {
@@ -383,7 +382,6 @@ sub _compareRight($$$$$;$)
     
     if ($end == -1)
     {
-        #XXX: Does this happen in my impl?
         $end = scalar @{$dst} ;
     } 
     # we need to `remove` elements from list tail to not deal with index shift
@@ -869,13 +867,25 @@ All functions intended to be accessed by the outside world.
  Optional:  $options:        hashref: Used to specify optional parameters for the output and
                                       the overall operation of the module
  
- Returns:   $diff:           perlref: [ { JSON Patch operation }, ... ]
- 
+ Returns:   $diff:           arrayref: Used to hold and update the resulting JSON Patch
+
  Throws:    no
 
 Returns a B<JSON Patch> with the difference obtained from I<source> to I<destination>. The I<$options> hash refference is used to specify additional parameter configuration for the resulting B<JSON Patch>.
 
-#TODO: Document I<$options>.
+Available opions:
+ 
+ keep_old     Adds an additional key to JSON Patch - `old` - to hold the value before
+
+ use_replace  Substitute `remove` and `add` pairs acting on the same path with a single 
+              `replace` operation (needed only for arrays)
+
+ use_depth    Go in depth and expand the patch in the cases where a composite value was
+              replaced with a similar but not equal composite value (needed only for arrays)
+
+Enable by setting any of these to a truthly value. In example,
+
+    $options = {keep_old=>1, use_replace=>1, use_depth =>1};
 
 =back
 
@@ -933,7 +943,7 @@ This is the main entry point to comparing I<source> to I<destination> values and
  
  Throws:    no
 
-Called from within I<CompareValues()>, this subroutine is used to compare pairs of associative arrays (hashes). It pushes I<remove> and I<add> operations to the B<JSON Patch> difference when mismatches are found between the I<source> and I<destination> hashes. When matching keys are found, it recursively goes through I<CompareValues()>.
+Called from within I<CompareValues()>, this subroutine is used to compare pairs of associative arrays (hashes). It pushes `remove` and `add` operations to the B<JSON Patch> difference when mismatches are found between the I<source> and I<destination> hashes. When matching keys are found, it recursively goes through I<CompareValues()>.
 
 =item I<CompareArrays($path, $src, $dst, $diff, $options)>
 
@@ -961,6 +971,8 @@ Called from within I<CompareValues()>, this function is used to compare pairs of
 
 =head2 ARRAY HELPERS
 
+NOTE: Some of the documentation and much of the logic for the array handling methods has been adopted from Stefan Kögl's E<lt>stefan@skoegl.netE<gt> L<python-json-patch|https://github.com/stefankoegl/python-json-patch/>.
+
 =over 4
 
 =item I<_longestCommonSubSequence($src, $dst)>
@@ -987,40 +999,139 @@ Returns a pair of ranges that specify the index ranges from source and destinati
 
 =item I<_splitByCommonSequence($src, $dst, $range_src, $range_dst)>
 
- Inputs:    $src:           arrayref:  Usually decoded from JSON text (source)
+ Inputs:     $src:           arrayref:  Usually decoded from JSON text (source)
             
-            $dst:           arrayref:  Usually decoded from JSON text (destination)
+             $dst:           arrayref:  Usually decoded from JSON text (destination)
             
-            $range_src:     array:     Holds the indexes of the first and last element
+             $range_src:     array:     Holds the indexes of the first and last element
                                        from source that identify the longest common
                                        subsequence found between source and destination
             
-            $range_dst:     array:     Holds the indexes of the first and last element
+             $range_dst:     array:     Holds the indexes of the first and last element
                                        from destination that identify the longest common
                                        subsequence found between source and destination
 
  
- Returns:   $shift:         scalar:    A number specifying the index shift of the array.
-                                       Each time a new operation is added, this shift
-                                       should be accounted for
+ Returns:    ($left,
+              $right)       arrayref:  Differences on the left and right from the common subsequence
  
+ Variables:  $left:         arrayref:  Differences on the left from the common subsequence
+ 
+             $right:        arrayref:  Differences on the right from the common subsequence
+
  Throws:   no
 
-TODO: Document
+Recursively splits the I<$dst> list onto two parts: I<$left> and I<$right>. The left part contains differences on left from common subsequence, same as the right part by for other side.
 
+To easily understand the process let's take two lists: [0, 1, 2, 3] as I<$src> and [1, 2, 4, 5] for I<$dst>. If we've tried to generate the binary tree where nodes are common subsequence for both lists, leaves on the left side are subsequence for I<$src> list and leaves on the right one for I<$dst>, our tree would looks like:
+ 
+     [1, 2]
+     /     \
+  [0]       []
+           /  \
+        [3]   [4, 5]
 
+This function generate the similar structure as flat tree, but without nodes with common subsequences - since we're don't need them - only with left and right leaves:
+
+      []
+     / \
+  [0]  []
+       / \
+     [3]  [4, 5]
+
+The I<$range_src> is the absolute range for currently processed subsequence of I<$src>. The I<$range_dst> means the same, but for the I<$dst> array.
 
 =item _compareWithShift($$$$$$$;$);
 
-TODO: Document
+ Inputs:    $path       arrayref:  Path array where each element relates to successive
+                                   JSON object key
+ 
+            $src:       arrayref:  Usually decoded from JSON text (source)
+            
+            $dst:       arrayref:  Usually decoded from JSON text (destination)
+            
+            $left:      arrayref:  Differences on the left from the common subsequence
+
+            $right:     arrayref:  Differences on the right from the common subsequence
+
+            $shift:     scalar:    A number specifying the index shift of the array.
+                                   Each time a new operation is added, this shift
+                                   should be accounted for
+
+            $diff:      arrayref:  Used to hold and update the resulting JSON Patch
+
+ Optional:  $options:   hashref:   Used to specify optional parameters for the output and
+                                   the overall operation of the module
+
+ 
+ Returns:   $shift:     scalar:    A number specifying the index shift of the array.
+                                   Each time a new operation is added, this shift
+                                   should be accounted for
+ 
+ Throws:   no
+
+Recursively compares differences from I<$left> and I<$right> sides from common subsequences.
+
+The I<$shift> parameter is used to store index shift, caused by `add` and `remove` operations.
+
+Returns the updated index I<$shift>.
 
 =item _compareLeft($$$$$;$);
 
-TODO: Document
+ Inputs:    $path       arrayref:  Path array where each element relates to successive
+                                   JSON object key
+ 
+            $src:       arrayref:  Usually decoded from JSON text (source)
+            
+            $dst:       arrayref:  Usually decoded from JSON text (destination)
+            
+            $left:      arrayref:  Differences on the left from the common subsequence
+
+            $shift:     scalar:    A number specifying the index shift of the array.
+                                   Each time a new operation is added, this shift
+                                   should be accounted for
+
+            $diff:      arrayref:  Used to hold and update the resulting JSON Patch
+
+ Optional:  $options:   hashref:   Used to specify optional parameters for the output and
+                                   the overall operation of the module
+
+ 
+ Returns:   $shift:     scalar:    A number specifying the index shift of the array.
+                                   Each time a new operation is added, this shift
+                                   should be accounted for
+ 
+ Throws:   no
+
+Updates I<$diff> with `remove` operations for elements that only exist in the I<$src> array.
 
 =item _compareRight($$$$$;$); 
 
-TODO: Document
+ Inputs:    $path       arrayref:  Path array where each element relates to successive
+                                   JSON object key
+ 
+            $src:       arrayref:  Usually decoded from JSON text (source)
+            
+            $dst:       arrayref:  Usually decoded from JSON text (destination)
+
+            $right:     arrayref:  Differences on the right from the common subsequence
+
+            $shift:     scalar:    A number specifying the index shift of the array.
+                                   Each time a new operation is added, this shift
+                                   should be accounted for
+
+            $diff:      arrayref:  Used to hold and update the resulting JSON Patch
+
+ Optional:  $options:   hashref:   Used to specify optional parameters for the output and
+                                   the overall operation of the module
+ 
+ Returns:   $shift:     scalar:    A number specifying the index shift of the array.
+                                   Each time a new operation is added, this shift
+                                   should be accounted for
+ 
+ Throws:   no
+
+Updates I<$diff> with `add` operations for elements that only exist in the I<$dst> array.
 
 =item I<_optimizeWithReplace($diff, $options)>
 
@@ -1033,7 +1144,7 @@ TODO: Document
 
  Throws:    no
 
-Searches I<$diff> for pairs of I<remove> followed by I<add> operations pointing to the same path and substitutes them with a single I<replace> operation. The I<$diff> refference is then updated by the subroutine.
+Searches I<$diff> for pairs of `remove` followed by `add` operations pointing to the same path and substitutes them with a single `replace` operation. The I<$diff> refference is then updated by the subroutine.
 
 =item I<_optimizeWithMove($diff, $options)>
 
@@ -1048,7 +1159,7 @@ NOTE: Currently disabled.
 
  Throws:    no
 
-Searches I<$diff> for pairs of I<remove> followed by I<add> operations pointing to the same value and substitutes them with a single I<move> operation. The I<$diff> refference is then updated by the subroutine.
+Searches I<$diff> for pairs of `remove` followed by `add` operations pointing to the same value and substitutes them with a single `move` operation. The I<$diff> refference is then updated by the subroutine.
 
 =item I<_expandInDepth($diff, $options)>
 
@@ -1061,7 +1172,7 @@ Searches I<$diff> for pairs of I<remove> followed by I<add> operations pointing 
 
  Throws:    no
 
-Searches I<$diff> for I<replace> operations that have updated a composite object with a composite object and goes in to compare the values in depth. The I<$diff> refference is then updated by the subroutine.
+Searches I<$diff> for `replace` operations that have updated a composite object with a composite object and goes in to compare the values in depth. The I<$diff> refference is then updated by the subroutine.
 
 =back
 

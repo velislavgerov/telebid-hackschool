@@ -3,4 +3,5 @@ trash/
 t.pl
 *.swp
 *.swo
+*.tmp
 out

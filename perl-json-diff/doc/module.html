@@ -1,0 +1,519 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title></title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#FUNCTIONAL-INTERFACE">FUNCTIONAL INTERFACE</a></li>
+  <li><a href="#INTERNAL-FUNCTIONS">INTERNAL FUNCTIONS</a>
+    <ul>
+      <li><a href="#VALUE-COMPARISONS">VALUE COMPARISONS</a></li>
+      <li><a href="#ARRAY-HELPERS">ARRAY HELPERS</a></li>
+      <li><a href="#GENERAL-HELPERS">GENERAL HELPERS</a></li>
+    </ul>
+  </li>
+  <li><a href="#BUGS">BUGS</a></li>
+  <li><a href="#AUTHOR">AUTHOR</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>JSON::Patch::Diff</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code>    use JSON::Patch::Diff;
+
+    ## These are usually decoded from JSON
+    my $src = {&quot;value&quot;=&gt; 1, &quot;list&quot;=&gt; [[1,2],1,2]};
+    my $dst = {&quot;name&quot;=&gt; &quot;new&quot;, &quot;value&quot;=&gt; 0, &quot;list&quot;=&gt; [[1,4],2,3]};
+    
+    my $options = {&quot;use_depth&quot;=&gt; 1}; ## optional
+
+    my $diff = GetPatch($src, $dst, $options);
+    
+    ## Result:  
+    # $diff = 
+    #   [
+    #       {&quot;op&quot;=&gt; &quot;add&quot;, &quot;path&quot;=&gt; &quot;/name&quot;, &quot;value&quot;=&gt; &quot;new&quot;},
+    #       {&quot;op&quot;=&gt; &quot;replace&quot;, &quot;path&quot;=&gt; &quot;/list/0/1&quot;, &quot;value&quot;=&gt; 4},
+    #       {&quot;op&quot;=&gt; &quot;remove&quot;, &quot;path&quot;=&gt; &quot;/list/1&quot;},
+    #       {&quot;op&quot;=&gt; &quot;add&quot;, &quot;path&quot;=&gt; &quot;/list/2&quot;, &quot;value&quot;=&gt; 3},
+    #       {&quot;op&quot;=&gt; &quot;replace&quot;, &quot;path&quot;=&gt; &quot;/value&quot;, &quot;value&quot;=&gt; 0}
+    #   ];</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>A minimalistic module to produce <b>JSON Patch</b> difference from <i>source</i> to <i>destination</i> perlrefs, decoded from JSON text. This difference is a patch which when applied to our <i>source</i> will produce our <i>destination</i>.</p>
+
+<p>See: <a href="https://tools.ietf.org/html/rfc6902">RFC6902</a></p>
+
+<h1 id="FUNCTIONAL-INTERFACE">FUNCTIONAL INTERFACE</h1>
+
+<p>All functions intended to be accessed by the outside world.</p>
+
+<dl>
+
+<dt id="GetPatch-src-dst-options"><i>GetPatch($src, $dst, $options)</i></dt>
+<dd>
+
+<pre><code> Inputs:    $src:            perlref: Usually decoded from JSON text (source)
+
+            $dst:            perlref: Usually decoded from JSON text (destination)
+ 
+ Optional:  $options:        hashref: Used to specify optional parameters for the output and
+                                      the overall operation of the module
+ 
+ Returns:   $diff:           arrayref: Used to hold and update the resulting JSON Patch
+
+ Throws:    no</code></pre>
+
+<p>Returns a <b>JSON Patch</b> with the difference obtained from <i>source</i> to <i>destination</i>. The <i>$options</i> hash refference is used to specify additional parameter configuration for the resulting <b>JSON Patch</b>.</p>
+
+<p>Available opions:</p>
+
+<pre><code> keep_old     Adds an additional key to JSON Patch - `old` - to hold the value before
+
+ use_replace  Substitute `remove` and `add` pairs acting on the same path with a single 
+              `replace` operation (needed only for arrays)
+
+ use_depth    Go in depth and expand the patch in the cases where a composite value was
+              replaced with a similar but not equal composite value (needed only for arrays)</code></pre>
+
+<p>Enable by setting any of these to a truthly value. In example,</p>
+
+<pre><code>    $options = {keep_old=&gt;1, use_replace=&gt;1, use_depth =&gt;1};</code></pre>
+
+</dd>
+</dl>
+
+<h1 id="INTERNAL-FUNCTIONS">INTERNAL FUNCTIONS</h1>
+
+<p>All functions inherent to the internal operations of the module.</p>
+
+<p><b>WARNING</b>: This section is intended for <i>developers</i>. Modify at your own risk!</p>
+
+<h2 id="VALUE-COMPARISONS">VALUE COMPARISONS</h2>
+
+<p>Functions that recursively compare the three main categories of values - values, arrays of values and associative arrays of values (hashes). These further update the <b>JSON Patch</b> difference when need be.</p>
+
+<dl>
+
+<dt id="CompareValues-path-src-dst-diff-options"><i>CompareValues($path, $src, $dst, $diff, $options)</i></dt>
+<dd>
+
+<pre><code> Inputs:    $path:           arrayref: Path array where each element relates to successive
+                                       JSON object key
+
+            $src:            perlref:  Usually decoded from JSON text (source) or part of it,
+                                       passed recursively by one of the other methods
+
+            $dst:            perlref:  Usually decoded from JSON text (source) or part of it,
+                                       passed recursively by one of the other methods
+
+            $diff:           arrayref: Used to hold and update the resulting JSON Patch
+
+ Optional:  $options:        hashref:  Used to specify optional parameters for the output and
+                                       the overall operation of the module
+ 
+ Returns:   void
+ 
+ Throws:    no</code></pre>
+
+<p>This is the main entry point to comparing <i>source</i> to <i>destination</i> values and updating the <b>JSON Patch</b> accordingly. It&#39;s main operation is to compare the values and, if needed, choose the appropriate further actions depending on the value types.</p>
+
+</dd>
+<dt id="CompareHashes-path-src-dst-diff-options"><i>CompareHashes($path, $src, $dst, $diff, $options)</i></dt>
+<dd>
+
+<pre><code> Inputs:    $path            arrayref: Path array where each element relates to successive
+                                       JSON object key
+
+            $src:            hashref:  Usually decoded from JSON text (source) or part of it,
+                                       passed recursively by one of the other methods
+
+            $dst:            hashref:  Usually decoded from JSON text (source) or part of it,
+                                       passed recursively by one of the other methods
+
+            $diff:           arrayref: Used to hold and update the resulting JSON Patch
+
+ Optional:  $options:        hashref:  Used to specify optional parameters for the output and
+                                       the overall operation of the module
+
+ Returns:   void
+ 
+ Throws:    no</code></pre>
+
+<p>Called from within <i>CompareValues()</i>, this subroutine is used to compare pairs of associative arrays (hashes). It pushes `remove` and `add` operations to the <b>JSON Patch</b> difference when mismatches are found between the <i>source</i> and <i>destination</i> hashes. When matching keys are found, it recursively goes through <i>CompareValues()</i>.</p>
+
+</dd>
+<dt id="CompareArrays-path-src-dst-diff-options"><i>CompareArrays($path, $src, $dst, $diff, $options)</i></dt>
+<dd>
+
+<pre><code> Inputs:    $path            arrayref: Path array where each element relates to successive
+                                       JSON object key
+
+            $src:            arrayref: Usually decoded from JSON text (source) or part of it,
+                                       passed recursively by one of the other methods
+
+            $dst:            arrayref: Usually decoded from JSON text (source) or part of it,
+                                       passed recursively by one of the other methods
+
+            $diff:           arrayref: Used to hold and update the resulting JSON Patch
+
+ Optional:  $options:        hashref:  Used to specify optional parameters for the output and
+                                       the overall operation of the module
+ 
+ Returns:   void
+ 
+ Throws:    no</code></pre>
+
+<p>Called from within <i>CompareValues()</i>, this function is used to compare pairs of arrays. This subroutine is the most complex by operation and it further relies on the <b>ARRAY HELPERS</b> explained below.</p>
+
+</dd>
+</dl>
+
+<h2 id="ARRAY-HELPERS">ARRAY HELPERS</h2>
+
+<p>NOTE: Some of the documentation and much of the logic for the array handling methods has been adopted from Stefan K&ouml;gl&#39;s &lt;stefan@skoegl.net&gt; <a href="https://github.com/stefankoegl/python-json-patch/">python-json-patch</a>.</p>
+
+<dl>
+
+<dt id="longestCommonSubSequence-src-dst"><i>_longestCommonSubSequence($src, $dst)</i></dt>
+<dd>
+
+<pre><code> Inputs:    $src:            arrayref:  Usually decoded from JSON text (source)
+
+            $dst:            arrayref:  Usually decoded from JSON text (destination)
+ 
+ Returns:   ($range_src,
+             $range_dst):    array:     Specifying the ranges of the longest common
+                                        sequences between the source and destination
+            
+ Variables: $range_src:      array:     Holds the indexes of the first and last element
+                                        from source that identify the longest common
+                                        subsequence found between source and destination
+
+            $range_dst:      array:     Holds the indexes of the first and last element
+                                        from destination that identify the longest common
+                                        subsequence found between source and destination
+ 
+ Throws:   no</code></pre>
+
+<p>Returns a pair of ranges that specify the index ranges from source and destination of the longest common subsequence found between the two.</p>
+
+</dd>
+<dt id="splitByCommonSequence-src-dst-range_src-range_dst"><i>_splitByCommonSequence($src, $dst, $range_src, $range_dst)</i></dt>
+<dd>
+
+<pre><code> Inputs:     $src:           arrayref:  Usually decoded from JSON text (source)
+            
+             $dst:           arrayref:  Usually decoded from JSON text (destination)
+            
+             $range_src:     array:     Holds the indexes of the first and last element
+                                       from source that identify the longest common
+                                       subsequence found between source and destination
+            
+             $range_dst:     array:     Holds the indexes of the first and last element
+                                       from destination that identify the longest common
+                                       subsequence found between source and destination
+
+ 
+ Returns:    ($left,
+              $right)       arrayref:  Differences on the left and right from the common subsequence
+ 
+ Variables:  $left:         arrayref:  Differences on the left from the common subsequence
+ 
+             $right:        arrayref:  Differences on the right from the common subsequence
+
+ Throws:   no</code></pre>
+
+<p>Recursively splits the <i>$dst</i> list onto two parts: <i>$left</i> and <i>$right</i>. The left part contains differences on left from common subsequence, same as the right part by for other side.</p>
+
+<p>To easily understand the process let&#39;s take two lists: [0, 1, 2, 3] as <i>$src</i> and [1, 2, 4, 5] for <i>$dst</i>. If we&#39;ve tried to generate the binary tree where nodes are common subsequence for both lists, leaves on the left side are subsequence for <i>$src</i> list and leaves on the right one for <i>$dst</i>, our tree would looks like:</p>
+
+<pre><code>     [1, 2]
+     /     \
+  [0]       []
+           /  \
+        [3]   [4, 5]</code></pre>
+
+<p>This function generate the similar structure as flat tree, but without nodes with common subsequences - since we&#39;re don&#39;t need them - only with left and right leaves:</p>
+
+<pre><code>      []
+     / \
+  [0]  []
+       / \
+     [3]  [4, 5]</code></pre>
+
+<p>The <i>$range_src</i> is the absolute range for currently processed subsequence of <i>$src</i>. The <i>$range_dst</i> means the same, but for the <i>$dst</i> array.</p>
+
+</dd>
+<dt id="compareWithShift">_compareWithShift($$$$$$$;$);</dt>
+<dd>
+
+<pre><code> Inputs:    $path       arrayref:  Path array where each element relates to successive
+                                   JSON object key
+ 
+            $src:       arrayref:  Usually decoded from JSON text (source)
+            
+            $dst:       arrayref:  Usually decoded from JSON text (destination)
+            
+            $left:      arrayref:  Differences on the left from the common subsequence
+
+            $right:     arrayref:  Differences on the right from the common subsequence
+
+            $shift:     scalar:    A number specifying the index shift of the array.
+                                   Each time a new operation is added, this shift
+                                   should be accounted for
+
+            $diff:      arrayref:  Used to hold and update the resulting JSON Patch
+
+ Optional:  $options:   hashref:   Used to specify optional parameters for the output and
+                                   the overall operation of the module
+
+ 
+ Returns:   $shift:     scalar:    A number specifying the index shift of the array.
+                                   Each time a new operation is added, this shift
+                                   should be accounted for
+ 
+ Throws:   no</code></pre>
+
+<p>Recursively compares differences from <i>$left</i> and <i>$right</i> sides from common subsequences.</p>
+
+<p>The <i>$shift</i> parameter is used to store index shift, caused by `add` and `remove` operations.</p>
+
+<p>Returns the updated index <i>$shift</i>.</p>
+
+</dd>
+<dt id="compareLeft">_compareLeft($$$$$;$);</dt>
+<dd>
+
+<pre><code> Inputs:    $path       arrayref:  Path array where each element relates to successive
+                                   JSON object key
+ 
+            $src:       arrayref:  Usually decoded from JSON text (source)
+            
+            $dst:       arrayref:  Usually decoded from JSON text (destination)
+            
+            $left:      arrayref:  Differences on the left from the common subsequence
+
+            $shift:     scalar:    A number specifying the index shift of the array.
+                                   Each time a new operation is added, this shift
+                                   should be accounted for
+
+            $diff:      arrayref:  Used to hold and update the resulting JSON Patch
+
+ Optional:  $options:   hashref:   Used to specify optional parameters for the output and
+                                   the overall operation of the module
+
+ 
+ Returns:   $shift:     scalar:    A number specifying the index shift of the array.
+                                   Each time a new operation is added, this shift
+                                   should be accounted for
+ 
+ Throws:   no</code></pre>
+
+<p>Updates <i>$diff</i> with `remove` operations for elements that only exist in the <i>$src</i> array.</p>
+
+</dd>
+<dt id="compareRight">_compareRight($$$$$;$);</dt>
+<dd>
+
+<pre><code> Inputs:    $path       arrayref:  Path array where each element relates to successive
+                                   JSON object key
+ 
+            $src:       arrayref:  Usually decoded from JSON text (source)
+            
+            $dst:       arrayref:  Usually decoded from JSON text (destination)
+
+            $right:     arrayref:  Differences on the right from the common subsequence
+
+            $shift:     scalar:    A number specifying the index shift of the array.
+                                   Each time a new operation is added, this shift
+                                   should be accounted for
+
+            $diff:      arrayref:  Used to hold and update the resulting JSON Patch
+
+ Optional:  $options:   hashref:   Used to specify optional parameters for the output and
+                                   the overall operation of the module
+ 
+ Returns:   $shift:     scalar:    A number specifying the index shift of the array.
+                                   Each time a new operation is added, this shift
+                                   should be accounted for
+ 
+ Throws:   no</code></pre>
+
+<p>Updates <i>$diff</i> with `add` operations for elements that only exist in the <i>$dst</i> array.</p>
+
+</dd>
+<dt id="optimizeWithReplace-diff-options"><i>_optimizeWithReplace($diff, $options)</i></dt>
+<dd>
+
+<pre><code> Inputs:    $diff:           arrayref: Used to hold and update the resulting JSON Patch
+            
+ Optional:  $options:        hashref:  Used to specify optional parameters for the output and
+                                       the overall operation of the module
+ 
+ Returns:   void
+
+ Throws:    no</code></pre>
+
+<p>Searches <i>$diff</i> for pairs of `remove` followed by `add` operations pointing to the same path and substitutes them with a single `replace` operation. The <i>$diff</i> refference is then updated by the subroutine.</p>
+
+</dd>
+<dt id="optimizeWithMove-diff-options"><i>_optimizeWithMove($diff, $options)</i></dt>
+<dd>
+
+<p>NOTE: Currently disabled.</p>
+
+<pre><code> Inputs:    $diff:           arrayref: Used to hold and update the resulting JSON Patch
+            
+ Optional:  $options:        hashref:  Used to specify optional parameters for the output and
+                                       the overall operation of the module
+ 
+ Returns:   void
+
+ Throws:    no</code></pre>
+
+<p>Searches <i>$diff</i> for pairs of `remove` followed by `add` operations pointing to the same value and substitutes them with a single `move` operation. The <i>$diff</i> refference is then updated by the subroutine.</p>
+
+</dd>
+<dt id="expandInDepth-diff-options"><i>_expandInDepth($diff, $options)</i></dt>
+<dd>
+
+<pre><code> Inputs:    $diff:           arrayref: Used to hold and update the resulting JSON Patch
+            
+ Optional:  $options:        hashref:  Used to specify optional parameters for the output and
+                                       the overall operation of the module
+ 
+ Returns:   void
+
+ Throws:    no</code></pre>
+
+<p>Searches <i>$diff</i> for `replace` operations that have updated a composite object with a composite object and goes in to compare the values in depth. The <i>$diff</i> refference is then updated by the subroutine.</p>
+
+</dd>
+</dl>
+
+<h2 id="GENERAL-HELPERS">GENERAL HELPERS</h2>
+
+<dl>
+
+<dt id="NormalizePatch-diff-options"><i>NormalizePatch($diff, $options)</i></dt>
+<dd>
+
+<pre><code> Inputs:    $diff:           arrayref: Used to hold and update the resulting JSON Patch
+            
+ Optional:  $options:        hashref:  Used to specify optional parameters for the output and
+                                       the overall operation of the module
+ 
+ Returns:   void
+
+ Throws:    no</code></pre>
+
+<p>Removes additional values stored inside the operation hashes that are neccessary for the operation of <i>_optimizeWithReplace()</i> and <i>_expandInDepth()</i>.</p>
+
+</dd>
+<dt id="PushOperation-operation_name-path-value-old_value-diff-options"><i>PushOperation($operation_name, $path, $value, $old_value, $diff, $options)</i></dt>
+<dd>
+
+<pre><code> Inputs:    $operation_name  scalar:   Can be either &#39;add&#39;, &#39;replace&#39;, &#39;remove&#39; or &#39;move&#39;
+
+            $path            arrayref: Path array where each element relates to successive
+                                       JSON object key
+
+            $value:          perlref:  The value to be &#39;added&#39; or &#39;replaced&#39;
+
+            $old_value:      perlref:  The old value to be used if necessary
+
+            $diff:           arrayref: Used to hold and update the resulting JSON Patch
+
+ Optional:  $options:        hashref:  Used to specify optional parameters for the output and
+                                       the overall operation of the module
+ 
+ Returns:  void
+ 
+ Throws:   if &#39;$operation_name&#39; is invalid or unsupported</code></pre>
+
+<p>Prepares and pushes a new operation to our <i>$diff</i>.</p>
+
+</dd>
+<dt id="GetJSONPointer-path"><i>GetJSONPointer($path)</i></dt>
+<dd>
+
+<pre><code> Inputs:   $path            arrayref: each element represents a key in the JSON object
+ 
+ Returns:  $pointer         scalar:   JSON Pointer string
+ 
+ Throws:   no </code></pre>
+
+<p>Returns a JSON Pointer string created from $path.</p>
+
+</dd>
+<dt id="ReverseJSONPointer-pointer"><i>ReverseJSONPointer($pointer)</i></dt>
+<dd>
+
+<pre><code> Inputs:   $pointer         scalar:   JSON Pointer string
+
+ Returns:  $path            arrayref: Path array where each element relates to successive
+                                      JSON object key
+ 
+ Throws:   no </code></pre>
+
+<p>Returns the $path corresponding to a JSON Pointer string.</p>
+
+</dd>
+<dt id="IsNum-scalar"><i>IsNum($scalar)</i></dt>
+<dd>
+
+<pre><code> Inputs:   $scalar         scalar:   A scalar value which can be either string or a number
+
+ Returns:  1 or 0
+ 
+ Throws:   no </code></pre>
+
+<p>Returns 1 if the scalar value is a number or 0 otherwise.</p>
+
+</dd>
+</dl>
+
+<h1 id="BUGS">BUGS</h1>
+
+<dl>
+
+<dt id="use_move"><i>use_move</i></dt>
+<dd>
+
+<p><i>_optimizeWithMove()</i> does not properly account for item shifts. Currently, the function has been disabled.</p>
+
+</dd>
+<dt id="DEBUG"><i>$DEBUG</i></dt>
+<dd>
+
+<p>When <i>$DEBUG</i> is truthly, the module wrongly converts JSON numbers to strings.</p>
+
+</dd>
+</dl>
+
+<h1 id="AUTHOR">AUTHOR</h1>
+
+<p>Velislav Gerov &lt;velislav@telebid-pro.com&gt;</p>
+
+
+</body>
+
+</html>
+
+
