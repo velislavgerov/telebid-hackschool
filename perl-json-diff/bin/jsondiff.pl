@@ -133,7 +133,7 @@ In depth expansion for array operations.
 
 =item B<-k, --keep-old>
 
-Keep old values for 'replace' and 'remove' operations ("old" key).
+Keep values before 'replace' and 'remove' operations ("old" key).
 
 =item B<-p, --pretty>
 
