@@ -26,4 +26,4 @@ is converted to:
 
 #### TODO
 
-* Syntax configuration strings: Value $VALUE$ changed from $OLD$ to $NEW$ at $PATH$.
+* Syntax configuration strings: `Value $VALUE$ changed from $OLD$ to $NEW$ at $PATH$.`
