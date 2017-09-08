@@ -13,7 +13,8 @@ sub Humanize($);
 my $ref = [
     { "op"=> "replace", "path"=> "/baz", "value"=> "boo", "old"=> "asd" },
     { "op"=> "add", "path"=> "/hello", "value"=> ["world"] },
-    { "op"=> "remove", "path"=> "/foo", "old"=>"bar"}
+    { "op"=> "remove", "path"=> "/foo", "old"=>"bar"},
+    { "op" => "move", "path"=> "/a", "from"=> "/b", "value"=>2}
 ];
 
 sub Humanize($)
@@ -45,17 +46,21 @@ sub temp_OpParse($)
 {
     my ($op) = shift;
 
-    if (lc $$op{op} eq 'add')
+    if (lc $$op{op} eq 'add' || lc $$op{op} eq 'copy')
     {
-       return join('', $json->encode($$op{value}), ' was added to "', $$op{path}, '"');
+       return join('', 'Added value ', $json->encode($$op{value}), ' at ', $$op{path}, '.');
     }
     elsif (lc $$op{op} eq 'replace')
     {
-       return join('', $json->encode($$op{old}), ' at "', $$op{path}, '" was replaced with ', $json->encode($$op{value}));
+       return join('', 'Changed value from ', $json->encode($$op{old}), ' to ', $json->encode($$op{value}), ' at ', $$op{path}, '.');
     }
     elsif (lc $$op{op} eq 'remove')
     {
-        return join('', $json->encode($$op{old}), ' was removed from "', $$op{path}, '"');
+        return join('', 'Deleted value ', $json->encode($$op{old}), ' at ', $$op{path}, '.');
+    }
+    elsif (lc $$op{op} eq 'move')
+    {
+        return join('', 'Moved value ', $json->encode($$op{value}), ' from ', $$op{from}, ' to ', $$op{path}, '.');
     }
 
     return "Unrecognized operation";
