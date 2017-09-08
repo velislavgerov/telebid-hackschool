@@ -2,7 +2,7 @@
 
 A simple perl module to convert JSON Patch arrays to arrays of readable strings.
 
-I.e,
+Example:
 
 ```
 [    
@@ -13,7 +13,7 @@ I.e,
 ]
 ```
 
-becomes
+is converted to:
 
 ```
 [
@@ -23,3 +23,7 @@ becomes
     'Moved value 2 from /b to /a.'
 ]
 ```
+
+#### TODO
+
+* Syntax configuration strings: Value $VALUE$ changed from $OLD$ to $NEW$ at $PATH$.
