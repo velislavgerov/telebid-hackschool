@@ -12,7 +12,7 @@ except:
     sys.exit(1)
 
 if not 0 < K <= L <= 1000 or not 0 < R <= 100:
-    print("Some of the input values are out of the allowed range.", file=sys.stderr)
+    print("Input value(s) out of the allowed range(s).", file=sys.stderr)
     sys.exit(1)
 
 grid = numpy.zeros((K, L))
@@ -20,10 +20,17 @@ grid = numpy.zeros((K, L))
 while 1:
     line = sys.stdin.readline()
     if line == "\n" or line == "\r\n": break
+    
     try:
         k, l = [int(x) for x in line.split()]
     except:
         print("Invalid input format.", file=sys.stderr)
+        sys.exit(1)
+    
+    if not 0 < k <= K  or not 0 < l <= L:
+        print("Input value(s) out of the allowed range(s).", file=sys.stderr)
+        sys.exit(1)
+    
     grid[K-k][l-1] = 1
 
 for i in range(R):
