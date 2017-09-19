@@ -41,4 +41,4 @@ for i in range(R):
                     new_grid[n][m+1] = 1    
     grid = new_grid
 
-print(8*10 - numpy.count_nonzero(grid))
+print(K*L - numpy.count_nonzero(grid))
