@@ -1,132 +1,167 @@
+<!DOCTYPE html>
 <html>
-    <head>
-        <title>
-            Segments
-        </title>
-    </head>
-    <body>
-        <input type="text" id="input" value=""/>
-        <button onclick="go()">Go</button>
-        <div id="message" style="color:red;display:inline-block;"></div>
-        <div id="bar" class="bar" style="position:relative;height:24px;width:100%;background-color:#f1f1f1"></div>
-    <script>
-        var msg = document.getElementById("message");
-        var bar = document.getElementById("bar");
+  <head>
+    <title>
+      Segments
+    </title>
+    <style>
+      .bar {
+				display: flex;
+				position: relative; 
+				height: 24px;
+				width: 100%;
+				background-color: #f1f1f1;
+      }
+			
+			.segment {
+  				position: absolute;
+  				height: 24px;
+				  background-color: red;
+			}
 
-        function go () {
-          msg.innerHTML = '';
-          bar.innerHTML = '';
+			#message{
+				display: inline-block;
+			}
+    </style>
+  </head>
+  <body>
+		<main>
+			<input type="text" id="box" value="10 3 2 1"/>
+			<button id="button" onclick="go()">
+				Go
+			</button>
+			<div id="message">
+			</div>
+			<div id="bar" class="bar" >
+			</div>
+		</main>
+  	<script>
+			document.getElementById("id_of_textbox")
 
-          data = document.getElementById('input').value;
-          data = data.match(/\S+/g);
 
-          if (data.length != 4)
-          {
-            msg.setAttribute('style', 'color:red;display:inline-block;');
-            msg.innerHTML = 'Invalid input format. Must be like "n a b c"';
-            return;
-          }
+			var msg = document.getElementById("message");
+			var bar = document.getElementById("bar");
+			var box = document.getElementById("box");
+			box.addEventListener("keyup", function(event) {
+				event.preventDefault();
+				if (event.keyCode === 13) {
+					document.getElementById("button").click();
+				}
+			});
 
-          for (var i = 0; i < data.length; i++)
-          {
-            item = data[i];
-            if (isNaN(item))
-            {
-              msg.innerHTML = 'All values must be numbers';
-              return;
-            }
-            if (item >= 100000)
-            {
-              msg.setAttribute('style', 'color:red;display:inline-block;');
-              msg.innerHTML = 'All values must be less than 100000';
-              return;
-            }
-          }
+			function go () {
+				msg.innerHTML = '';
+				bar.innerHTML = '';
 
-            var input = {
-              n: parseInt(data[0]),
-              a: parseInt(data[1]),
-              b: parseInt(data[2]),
-              c: parseInt(data[3])
-            };
+				data = box.value;
+				data = data.match(/\S+/g);
 
-            var pairs = Array();
-            var points = new Set();
+				if (data.length != 4)
+				{
+					msg.style.color = "red";
+					msg.innerHTML = 'Invalid input format. Must be like "n a b c"';
+					return;
+				}
 
-            var redLength = 0;
+				for (var i = 0; i < data.length; i++)
+				{
+					item = data[i];
+					if (isNaN(item))
+					{
+						msg.style.color = "red";
+						msg.innerHTML = 'All values must be numbers';
+						return;
+					}
+					if (item >= 100000)
+					{
+						msg.style.color = "red";
+						msg.innerHTML = 'All values must be less than 100000';
+						return;
+					}
+				}
 
-            for (var i = 0; i < input.n; i++) {
-                if (i % input.a == 0) { points.add(i); }
-                if (i % input.b == 0) { points.add(input.n - i); }
-            }
-            
-            points = Array.from(points);
-            points.sort(compareNumbers);
+				var input = {
+					n: parseInt(data[0]),
+					a: parseInt(data[1]),
+					b: parseInt(data[2]),
+					c: parseInt(data[3])
+				};
 
-            var min = 0;
-            var max_val = null;
-            for (var i = 0; i < points.length; i++)
-            {
-                for (var j = i + 1; j < points.length; j++)
-                {
-                    if ((points[j] - points[i]) == input.c)
-                    {
-                        console.log(max_val,points[i], points[j]);
-                        if (max_val == null)
-                        {
-                              redLength += input.c;
-                              max_val = points[j];
-                        }
-                        else
-                        {
-                            if (points[i] < max_val)
-                            {
-                                if (points[j] > max_val)
-                                {
-                                    redLength += points[j] - max_val;
-                                    max_val = points[j];
-                                }
-                            }
-                            else
-                            {
-                              redLength += input.c;
-                              max_val = points[j];
-                            }
+				var pairs = Array();
+				var points = new Set();
 
-                        }
+				var redLength = 0;
 
-                        pairs.push([points[i], points[j]]);
-                        break;
-                    }
-                }
-            }
+				for (var i = 0; i < input.n; i++) {
+					if (i % input.a == 0) { points.add(i); }
+					if (i % input.b == 0) { points.add(input.n - i); }
+				}
+				
+				points = Array.from(points);
+				points.sort(compareNumbers);
 
-            var nonRedLength = input.n - redLength;
+				var last_max = null;
+				for (var i = 0; i < points.length; i++)
+				{
+					for (var j = i + 1; j < points.length; j++)
+					{
+						if ((points[j] - points[i]) == input.c)
+						{
+							console.log(last_max,points[i], points[j]);
+							if (last_max == null)
+							{
+								redLength += input.c;
+								last_max = points[j];
+							}
+							else
+							{
+								if (points[i] < last_max)
+								{
+									if (points[j] > last_max)
+									{
+										redLength += points[j] - last_max;
+										last_max = points[j];
+									}
+								}
+								else
+								{
+									redLength += input.c;
+									last_max = points[j];
+								}
+							}
 
-            console.log(input);
-            console.log(pairs);
-            console.log(redLength);
-            console.log(nonRedLength);
+							pairs.push([points[i], points[j]]);
+							break;
+						}
+					}
+				}
 
-            var segmentWidth = ((input.c/input.n) * 100);
+				var nonRedLength = input.n - redLength;
 
-            pairs.forEach(function(pair) {
-              pair.sort(compareNumbers);
-              marginLeft = ((pair[0]/input.n) * 100);
-              var e = document.createElement('div');
-              e.setAttribute('style', 'position:absolute;height:24px;margin-left:' + marginLeft  + '%;width:' + segmentWidth + '%;background-color:red;');
-              console.log(e);
-              bar.appendChild(e);
-            });
+				console.log(input);
+				console.log(pairs);
+				console.log(redLength);
+				console.log(nonRedLength);
 
-            msg.setAttribute('style', 'color:black;display:inline-block;');
-            msg.innerHTML = 'Output: ' + nonRedLength;
-            console.log(segmentWidth);
-        }
+				var segmentWidth = ((input.c/input.n) * 100);
+				console.log(segmentWidth);
 
-        function compareNumbers(a,b) {
-            return a - b;
-        }
-    </script>
-    </body>
+				pairs.forEach(function(pair) {
+					pair.sort(compareNumbers);
+					var e = document.createElement('div');
+					e.setAttribute('class', 'segment');
+					e.style["margin-left"] = ((pair[0]/input.n) * 100) + '%';
+					e.style["width"] = segmentWidth + '%'; 
+					bar.appendChild(e);
+				});
+
+				msg.style.color = "black";
+				msg.innerHTML = 'Output: ' + nonRedLength;
+			}
+
+			function compareNumbers(a,b) {
+				return a - b;
+			}
+		</script>
+  </body>
 </html>
