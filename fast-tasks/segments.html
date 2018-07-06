@@ -1,0 +1,113 @@
+<html>
+    <head>
+        <title>
+            Segments
+        </title>
+    </head>
+    <body>
+        <input type="text" id="input" value=""/>
+        <button onclick="go()">Go</button>
+        <div id="message" style="color:red;display:inline-block;"></div>
+        <div id="bar" class="bar" style="height:24px;width:100%;background-color:#f1f1f1"></div>
+    <script>
+        var msg = document.getElementById("message");
+        var bar = document.getElementById("bar");
+
+        function go () {
+          msg.innerHTML = '';
+          bar.innerHTML = '';
+
+          data = document.getElementById('input').value;
+          data = data.match(/\S+/g);
+
+          if (data.length != 4)
+          {
+            msg.setAttribute('style', 'color:red;display:inline-block;');
+            msg.innerHTML = 'Invalid input format. Must be like "n a b c"';
+            return;
+          }
+
+          for (var i = 0; i < data.length; i++)
+          {
+            item = data[i];
+            if (isNaN(item))
+            {
+              msg.innerHTML = 'All values must be numbers';
+              return;
+            }
+            if (item >= 100000)
+            {
+              msg.setAttribute('style', 'color:red;display:inline-block;');
+              msg.innerHTML = 'All values must be less than 100000';
+              return;
+            }
+          }
+
+            var input = {
+              n: parseInt(data[0]),
+              a: parseInt(data[1]),
+              b: parseInt(data[2]),
+              c: parseInt(data[3])
+            };
+
+            var georgi = Array();
+            var gergana = Array();
+            var pairs = Array();
+
+            var redLength = 0;
+
+            for (var i = 0; i < input.n; i++) {
+                if (i % input.a == 0) { georgi.push(i); }
+                if (i % input.b == 0) { gergana.push(input.n - i); }
+            }
+
+            gergana.sort(compareNumbers);
+            for (var i = 0; i < georgi.length; i++)
+            {
+                console.log('gi', georgi[i]);
+                for (var j = 0; j < gergana.length; j++)
+                {
+                    console.log('ga', gergana[j]);
+                    if (Math.abs(georgi[i] - gergana[j]) == input.c)
+                    {
+                        pairs.push([georgi[i], gergana[j]]);
+                        redLength += input.c;
+                    }
+                    else if ((gergana[j] - georgi[i]) > input.c)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            var nonRedLength = input.n - redLength;
+
+            console.log(input);
+            console.log(georgi);
+            console.log(gergana);
+            console.log(pairs);
+            console.log(redLength);
+            console.log(nonRedLength);
+
+            var segmentWidth = ((input.c/input.n) * 100);
+
+            pairs.forEach(function(pair) {
+              pair.sort(compareNumbers);
+              marginLeft = ((pair[0]/input.n) * 100);
+              var e = document.createElement('div');
+              e.setAttribute('style', 'height:24px;margin-left:' + marginLeft  + '%;width:' + segmentWidth + '%;background-color:green;');
+              console.log(e);
+              bar.appendChild(e);
+            });
+
+            msg.setAttribute('style', 'color:black;display:inline-block;');
+            msg.innerHTML = 'Output: ' + redLength;
+            console.log(segmentWidth);
+        }
+
+        function compareNumbers(a,b) {
+            return a - b;
+        }
+    </script>
+    </body>
+</html>

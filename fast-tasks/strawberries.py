@@ -49,3 +49,4 @@ for i in range(R):
     grid = new_grid
 
 print(K*L - numpy.count_nonzero(grid))
+print(grid)
