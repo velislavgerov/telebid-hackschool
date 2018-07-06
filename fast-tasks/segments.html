@@ -50,30 +50,29 @@
               c: parseInt(data[3])
             };
 
-            var georgi = Array();
-            var gergana = Array();
             var pairs = Array();
+            var points = new Set();
 
             var redLength = 0;
 
             for (var i = 0; i < input.n; i++) {
-                if (i % input.a == 0) { georgi.push(i); }
-                if (i % input.b == 0) { gergana.push(input.n - i); }
+                if (i % input.a == 0) { points.add(i); }
+                if (i % input.b == 0) { points.add(input.n - i); }
             }
+            
+            points = Array.from(points);
+            points.sort(compareNumbers);
 
-            gergana.sort(compareNumbers);
-            for (var i = 0; i < georgi.length; i++)
+            for (var i = 0; i < points.length; i++)
             {
-                console.log('gi', georgi[i]);
-                for (var j = 0; j < gergana.length; j++)
+                for (var j = i + 1; j < points.length; j++)
                 {
-                    console.log('ga', gergana[j]);
-                    if (Math.abs(georgi[i] - gergana[j]) == input.c)
+                    if (Math.abs(points[i] - points[j]) == input.c)
                     {
-                        pairs.push([georgi[i], gergana[j]]);
+                        pairs.push([points[i], points[j]]);
                         redLength += input.c;
                     }
-                    else if ((gergana[j] - georgi[i]) > input.c)
+                    else if ((points[j] - points[i]) > input.c)
                     {
                         break;
                     }
@@ -83,8 +82,6 @@
             var nonRedLength = input.n - redLength;
 
             console.log(input);
-            console.log(georgi);
-            console.log(gergana);
             console.log(pairs);
             console.log(redLength);
             console.log(nonRedLength);
@@ -95,7 +92,7 @@
               pair.sort(compareNumbers);
               marginLeft = ((pair[0]/input.n) * 100);
               var e = document.createElement('div');
-              e.setAttribute('style', 'height:24px;margin-left:' + marginLeft  + '%;width:' + segmentWidth + '%;background-color:green;');
+              e.setAttribute('style', 'height:24px;margin-left:' + marginLeft  + '%;width:' + segmentWidth + '%;background-color:red;');
               console.log(e);
               bar.appendChild(e);
             });
