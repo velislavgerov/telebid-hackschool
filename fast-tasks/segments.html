@@ -11,15 +11,16 @@
         height: 24px;
         width: 100%;
         background-color: #f1f1f1;
+        border: 1px solid black;
       }
       .segment {
-          position: absolute;
-          height: 24px;
-          background-color: red;
+        position: absolute;
+        height: 24px;
+        background-color: #f44336;
       }
 
       #message{
-          display: inline-block;
+        display: inline-block;
       }
     </style>
   </head>
@@ -102,7 +103,7 @@
           {
             if ((points[j] - points[i]) == input.c)
             {
-              console.log(last_max,points[i], points[j]);
+              console.log(last_max, points[i], points[j]);
               if (last_max == null)
               {
                 redLength += input.c;
