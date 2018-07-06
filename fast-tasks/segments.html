@@ -8,7 +8,7 @@
         <input type="text" id="input" value=""/>
         <button onclick="go()">Go</button>
         <div id="message" style="color:red;display:inline-block;"></div>
-        <div id="bar" class="bar" style="height:24px;width:100%;background-color:#f1f1f1"></div>
+        <div id="bar" class="bar" style="position:relative;height:24px;width:100%;background-color:#f1f1f1"></div>
     <script>
         var msg = document.getElementById("message");
         var bar = document.getElementById("bar");
@@ -63,17 +63,39 @@
             points = Array.from(points);
             points.sort(compareNumbers);
 
+            var min = 0;
+            var max_val = null;
             for (var i = 0; i < points.length; i++)
             {
                 for (var j = i + 1; j < points.length; j++)
                 {
-                    if (Math.abs(points[i] - points[j]) == input.c)
+                    if ((points[j] - points[i]) == input.c)
                     {
+                        console.log(max_val,points[i], points[j]);
+                        if (max_val == null)
+                        {
+                              redLength += input.c;
+                              max_val = points[j];
+                        }
+                        else
+                        {
+                            if (points[i] < max_val)
+                            {
+                                if (points[j] > max_val)
+                                {
+                                    redLength += points[j] - max_val;
+                                    max_val = points[j];
+                                }
+                            }
+                            else
+                            {
+                              redLength += input.c;
+                              max_val = points[j];
+                            }
+
+                        }
+
                         pairs.push([points[i], points[j]]);
-                        redLength += input.c;
-                    }
-                    else if ((points[j] - points[i]) > input.c)
-                    {
                         break;
                     }
                 }
@@ -92,7 +114,7 @@
               pair.sort(compareNumbers);
               marginLeft = ((pair[0]/input.n) * 100);
               var e = document.createElement('div');
-              e.setAttribute('style', 'height:24px;margin-left:' + marginLeft  + '%;width:' + segmentWidth + '%;background-color:red;');
+              e.setAttribute('style', 'position:absolute;height:24px;margin-left:' + marginLeft  + '%;width:' + segmentWidth + '%;background-color:red;');
               console.log(e);
               bar.appendChild(e);
             });
